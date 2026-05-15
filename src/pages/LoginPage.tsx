@@ -1,0 +1,100 @@
+import { useState } from "react"
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth"
+import { auth } from "@/lib/firebase"
+import { useNavigate, Link } from "react-router-dom"
+import {toast} from 'sonner'
+
+const googleProvider = new GoogleAuthProvider()
+
+export default function LoginPage() {
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
+  const navigate = useNavigate()
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+    try {
+      await signInWithEmailAndPassword(auth, email, password)
+      toast.success('login success')
+      navigate("/dashboard")
+    } catch {
+      setError("帳號或密碼錯誤")
+    }
+  }
+
+  const handleGoogleLogin = async () => {
+    setError("")
+    try {
+      await signInWithPopup(auth, googleProvider)
+      toast.success('login success')
+      navigate("/dashboard")
+    } catch {
+      setError("Google 登入失敗")
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="w-full max-w-sm p-8 bg-card rounded-xl border border-border shadow-sm">
+        <h1 className="text-2xl font-bold text-foreground mb-1">歡迎回來</h1>
+        <p className="text-sm text-muted-foreground mb-6">登入你的 SprintFlow 帳號</p>
+
+        <form onSubmit={handleEmailLogin} className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-foreground">電子郵件</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full mt-1 px-3 py-2 rounded-md border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring"
+              placeholder="you@example.com"
+              required
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-foreground">密碼</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full mt-1 px-3 py-2 rounded-md border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring"
+              placeholder="••••••••"
+              required
+            />
+          </div>
+
+          {error && <p className="text-sm text-destructive">{error}</p>}
+
+          <button
+            type="submit"
+            className="w-full py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            登入
+          </button>
+        </form>
+
+        <div className="my-4 flex items-center gap-3">
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-xs text-muted-foreground">或</span>
+          <div className="flex-1 h-px bg-border" />
+        </div>
+
+        <button
+          onClick={handleGoogleLogin}
+          className="w-full py-2 rounded-md border border-border text-sm font-medium hover:bg-accent transition-colors"
+        >
+          使用 Google 登入
+        </button>
+
+        <p className="text-center text-sm text-muted-foreground mt-6">
+          還沒有帳號？{" "}
+          <Link to="/register" className="text-primary font-medium hover:underline">
+            註冊
+          </Link>
+        </p>
+      </div>
+    </div>
+  )
+}
