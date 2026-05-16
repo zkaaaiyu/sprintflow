@@ -13,15 +13,15 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError("")
+    setError("") 
     if (password.length < 6) {
       setError("密碼至少需要 6 個字元")
       return
     }
     try {
-      const { user } = await createUserWithEmailAndPassword(auth, email, password)
-      await updateProfile(user, { displayName: name })
-      toast.success('login success')
+      const { user } = await createUserWithEmailAndPassword(auth, email, password) 
+      await updateProfile(user, { displayName: name }) 
+      toast.success('註冊成功')
       navigate("/dashboard")
     } catch {
       setError("註冊失敗，此信箱可能已被使用")

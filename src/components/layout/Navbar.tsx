@@ -1,6 +1,30 @@
-import { Search, Bell, User } from "lucide-react"
+import { Search, Bell, LogOut } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { toast } from "sonner"
 
 export default function Navbar() {
+  const { user, logout } = useAuth()  //AuthContext 封裝的useAuth()
+
+  // 取名字縮寫
+  const getInitials = () => {
+    if (!user?.displayName) return "U"
+    const parts = user.displayName.trim().split(" ")
+    if (parts.length === 1) return parts[0][0].toUpperCase()
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  }
+
+  const handleLogout = async () => {
+    await logout()
+    toast.success("已登出")
+  }
+
   return (
     <header className="h-14 border-b border-border bg-background flex items-center px-6 gap-4">
 
@@ -19,11 +43,37 @@ export default function Navbar() {
         <button className="p-2 rounded-md hover:bg-accent transition-colors">
           <Bell className="w-4 h-4 text-muted-foreground" />
         </button>
-        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center cursor-pointer">
-          <User className="w-4 h-4 text-primary-foreground" />
-        </div>
-      </div>
 
+        {/* 用戶頭像 + 下拉選單 */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            {user?.photoURL ? (
+              <img
+                src={user.photoURL}
+                alt="avatar"
+                className="w-8 h-8 rounded-full cursor-pointer object-cover"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center cursor-pointer text-primary-foreground text-xs font-semibold">
+                {getInitials()}
+              </div>
+            )}
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent align="end" className="w-48">
+            <div className="px-2 py-1.5">
+              <p className="text-sm font-medium truncate">{user?.displayName || "使用者"}</p>
+              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive cursor-pointer">
+              <LogOut className="w-4 h-4 mr-2" />
+              登出
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+      </div>
     </header>
   )
 }

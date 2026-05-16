@@ -17,7 +17,7 @@ export default function LoginPage() {
     setError("")
     try {
       await signInWithEmailAndPassword(auth, email, password)
-      toast.success('login success')
+      toast.success('登入成功')
       navigate("/dashboard")
     } catch {
       setError("帳號或密碼錯誤")
@@ -28,7 +28,7 @@ export default function LoginPage() {
     setError("")
     try {
       await signInWithPopup(auth, googleProvider)
-      toast.success('login success')
+      toast.success('login 登入成功')
       navigate("/dashboard")
     } catch {
       setError("Google 登入失敗")

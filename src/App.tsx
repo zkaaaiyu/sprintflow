@@ -1,32 +1,28 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
-import DashboardPage from "./pages/DashboardPage"
+import AppLayout from "@/components/layout/AppLayout"
+import LoginPage from "@/pages/LoginPage"
+import RegisterPage from "@/pages/RegisterPage"
+import DashboardPage from "@/pages/DashboardPage"
 import ProjectsPage from "@/pages/ProjectsPage"
 import BacklogPage from "@/pages/BacklogPage"
 import SprintPage from "@/pages/SprintPage"
 import MembersPage from "@/pages/MembersPage"
-import Sidebar from "./components/layout/sidebar"
-import Navbar from "./components/layout/Navbar"
+
 export default function App() {
   return (
     <BrowserRouter>
-      <div className="flex h-screen">
-        {/* 渲染sider bar組件 */}
-        <Sidebar />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Navbar />
-          <main className="flex-1 overflow-auto">
-            <Routes>  {/* 路由配置 */}
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/projects" element={<ProjectsPage />} />
-              <Route path="/backlog" element={<BacklogPage />} />
-              <Route path="/sprint" element={<SprintPage />} />
-              <Route path="/members" element={<MembersPage />} />
-            </Routes>
-          </main>
-        </div>
-        
-      </div>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/projects" element={<ProjectsPage />} />
+          <Route path="/backlog" element={<BacklogPage />} />
+          <Route path="/sprint" element={<SprintPage />} />
+          <Route path="/members" element={<MembersPage />} />
+        </Route>
+      </Routes>
     </BrowserRouter>
   )
 }
