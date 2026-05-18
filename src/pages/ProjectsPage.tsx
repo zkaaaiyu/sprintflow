@@ -196,83 +196,12 @@ const confirmDelete = async () => {
   )
 
   return (
+
+  <Dialog open={open} onOpenChange={setOpen}>
     <div className="max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold">Workspace</h1>
-          <p className="text-sm text-muted-foreground mt-1">管理你的所有專案</p>
-        </div>
-
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="w-4 h-4 mr-2" />新增專案</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md rounded-2xl p-8">
-            <DialogHeader className="mb-6">
-              <DialogTitle className="text-2xl font-bold">Create Project</DialogTitle>
-            </DialogHeader>
-
-            <div className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="name" className="font-semibold text-sm">Project Name</Label>
-                <Input
-                  id="name"
-                  placeholder="e.g. SprintFlow"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="rounded-xl bg-muted border-0 h-11 focus-visible:ring-1"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="desc" className="font-semibold text-sm">Description</Label>
-                <Input
-                  id="desc"
-                  placeholder="What's this project about..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="rounded-xl bg-muted border-0 h-11 focus-visible:ring-1"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="font-semibold text-sm">Color Tag</Label>
-                <div className="flex gap-2 flex-wrap">
-                  {COLOR_OPTIONS.map((c) => (
-                    <button
-                      key={c.value}
-                      type="button"
-                      onClick={() => setColor(c.value)}
-                      className="w-8 h-8 rounded-full focus:outline-none transition-all"
-                      style={{
-                        backgroundColor: c.value,
-                        outline: color === c.value ? `2px solid ${c.value}` : "none",
-                        outlineOffset: "2px",
-                      }}
-                      title={c.label}
-                    />
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {COLOR_OPTIONS.find((c) => c.value === color)?.label} selected
-                </p>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 mt-8">
-              <Button variant="ghost" onClick={() => setOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreate}
-                disabled={submitting}
-                className="bg-[#F97316] hover:bg-[#ea6c0a] text-white rounded-full px-6"
-              >
-                {submitting ? "Creating..." : "Create"}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold">Workspace</h1>
+        <p className="text-sm text-muted-foreground mt-1">管理你的所有專案</p>
       </div>
       {/* 確認刪除模塊 */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
@@ -284,7 +213,7 @@ const confirmDelete = async () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="border-t-0 bg-transparent pt-2">
-            <AlertDialogCancel>cancel</AlertDialogCancel>
+            <AlertDialogCancel>cancle</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               className="bg-destructive hover:bg-destructive/90 text-white"
@@ -313,5 +242,73 @@ const confirmDelete = async () => {
         </div>
       )}
     </div>
+
+  <DialogContent className="sm:max-w-md rounded-2xl p-8">
+    <DialogHeader className="mb-6">
+      <DialogTitle className="text-2xl font-bold">Create Project</DialogTitle>
+    </DialogHeader>
+    <div className="space-y-5">
+      <div className="space-y-2">
+        <Label htmlFor="name" className="font-semibold text-sm">Project Name</Label>
+        <Input
+          id="name"
+          placeholder="e.g. SprintFlow"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="rounded-xl bg-muted border-0 h-11 focus-visible:ring-1"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="desc" className="font-semibold text-sm">Description</Label>
+        <Input
+          id="desc"
+          placeholder="What's this project about..."
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="rounded-xl bg-muted border-0 h-11 focus-visible:ring-1"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label className="font-semibold text-sm">Color Tag</Label>
+        <div className="flex gap-2 flex-wrap">
+          {COLOR_OPTIONS.map((c) => (
+            <button
+              key={c.value}
+              type="button"
+              onClick={() => setColor(c.value)}
+              className="w-8 h-8 rounded-full focus:outline-none transition-all"
+              style={{
+                backgroundColor: c.value,
+                outline: color === c.value ? `2px solid ${c.value}` : "none",
+                outlineOffset: "2px",
+              }}
+              title={c.label}
+            />
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {COLOR_OPTIONS.find((c) => c.value === color)?.label} selected
+        </p>
+      </div>
+    </div>
+    <div className="flex justify-end gap-3 mt-8">
+      <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+      <Button
+        onClick={handleCreate}
+        disabled={submitting}
+        className="bg-[#F97316] hover:bg-[#ea6c0a] text-white rounded-full px-6"
+      >
+        {submitting ? "Creating..." : "Create"}
+      </Button>
+    </div>
+  </DialogContent>
+
+  <DialogTrigger asChild>
+    <button className="fixed bottom-8 right-8 w-14 h-14 rounded-full bg-[#F97316] hover:bg-[#ea6c0a] text-white shadow-lg hover:shadow-xl transition-all flex items-center justify-center z-40">
+      <Plus className="w-6 h-6" />
+    </button>
+  </DialogTrigger>
+
+  </Dialog>
   )
 }
