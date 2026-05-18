@@ -14,6 +14,17 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Plus, Trash2, Timer } from "lucide-react"
+import { // 刪除警告套件
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+
 import { toast } from "sonner"
 import type { Project } from "@/hooks/useWorkspace"
 
@@ -156,6 +167,7 @@ export default function ProjectsPage() {
   const [description, setDescription] = useState("")
   const [color, setColor] = useState(COLOR_OPTIONS[0].value)
   const [submitting, setSubmitting] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null) 
 
   const handleCreate = async () => {
     if (!name.trim()) { toast.error("請輸入專案名稱"); return }
@@ -166,11 +178,18 @@ export default function ProjectsPage() {
     setOpen(false); setSubmitting(false)
   }
 
-  const handleDelete = async (e: React.MouseEvent, projectId: string, projectName: string) => {
-    e.stopPropagation() // 防止觸發卡片點擊
-    await deleteProject(projectId)
-    toast.success(`已刪除「${projectName}」`)
-  }
+const handleDelete = (e: React.MouseEvent, projectId: string, projectName: string) => {
+  e.stopPropagation()
+  setDeleteTarget({ id: projectId, name: projectName })
+}
+
+const confirmDelete = async () => {
+  if (!deleteTarget) return
+  await deleteProject(deleteTarget.id)
+  toast.success(`已刪除「${deleteTarget.name}」`)
+  setDeleteTarget(null)
+}
+
 
   if (loading) return (
     <div className="flex items-center justify-center h-full text-muted-foreground">載入中...</div>
@@ -255,6 +274,26 @@ export default function ProjectsPage() {
           </DialogContent>
         </Dialog>
       </div>
+      {/* 確認刪除模塊 */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>確認刪除專案？</AlertDialogTitle>
+            <AlertDialogDescription>
+              即將刪除「{deleteTarget?.name}」，此操作無法復原。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="border-t-0 bg-transparent pt-2">
+            <AlertDialogCancel>cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive hover:bg-destructive/90 text-white"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter >
+        </AlertDialogContent>
+      </AlertDialog>
 
       {projects.length === 0 ? (
         <div className="text-center py-24 text-muted-foreground">
