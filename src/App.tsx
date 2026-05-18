@@ -7,6 +7,7 @@ import ProjectsPage from "@/pages/ProjectsPage"
 import BacklogPage from "@/pages/BacklogPage"
 import SprintPage from "@/pages/SprintPage"
 import MembersPage from "@/pages/MembersPage"
+import ProjectDetailPage from "./pages/ProjectDetailPage"
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/projects" element={<ProjectsPage />} />
+          <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
           <Route path="/backlog" element={<BacklogPage />} />
           <Route path="/sprint" element={<SprintPage />} />
           <Route path="/members" element={<MembersPage />} />
