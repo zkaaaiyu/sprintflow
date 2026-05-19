@@ -19,7 +19,7 @@ export default function App() {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/projects" element={<ProjectsPage />} />
-          <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
+          <Route path="/projects/:projectId" element={<ProjectDetailPage />} />  {/*  :projectId params 查詢參數的佔位符 */}
           <Route path="/backlog" element={<BacklogPage />} />
           <Route path="/sprint" element={<SprintPage />} />
           <Route path="/members" element={<MembersPage />} />

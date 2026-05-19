@@ -28,6 +28,7 @@ import { // 刪除警告套件
 import { toast } from "sonner"
 import type { Project } from "@/hooks/useWorkspace"
 
+// 顏色定義
 const COLOR_OPTIONS = [
   { label: "Orange", value: "#F97316" },
   { label: "Blue", value: "#3B82F6" },
@@ -39,7 +40,7 @@ const COLOR_OPTIONS = [
   { label: "Pink", value: "#EC4899" },
 ]
 
-// 顏色轉淡色背景（加透明度）
+// 顏色減淡作為project cards 左上角標籤
 function toAlpha(hex: string, alpha: number) {
   const r = parseInt(hex.slice(1, 3), 16)
   const g = parseInt(hex.slice(3, 5), 16)
@@ -47,7 +48,7 @@ function toAlpha(hex: string, alpha: number) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
-// 分段進度條
+// project cards 進度條
 function SegmentedBar({ progress, color }: { progress: number; color: string }) {
   const segments = 30
   const filled = Math.round((progress / 100) * segments)
@@ -66,10 +67,12 @@ function SegmentedBar({ progress, color }: { progress: number; color: string }) 
 
 // Member 頭像（暫以顏色圓圈代替，之後接用戶資料）
 const AVATAR_COLORS = ["#F97316", "#3B82F6", "#10B981", "#8B5CF6", "#EF4444"]
+// project cards 右下角 member頭像顯示
 function MemberAvatars({ memberIds }: { memberIds: string[] }) {
   const show = memberIds.slice(0, 3)
   return (
-    <div className="flex -space-x-2">
+    // -space-x-2 (重疊)
+    <div className="flex -space-x-2"> 
       {show.map((uid, i) => (
         <div
           key={uid}
@@ -88,7 +91,7 @@ function MemberAvatars({ memberIds }: { memberIds: string[] }) {
   )
 }
 
-// Project 卡片
+// 封裝projectCard 組件
 function ProjectCard({ project, onDelete, isOwner }: {
   project: Project
   onDelete: (e: React.MouseEvent) => void
@@ -101,7 +104,6 @@ function ProjectCard({ project, onDelete, isOwner }: {
       onClick={() => navigate(`/projects/${project.id}`)}
       className="bg-card border border-border rounded-2xl p-5 hover:shadow-md transition-all cursor-pointer group"
     >
-      {/* 頂部 badge + 刪除 */}
       <div className="flex items-center justify-between mb-3">
         <div
           className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
@@ -162,35 +164,39 @@ function ProjectCard({ project, onDelete, isOwner }: {
 export default function ProjectsPage() {
   const { user } = useAuth()
   const { projects, loading, createProject, deleteProject } = useWorkspace()
-  const [open, setOpen] = useState(false)
+  
+  //create project相關
+  const [open, setOpen] = useState(false)  //create project dialog 的開關
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [color, setColor] = useState(COLOR_OPTIONS[0].value)
   const [submitting, setSubmitting] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null) 
 
+  // create project 函數
   const handleCreate = async () => {
     if (!name.trim()) { toast.error("請輸入專案名稱"); return }
-    setSubmitting(true)
-    await createProject(name.trim(), description.trim(), color)
+    setSubmitting(true) //允許提交
+    await createProject(name.trim(), description.trim(), color) //調用自定義hooks useworkSpace 裡面的 create project 處理資料端
     toast.success("專案建立成功")
+    
+    //清空表單＆關閉
     setName(""); setDescription(""); setColor(COLOR_OPTIONS[0].value)
     setOpen(false); setSubmitting(false)
   }
 
+// Delete Alert 
 const handleDelete = (e: React.MouseEvent, projectId: string, projectName: string) => {
-  e.stopPropagation()
+  e.stopPropagation() //阻止事件冒泡 Event Bubbling
   setDeleteTarget({ id: projectId, name: projectName })
 }
-
+// project delete
 const confirmDelete = async () => {
   if (!deleteTarget) return
-  await deleteProject(deleteTarget.id)
+  await deleteProject(deleteTarget.id) //調自定義hooks裡面的 deleteProject 刪除firebase裡面的project資料
   toast.success(`已刪除「${deleteTarget.name}」`)
   setDeleteTarget(null)
 }
-
-
   if (loading) return (
     <div className="flex items-center justify-center h-full text-muted-foreground">載入中...</div>
   )
