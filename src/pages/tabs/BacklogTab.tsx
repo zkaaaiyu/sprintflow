@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Plus, ChevronDown } from "lucide-react"
 import { toast } from "sonner"
+import TaskDetailModal from "@/components/TaskDetailModal" //導入task detail 組件
 
 // 優先級 顏色背景 定義
 const PRIORITY_CONFIG = {
@@ -161,6 +162,7 @@ function TaskCard({ task, assignee }: { task: Task; assignee?: UserProfile }) {
 export default function BacklogTab({ projectId, memberIds }: { projectId: string; memberIds: string[] }) {
   const { tasks, loading, createTask } = useTasks(projectId) //取得任務資料
   const { members } = useMembers(memberIds) //取得member資料
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [open, setOpen] = useState(false) //控制開關
   const [title, setTitle] = useState("") //任務名
   const [description, setDescription] = useState("") //描述
@@ -169,6 +171,8 @@ export default function BacklogTab({ projectId, memberIds }: { projectId: string
   const [assigneeId, setAssigneeId] = useState<string | null>(null) //指派人
   const [dueDate, setDueDate] = useState("") //到期日
   const [submitting, setSubmitting] = useState(false)
+
+  
 
   const backlogTasks = tasks.filter((t) => t.sprintId === null) //只抓還沒排入sprint的任務
 
@@ -208,8 +212,12 @@ export default function BacklogTab({ projectId, memberIds }: { projectId: string
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {backlogTasks.map((task) => {
             const assignee = members.find((m) => m.uid === task.assigneeId)
-            return <TaskCard key={task.id} task={task} assignee={assignee} />
-          })}
+            return (
+                <div key={task.id} onClick={() => setSelectedTaskId(task.id)}>
+                <TaskCard task={task} assignee={assignee} />
+                </div>
+            )
+            })}
         </div>
       </div>
 
@@ -314,6 +322,19 @@ export default function BacklogTab({ projectId, memberIds }: { projectId: string
           <Plus className="w-6 h-6" />
         </button>
       </DialogTrigger>
+      
+       {selectedTaskId && (
+        <TaskDetailModal
+            projectId={projectId}
+            taskId={selectedTaskId}
+            memberIds={memberIds}
+            open={!!selectedTaskId}
+            onClose={() => setSelectedTaskId(null)}
+        />
+        )}
     </Dialog>
+    
+
+    
   )
 }
