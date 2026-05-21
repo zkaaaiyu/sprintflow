@@ -3,6 +3,8 @@
 import { createContext, useContext, useEffect, useState } from "react"
 import { type User, onAuthStateChanged, signOut } from "firebase/auth"
 import { auth } from "@/lib/firebase"
+import { doc, setDoc } from "firebase/firestore"
+import { db } from "@/lib/firebase"
 
 // 定義型別
 type AuthContextType = {
@@ -21,10 +23,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // 用Firebase 內部onAuthStateChanged方法 監聽狀態 登入/登出
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser) 
-      setLoading(false)
-    })
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    if (firebaseUser) {
+      await setDoc(
+        doc(db, "users", firebaseUser.uid),
+        {
+          uid: firebaseUser.uid,
+          displayName: firebaseUser.displayName ?? "",
+          email: firebaseUser.email ?? "",
+          photoURL: firebaseUser.photoURL ?? null,
+        },
+        { merge: true }
+      )
+    }
+    setUser(firebaseUser)
+    setLoading(false)
+  })
     return unsubscribe
   }, [])
 

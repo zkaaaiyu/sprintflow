@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom"
 import { useState } from "react"
 import { useWorkspace } from "@/hooks/useWorkspace"
 import SprintsTab from "./tabs/SprintsTab"
+import BacklogTab from "@/pages/tabs/BacklogTab"
 
 type Tab = "sprints" | "backlog" | "settings"
 
@@ -50,12 +51,12 @@ export default function ProjectDetailPage() {
         ))}
       </div>
 
-      {/* Tab 內容（先用佔位文字） */}
+      
       {activeTab === "sprints" && (
         <SprintsTab projectId={projectId!} />
       )}
       {activeTab === "backlog" && (
-        <div className="text-muted-foreground">Backlog tab — 待實作</div>
+        <BacklogTab projectId={projectId!} memberIds={project.memberIds} />
       )}
       {activeTab === "settings" && (
         <div className="text-muted-foreground">Settings tab — 待實作</div>

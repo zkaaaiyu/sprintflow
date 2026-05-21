@@ -14,20 +14,23 @@ import {
 import { Plus, Calendar, ChevronRight } from "lucide-react"
 import { toast } from "sonner"
 
+// 定義 狀態配置 的型別
 const STATUS_CONFIG: Record<SprintStatus, { label: string; color: string; bg: string }> = {
   planning:  { label: "Planning",  color: "#6B7280", bg: "#F3F4F6" },
   active:    { label: "Active",    color: "#F97316", bg: "#FFF7ED" },
   completed: { label: "Completed", color: "#10B981", bg: "#ECFDF5" },
 }
-
+//時間格式化函數
 function formatDate(date: Date | null) {
   if (!date) return "—"
   return date.toLocaleDateString("zh-TW", { month: "short", day: "numeric", year: "numeric" })
 }
 
+
+//SprintTab 組件
 export default function SprintsTab({ projectId }: { projectId: string }) {
-  const navigate = useNavigate()
-  const { sprints, loading, createSprint } = useSprints(projectId)
+  const navigate = useNavigate() 
+  const { sprints, loading, createSprint } = useSprints(projectId) // 傳入id解構出 sprints, loading, createSprint
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
   const [goal, setGoal] = useState("")
@@ -38,12 +41,12 @@ export default function SprintsTab({ projectId }: { projectId: string }) {
   const handleCreate = async () => {
     if (!name.trim()) { toast.error("請輸入 Sprint 名稱"); return }
     if (!startDate || !endDate) { toast.error("請選擇日期範圍"); return }
-    setSubmitting(true)
+    setSubmitting(true) //解鎖
     await createSprint(name.trim(), goal.trim(), new Date(startDate), new Date(endDate))
     toast.success("Sprint 建立成功")
-    setName(""); setGoal(""); setStartDate(""); setEndDate("")
-    setOpen(false)
-    setSubmitting(false)
+    setName(""); setGoal(""); setStartDate(""); setEndDate("") //清空表單
+    setOpen(false) //關閉表單
+    setSubmitting(false) //上鎖
   }
 
   if (loading) return <div className="text-muted-foreground text-sm">載入中...</div>
