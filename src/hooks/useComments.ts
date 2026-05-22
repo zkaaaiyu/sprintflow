@@ -12,6 +12,7 @@ import {
 import { db } from "@/lib/firebase"
 import { useAuth } from "@/contexts/AuthContext"
 
+// 留言資料結構定義
 export type Comment = {
   id: string
   content: string
@@ -20,8 +21,8 @@ export type Comment = {
   authorPhotoURL: string | null
   createdAt: Date | null
 }
-
-export function useComments(projectId: string, taskId: string) {
+//自訂 Hook + 狀態初始化
+export function useComments(projectId: string, taskId: string) { //要傳入project ID 和 task ID 才能定位到這個任務的留言板
   const { user } = useAuth()
   const [comments, setComments] = useState<Comment[]>([])
   const [loading, setLoading] = useState(true)
@@ -29,11 +30,12 @@ export function useComments(projectId: string, taskId: string) {
   useEffect(() => {
     if (!projectId || !taskId) return
 
+    //定義查詢規則
     const q = query(
       collection(db, "projects", projectId, "tasks", taskId, "comments"),
       orderBy("createdAt", "asc")  // 留言由舊到新排列
     )
-
+    //監聽
     const unsub = onSnapshot(q, (snap) => {
       const list = snap.docs.map((d) => ({
         id: d.id,
@@ -54,6 +56,7 @@ export function useComments(projectId: string, taskId: string) {
       collection(db, "projects", projectId, "tasks", taskId, "comments"),
       {
         content: content.trim(),
+        // id name 頭像 時間 自動獲取
         authorId: user.uid,
         authorName: user.displayName || user.email || "Someone",
         authorPhotoURL: user.photoURL ?? null,

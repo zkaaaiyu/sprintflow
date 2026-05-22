@@ -9,6 +9,7 @@ import {
 } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 
+//定義歷史紀錄的資料結構
 export type Activity = {
   id: string
   type: string
@@ -41,11 +42,11 @@ export function useActivities(projectId: string, taskId: string) {
         changedByPhotoURL: (d.data().changedByPhotoURL as string | null) ?? null,
         createdAt: (d.data().createdAt as Timestamp)?.toDate() ?? null,
       })) as Activity[]
-      setActivities(list)
+      setActivities(list) //把最新的資料遍歷出來後存到activitys裡面 然後導出到頁面上面渲染
       setLoading(false)
     })
 
-    return () => unsub()
+    return () => unsub() // 離開或是依賴項更動的時候 取消訂閱 
   }, [projectId, taskId])
 
   return { activities, loading }

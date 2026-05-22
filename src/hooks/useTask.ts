@@ -3,7 +3,7 @@ import { useState, useEffect } from "react"
 import {
   doc,
   onSnapshot,
-  updateDoc,
+  updateDoc, // 更新「單一文件」
   deleteDoc,
   addDoc,
   collection,
@@ -20,13 +20,14 @@ export function useTask(projectId: string, taskId: string) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!projectId || !taskId) return
+    if (!projectId || !taskId) return //要同時有專案id 跟任務id
 
-    const ref = doc(db, "projects", projectId, "tasks", taskId)  // 指向單一任務文件
+    // 指向單一任務文件 資料庫裡projects資料夾特定projectId的tasks資料夾裡的特定taskId任務
+    const ref = doc(db, "projects", projectId, "tasks", taskId)  
 
     const unsub = onSnapshot(ref, (snap) => {
-      if (!snap.exists()) { setTask(null); setLoading(false); return }
-      const data = snap.data()
+      if (!snap.exists()) { setTask(null); setLoading(false); return } //用snap.exists() 查詢要查找的這一份文件到底在不在 避免id錯了 或是已經被刪了
+      const data = snap.data() //snap.data 拿到詳細資料
       setTask({
         id: snap.id,
         ...data,
@@ -36,11 +37,14 @@ export function useTask(projectId: string, taskId: string) {
       setLoading(false)
     })
 
-    return () => unsub()
-  }, [projectId, taskId])
+    return () => unsub() //離開或是依賴項改變時執行並清除 更換監聽對象
+  }, [projectId, taskId]) //projectId 跟 taskId 作為useeffect 的依賴項 如果變動就要重新執行 
+
+ 
+// 更新欄位 + 歷史足跡記錄 函數
 
   const updateField = async (
-    field: string,           // 欄位名稱 e.g. "priority"
+    field: string,           // 要改資料庫裡的哪個資料 該資料的「欄位名」？
     newValue: unknown,       // 新值
     label: string,           // 顯示用文字 e.g. "優先級"
     fromDisplay?: string,    // 舊值的顯示文字（選填）
@@ -48,14 +52,15 @@ export function useTask(projectId: string, taskId: string) {
   ) => {
     if (!user) return
 
-    const taskRef = doc(db, "projects", projectId, "tasks", taskId)
-    const storeValue = newValue instanceof Date
-      ? Timestamp.fromDate(newValue)  // Date 要轉成 Timestamp 才能存 Firestore
+    const taskRef = doc(db, "projects", projectId, "tasks", taskId) //找到特定id下的任務的資料
+    const storeValue = newValue instanceof Date //如果newValue 是 Date 要轉換成 fireStore 的 Timestamp 格式 如果是一般字串就不用動
+      ? Timestamp.fromDate(newValue)  
       : newValue
 
-    await updateDoc(taskRef, { [field]: storeValue })  // 更新任務文件
+    // 只更新該任務中「特定一個欄位」，而不覆蓋其他資料
+    await updateDoc(taskRef, { [field]: storeValue })  // 更新任務文件 filed 是動態的 可以是 時間、狀態或是其他屬性 storeValue 是判斷好的新值
 
-    // 寫入活動紀錄（子集合）
+    // 用 addDoc 指向 activities 子集合  在該任務底下新增一筆獨立的歷史紀錄文件
     await addDoc(
       collection(db, "projects", projectId, "tasks", taskId, "activities"),
       {

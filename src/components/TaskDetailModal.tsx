@@ -8,18 +8,19 @@ import { useMembers, type UserProfile } from "@/hooks/useMembers"
 import type { Priority, TaskStatus, StoryPoints } from "@/hooks/useTasks"
 import { Pencil, SendHorizontal, Trash2 } from "lucide-react"
 
+// 時間格式化工具 
 function formatDateTime(date: Date | null): string {
   if (!date) return ""
   return date.toLocaleString("zh-TW", {
     month: "numeric", day: "numeric",
     hour: "numeric", minute: "2-digit",
     hour12: false,
-  })
+  })            
 }
 
-// 活動頭像：有照片就顯示照片，否則顯示名字縮寫
+// 負責activity 欄位的頭像 有照片就顯示照片，沒有就顯示名字縮寫
 function ActivityAvatar({ name, photoURL }: { name: string; photoURL: string | null }) {
-  const initial = name[0]?.toUpperCase() ?? "?"
+  const initial = name[0]?.toUpperCase() ?? "?" //用name[0]抓首字母 , ?.(如果抓不到名字就返回undefine) , .toUpperCase 改大寫 ,  '??'如果前面的東西是undefine就返回後面的字串問號
   if (photoURL) {
     return <img src={photoURL} referrerPolicy="no-referrer" className="w-7 h-7 rounded-full object-cover shrink-0" />
   }
@@ -33,24 +34,26 @@ function ActivityAvatar({ name, photoURL }: { name: string; photoURL: string | n
 // 根據欄位類型決定顯示樣式
 function ValueBadge({ field, value }: { field: string; value: string }) {
   if (!value || value === "—") return <span className="text-xs text-muted-foreground">—</span>
-  if (field === "status") {
+  
+  if (field === "status") {  // 如果變更的是 status，就去 STATUS_CONFIG 查表 渲染對應的樣式
     const cfg = Object.values(STATUS_CONFIG).find((c) => c.label === value)
     if (cfg) return <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ color: cfg.color, backgroundColor: cfg.bg }}>{value}</span>
   }
-  if (field === "priority") {
+  if (field === "priority") { //如果變更的是 priority，一樣查表渲染標籤
     const cfg = Object.values(PRIORITY_CONFIG).find((c) => c.label === value)
     if (cfg) return <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ color: cfg.color, backgroundColor: cfg.bg }}>{value}</span>
   }
+  // 如果是一般的文字變更 就給一個簡單的灰色底色
   return <span className="text-xs bg-muted px-1.5 py-0.5 rounded font-medium">{value}</span>
 }
-
+//定義優先級標籤樣式表
 const PRIORITY_CONFIG = {
   low:    { label: "Low",    color: "#6B7280", bg: "#F3F4F6" },
   medium: { label: "Medium", color: "#3B82F6", bg: "#EFF6FF" },
   high:   { label: "High",   color: "#F97316", bg: "#FFF7ED" },
   urgent: { label: "Urgent", color: "#EF4444", bg: "#FEF2F2" },
 }
-
+//定義狀態標籤樣式表
 const STATUS_CONFIG = {
   todo:        { label: "To Do",       color: "#6B7280", bg: "#F3F4F6" },
   in_progress: { label: "In Progress", color: "#3B82F6", bg: "#EFF6FF" },
@@ -58,6 +61,7 @@ const STATUS_CONFIG = {
   done:        { label: "Done",        color: "#10B981", bg: "#ECFDF5" },
 }
 
+//負責處理任務指派的 member 頭像顯示
 function MemberAvatar({ user }: { user: UserProfile }) {
   const initials = user.displayName
     ? user.displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
@@ -71,7 +75,7 @@ function MemberAvatar({ user }: { user: UserProfile }) {
     </div>
   )
 }
-
+//定義props資料結構
 type Props = {
   projectId: string
   taskId: string
@@ -87,10 +91,12 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
   const { members } = useMembers(memberIds)
 
   const { comments, addComment } = useComments(projectId, taskId)
-  const [editingField, setEditingField] = useState<string | null>(null)
+  const [editingField, setEditingField] = useState<string | null>(null) //紀錄現在在編輯哪一個欄位 null 代表沒有在編輯
+  //定義編輯狀態暫時存儲 讓資料在編輯的時候不會直接覆蓋刪除原本的資料
   const [editTitle, setEditTitle] = useState("")
   const [editDescription, setEditDescription] = useState("")
   const [editDueDate, setEditDueDate] = useState("")
+  //留言板＋刪除確認
   const [commentText, setCommentText] = useState("")
   const [submittingComment, setSubmittingComment] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -131,7 +137,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                     value={editTitle}
                     onChange={(e) => setEditTitle(e.target.value)}
                     onBlur={async () => {
-                      if (editTitle.trim() && editTitle.trim() !== task.title) {
+                      if (editTitle.trim() && editTitle.trim() !== task.title) { //更改後的標題不為空 且 不等於原標題
                         await updateField("title", editTitle.trim(), "標題", task.title, editTitle.trim())
                       }
                       stopEditing()
