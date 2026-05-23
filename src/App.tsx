@@ -8,6 +8,7 @@ import BacklogPage from "@/pages/BacklogPage"
 import SprintPage from "@/pages/SprintPage"
 import MembersPage from "@/pages/MembersPage"
 import ProjectDetailPage from "./pages/ProjectDetailPage"
+import SprintKanbanPage from "./pages/SprintKanbanPage"
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/projects" element={<ProjectsPage />} />
           <Route path="/projects/:projectId" element={<ProjectDetailPage />} />  {/*  :projectId params 查詢參數的佔位符 */}
+          <Route path="/projects/:projectId/sprints/:sprintId" element={<SprintKanbanPage />} />
           <Route path="/backlog" element={<BacklogPage />} />
           <Route path="/sprint" element={<SprintPage />} />
           <Route path="/members" element={<MembersPage />} />

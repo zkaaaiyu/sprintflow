@@ -67,19 +67,21 @@ export function useTasks(projectId: string) {
     storyPoints: StoryPoints | null
     dueDate: Date | null
     assigneeId?: string | null
+    sprintId?: string | null   // 可選：傳入則加入該 sprint，否則預設進 Backlog
+    status?: TaskStatus        // 可選：傳入則使用指定狀態，否則預設 todo
   }) => {
     if (!user) return
     await addDoc(collection(db, "projects", projectId, "tasks"), {
       ...data,
       projectId,
-      sprintId: null,
-      status: "todo",
+      sprintId: data.sprintId ?? null,
+      status: data.status ?? "todo",
       assigneeId: data.assigneeId ?? null,
       labels: [],
       order: Date.now(),
       createdBy: user.uid,
       dueDate: data.dueDate ? Timestamp.fromDate(data.dueDate) : null,
-      createdAt: serverTimestamp(),  
+      createdAt: serverTimestamp(),
     })
   }
 
