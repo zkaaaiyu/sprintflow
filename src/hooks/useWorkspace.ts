@@ -7,6 +7,7 @@ import {
   getDocs,
   addDoc,
   deleteDoc,
+  updateDoc,
   doc,
   serverTimestamp,
 } from "firebase/firestore"
@@ -98,9 +99,38 @@ export function useWorkspace() {
 
   //刪除Project
   const deleteProject = async (projectId: string) => {
-    await deleteDoc(doc(db, "projects", projectId)) 
-    setProjects((prev) => prev.filter((p) => p.id !== projectId)) //跟新增專案的邏輯（樂觀刪除） 
+    await deleteDoc(doc(db, "projects", projectId))
+    setProjects((prev) => prev.filter((p) => p.id !== projectId))
   }
 
-  return { projects, loading, createProject, deleteProject }
+  // 編輯專案名稱、描述、顏色
+  const updateProject = async (projectId: string, updates: { name?: string; description?: string; color?: string }) => {
+    await updateDoc(doc(db, "projects", projectId), { ...updates, updatedAt: serverTimestamp() })
+    setProjects((prev) => prev.map((p) => (p.id === projectId ? { ...p, ...updates } : p)))
+  }
+
+  // Owner 移除成員
+  const removeMember = async (projectId: string, uid: string) => {
+    const project = projects.find((p) => p.id === projectId)
+    if (!project) return
+    const newMemberIds = project.memberIds.filter((id) => id !== uid)
+    const newRoles = { ...project.roles }
+    delete newRoles[uid]
+    await updateDoc(doc(db, "projects", projectId), { memberIds: newMemberIds, roles: newRoles, updatedAt: serverTimestamp() })
+    setProjects((prev) => prev.map((p) => p.id === projectId ? { ...p, memberIds: newMemberIds, roles: newRoles } : p))
+  }
+
+  // 成員自行離開專案
+  const leaveProject = async (projectId: string) => {
+    if (!user) return
+    const project = projects.find((p) => p.id === projectId)
+    if (!project) return
+    const newMemberIds = project.memberIds.filter((id) => id !== user.uid)
+    const newRoles = { ...project.roles }
+    delete newRoles[user.uid]
+    await updateDoc(doc(db, "projects", projectId), { memberIds: newMemberIds, roles: newRoles, updatedAt: serverTimestamp() })
+    setProjects((prev) => prev.filter((p) => p.id !== projectId))
+  }
+
+  return { projects, loading, createProject, deleteProject, updateProject, removeMember, leaveProject }
 }

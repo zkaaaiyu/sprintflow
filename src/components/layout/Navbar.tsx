@@ -49,8 +49,6 @@ export default function Navbar() {
       if (parts[2] === "sprints" && parts[3]) {
         crumbs.push({ label: "Sprint", to: pathname })
       }
-    } else if (parts[0] === "backlog") {
-      crumbs.push({ label: "Backlog", to: "/backlog" })
     } else if (parts[0] === "members") {
       crumbs.push({ label: "Members", to: "/members" })
     }

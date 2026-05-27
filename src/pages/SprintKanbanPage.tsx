@@ -3,7 +3,7 @@ import type { ReactNode } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { doc, updateDoc, writeBatch } from "firebase/firestore"
 import { db } from "@/lib/firebase"
-import {
+import {  // 引入拖曳套件 @dnd-kit 
   DndContext,
   DragOverlay,
   closestCorners,
@@ -21,6 +21,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
+//引入 前面寫好的hook
 import { useSprint } from "@/hooks/useSprint"
 import { useTasks, type TaskStatus, type Task, type Priority, type StoryPoints } from "@/hooks/useTasks"
 import { useWorkspace } from "@/hooks/useWorkspace"
@@ -46,7 +47,7 @@ import { MoreHorizontal, Plus, ChevronDown } from "lucide-react"
 import { toast } from "sonner"
 import TaskDetailModal from "@/components/TaskDetailModal"
 
-// 四欄定義
+// kanban 四個欄位定義
 const COLUMNS: { id: TaskStatus; label: string }[] = [
   { id: "todo",        label: "To Do" },
   { id: "in_progress", label: "In Progress" },
@@ -69,7 +70,7 @@ const PRIORITY_CONFIG = {
   urgent: { color: "#EF4444", bg: "#FEF2F2" },
 }
 
-// 日期範圍格式化，例如 "May 5 – May 10"
+// 日期格式化
 function formatDateRange(start: Date | null, end: Date | null) {
   if (!start || !end) return "—"
   const fmt = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
@@ -87,7 +88,7 @@ function getDaysRemaining(dueDate: Date): { label: string; color: string } {
   return               { label: `${diff}d left`, color: "#6B7280" }
 }
 
-// 成員頭像元件
+// 渲染成員頭像
 function MemberAvatar({ user }: { user: UserProfile }) {
   const initials = user.displayName
     ? user.displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
@@ -160,13 +161,14 @@ function AssigneePicker({ members, value, onChange }: {
   )
 }
 
-// 任務卡片元件（純顯示，不含拖拉邏輯）
+// 任務卡片元件（純顯示，不含拖拉邏輯） 
 function KanbanCard({ task, assignee, onClick }: { task: Task; assignee?: UserProfile; onClick: () => void }) {
-  const p = PRIORITY_CONFIG[task.priority]
-  // 逾期判斷：有截止日 + 尚未完成 + 今天已超過截止日
-  const isOverdue = task.dueDate && task.status !== "done" && new Date() > task.dueDate
+  const p = PRIORITY_CONFIG[task.priority] //根據優先級查表
+
+  const isOverdue = task.dueDate && task.status !== "done" && new Date() > task.dueDate  // 逾期判斷
 
   return (
+    // 卡片內容渲染
     <div
       onClick={onClick}
       className={`bg-card border rounded-xl p-3 cursor-pointer hover:shadow-sm transition-all ${
@@ -194,7 +196,7 @@ function KanbanCard({ task, assignee, onClick }: { task: Task; assignee?: UserPr
       {/* 底部：到期日 + 指派人頭像 */}
       <div className="flex items-center justify-between">
         {task.dueDate ? (() => {
-          const { label, color } = getDaysRemaining(task.dueDate)
+          const { label, color } = getDaysRemaining(task.dueDate) //調getDaysRemaining函數 傳入到期日 計算剩餘天數
           return <span className="text-[11px] font-medium" style={{ color }}>{label}</span>
         })() : <span />}
         {assignee && <MemberAvatar user={assignee} />}
@@ -210,34 +212,40 @@ function SortableKanbanCard({ task, assignee, onClick, disabled }: {
   onClick: () => void
   disabled?: boolean
 }) {
+
+
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
-    disabled,  // completed sprint 時停用拖拉
+    disabled,  // completed sprint 時停用拖拉 
   })
-
+    // setNodeRef：用來確定哪一個元素要被拖動
+    // transform：記錄現在拖到哪的座標數據 
+    // transition：動畫設定
+    // listeners：所有的滑鼠跟觸控監聽事件（按下、移動、放開）。
+    // attributes：無障礙屬性
+    // isDragging：是否正在被拖動
   return (
     <div
-      ref={setNodeRef}
+      ref={setNodeRef} //用setNodeRef告訴dnd-kit是這一個元素要被拖動
       style={{
         transform: CSS.Transform.toString(transform),
-        // 被拖動的卡片不加 transition（避免放開時飛回動畫）
-        // 被擠開的其他卡片套用 dnd-kit 原生 transition，讓位移絲滑
-        transition: isDragging ? undefined : transition,
+        transition: isDragging ? undefined : transition, //判斷要不要給動畫
       }}
-      {...attributes}
+      {...attributes} //直接展開dnd-kit封裝好的 無障礙跟監聽屬性
       {...listeners}
-      onClick={onClick}  // 保留點擊事件（距離 < 5px 不會觸發 drag）
-      className={isDragging ? "opacity-0" : ""}
+      onClick={onClick}  // 保留點擊事件（距離 < 5px 不會觸發拖動）
+      className={isDragging ? "opacity-0" : ""} //dnd-kit 默認拖動的時候原地會有一個殘影 讓他透明度為零不顯示
     >
-      {/* 把 onClick 傳空值，避免重複觸發 */}
+      {/* 把 onClick 傳空值 讓原本卡片的點擊事件也由包裝函數負責 避免重複觸發 */}
       <KanbanCard task={task} assignee={assignee} onClick={() => {}} />
     </div>
   )
 }
 
-// 讓每一欄的空白區域也能接受拖拉（空欄時才需要）
+// 可放置區域設定
 function DroppableColumn({ id, children }: { id: string; children: ReactNode }) {
-  const { setNodeRef } = useDroppable({ id })
+  const { setNodeRef } = useDroppable({ id }) 
   return (
     <div ref={setNodeRef} className="flex flex-col gap-2 flex-1 overflow-y-auto pr-1 min-h-20">
       {children}
@@ -246,22 +254,21 @@ function DroppableColumn({ id, children }: { id: string; children: ReactNode }) 
 }
 
 export default function SprintKanbanPage() {
-  const { projectId = "", sprintId = "" } = useParams()
-  const navigate = useNavigate()
+  const { projectId = "", sprintId = "" } = useParams() //用useParams拿到網址的查詢參數 才知道是哪一個專案下的哪一個sprint
+  const navigate = useNavigate() 
 
-  const { projects, loading: projectLoading } = useWorkspace()
-  // 解構時補上所有操作函式
-  const { sprint, loading: sprintLoading, startSprint, completeSprint, deleteSprint, updateSprint } = useSprint(projectId, sprintId)
-  const { tasks, loading: tasksLoading, createTask } = useTasks(projectId)
+  const { projects, loading: projectLoading } = useWorkspace() //把 loading 改名 projectLoading 避免撞名
+  const { sprint, loading: sprintLoading, startSprint, completeSprint, deleteSprint, updateSprint } = useSprint(projectId, sprintId) //要記得傳入projectId 跟sprintId
+  const { tasks, loading: tasksLoading, createTask } = useTasks(projectId) 
 
-  const project = projects.find((p) => p.id === projectId)
-  const memberIds = project?.memberIds ?? []
+  const project = projects.find((p) => p.id === projectId) // 到project陣列裡面找到id = projectId 的專案
+  const memberIds = project?.memberIds ?? [] //定義memberIds --> 找到 project 裡面的 memberids用
 
   const { members } = useMembers(memberIds)
 
   // 只顯示這個 sprint 的任務
   const sprintTasks = tasks.filter((t) => t.sprintId === sprintId)
-  // 還在 Backlog 的任務（用於「從 Backlog 選取」）
+  // 還在 Backlog 的任務
   const backlogTasks = tasks.filter((t) => t.sprintId === null)
 
   // 任務進度
@@ -305,27 +312,27 @@ export default function SprintKanbanPage() {
   const [filterMemberIds, setFilterMemberIds] = useState<string[]>([])
   const [filterPriority, setFilterPriority]   = useState<Priority | null>(null)
 
-  // 切換成員篩選（點一次選取，再點一次取消）
-  const toggleMemberFilter = (uid: string) => {
+  // 切換成員篩選（toggle）
+  const toggleMemberFilter = (uid: string) => { 
     setFilterMemberIds((prev) =>
-      prev.includes(uid) ? prev.filter((id) => id !== uid) : [...prev, uid]
+      prev.includes(uid) ? prev.filter((id) => id !== uid) : [...prev, uid] //如果篩選籃裡面已經有這個人了用filter把這個人踢出籃子 如果沒有就加入篩選籃裡
     )
   }
 
-  // 判斷任務是否符合篩選條件
+  // 判斷任務是否符合篩選條件 
   const isTaskVisible = (task: Task) => {
-    const memberMatch   = filterMemberIds.length === 0 || filterMemberIds.includes(task.assigneeId ?? "")
-    const priorityMatch = filterPriority === null || task.priority === filterPriority
-    return memberMatch && priorityMatch
+    const memberMatch   = filterMemberIds.length === 0 || filterMemberIds.includes(task.assigneeId ?? "") // 如果沒有選擇人員篩選條件全部顯示 || 檢查選擇的人有沒有在指派名單裡面 防呆給一個空串
+    const priorityMatch = filterPriority === null || task.priority === filterPriority //處理優先級篩選 邏輯同上
+    return memberMatch && priorityMatch //注意這裡要用「且」
   }
 
-  // dnd-kit sensors 設定：滑鼠移動超過 5px 才算拖拉，避免誤觸點擊
+  // dnd-kit sensors 設定： 觸發限制 -> 滑鼠移動超過 5px  用來區分點開taskDetail modal 還是拖拉卡片
   const sensors = useSensors(
-    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }), // 移動超過5px才判定卡片拖拉
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }) // 行動裝置 首要停留在卡片上超過250 ms 才判定卡片拖拉
   )
 
-  // 開啟編輯 Modal 時，把現有資料預填進欄位
+  // task edit modal 原資料回填
   const openEditModal = () => {
     setEditName(sprint.name)
     setEditGoal(sprint.goal ?? "")
@@ -336,7 +343,7 @@ export default function SprintKanbanPage() {
 
   // 儲存 Sprint 編輯
   const handleUpdate = async () => {
-    if (!editName.trim()) { toast.error("請輸入 Sprint 名稱"); return }
+    if (!editName.trim()) { toast.error("請輸入 Sprint 名稱"); return } //為空提示
     setActionLoading(true)
     await updateSprint({
       name: editName.trim(),
@@ -358,7 +365,7 @@ export default function SprintKanbanPage() {
     setActionLoading(false)
   }
 
-  // 刪除 Sprint：所有任務退回 Backlog，再導回專案頁
+  // 刪除 Sprint -> 所有任務退回 Backlog，再跳回專案頁
   const handleDelete = async () => {
     setActionLoading(true)
     await deleteSprint()
@@ -400,85 +407,86 @@ export default function SprintKanbanPage() {
 
   // 拖拉開始：記錄被拖動的任務，用來渲染 DragOverlay
   const handleDragStart = ({ active }: DragStartEvent) => {
-    const task = sprintTasks.find((t) => t.id === active.id)
+    const task = sprintTasks.find((t) => t.id === active.id) //找到要被拖曳的task
     setDraggingTask(task ?? null)
   }
 
   // 拖拉結束：計算新位置，批次更新 Firestore
-  const handleDragEnd = async ({ active, over }: DragEndEvent) => {
+  const handleDragEnd = async ({ active, over }: DragEndEvent) => { //參數 active 跟 over 是 dnd-kit 在拖曳結束提供的事件包 active就是正在拖拉的那一張哪片 over 是拖拉到哪一個位置（可能是被壓住的卡片或是空欄位） 
     setDraggingTask(null)
-    if (!over) return
+    if (!over) return  //如果拖到的不是卡片上面或是空欄位 -> 也就是拖到看板外了 -> 直接結束
 
     const activeId = active.id as string
     const overId   = over.id as string
-    if (activeId === overId) return
+    if (activeId === overId) return //如果放回原位的話直接結束
 
     const activeTask = sprintTasks.find((t) => t.id === activeId)
-    if (!activeTask) return
+    if (!activeTask) return //如果找不到這一張卡片也直接結束
 
-    // 判斷目標欄位：over 可能是任務 id 或欄位 id
+    // 判斷目的地 -> over 可能是任務 id 或欄位 id
     const overTask = sprintTasks.find((t) => t.id === overId)
-    const destColumnId = (overTask?.status ?? overId) as TaskStatus
+    const destColumnId = (overTask?.status ?? overId) as TaskStatus //目標欄位id
     if (!COLUMNS.find((c) => c.id === destColumnId)) return
 
     const batch = writeBatch(db)
-    const isSameColumn = activeTask.status === destColumnId
+    const isSameColumn = activeTask.status === destColumnId // 判斷是不是同一個欄位
 
     if (isSameColumn) {
-      // 同欄拖拉：用 arrayMove 重新排序，只更新 order
+      // 同欄拖拉內拖 -> 用arrayMove更新順序 
       const colTasks = sprintTasks
-        .filter((t) => t.status === destColumnId)
-        .sort((a, b) => a.order - b.order)
+        .filter((t) => t.status === destColumnId) //取出這個欄位的所有task
+        .sort((a, b) => a.order - b.order) // 根據order排序
 
       const oldIndex = colTasks.findIndex((t) => t.id === activeId)
       const newIndex = colTasks.findIndex((t) => t.id === overId)
-      if (oldIndex === -1 || newIndex === -1) return
+      if (oldIndex === -1 || newIndex === -1) return //如果是-1(找不到卡片)就結束
 
-      arrayMove(colTasks, oldIndex, newIndex).forEach((task, index) => {
-        batch.update(doc(db, "projects", projectId, "tasks", task.id), {
-          order: (index + 1) * 1000,
+      arrayMove(colTasks, oldIndex, newIndex).forEach((task, index) => { // 用dnd-kit提供的arrayMove方法 傳入欄位的所有任務、就索引、新索引 再用foreach遍歷給出新的index
+        batch.update(doc(db, "projects", projectId, "tasks", task.id), { //塞進 batch.update 的待更新清單裡
+          order: (index + 1) * 1000, // 給新的order權重
         })
       })
     } else {
-      // 跨欄拖拉：更新 status + order，同時修正來源欄的 order
-      const srcTasks = sprintTasks
+      // 跨欄拖拉：更新 status + order 同時修正 來源欄的 order
+      const srcTasks = sprintTasks //重新定義來源欄位的 task 陣列 把 active 的卡片踢除 然後排列好
         .filter((t) => t.status === activeTask.status && t.id !== activeId)
         .sort((a, b) => a.order - b.order)
 
-      const destTasks = sprintTasks
+      const destTasks = sprintTasks //撈出 目的欄位 目前現有的所有卡片 排列好
         .filter((t) => t.status === destColumnId)
         .sort((a, b) => a.order - b.order)
 
-      // 找插入位置（dropped on a task → insert before it，dropped on column → append）
+      // 找插入位置（index）
       const overIndex = overTask
-        ? destTasks.findIndex((t) => t.id === overId)
-        : destTasks.length
+        ? destTasks.findIndex((t) => t.id === overId) //如果壓在卡片上 找出被壓住的卡片index 排在它後面
+        : destTasks.length //如果是放在空白處 就丟在欄位的最後面
 
-      const newDestTasks = [...destTasks]
-      newDestTasks.splice(overIndex === -1 ? destTasks.length : overIndex, 0, activeTask)
+      const newDestTasks = [...destTasks] //複製一個目標欄位的原本的陣列
+      //把卡片插隊到 複製的陣列裡面 邏輯是新陣列如果找不到這張卡片（overIndex === -1 ）就放到最後 如果找得到執行splice裡面的插隊邏輯
+      newDestTasks.splice(overIndex === -1 ? destTasks.length : overIndex, 0, activeTask) 
 
       // 更新目標欄的所有任務 order，被移動的任務還要更新 status
-      newDestTasks.forEach((task, index) => {
+      newDestTasks.forEach((task, index) => { 
         const ref = doc(db, "projects", projectId, "tasks", task.id)
-        if (task.id === activeId) {
-          batch.update(ref, { status: destColumnId, order: (index + 1) * 1000 })
+        if (task.id === activeId) { //如果是新加入的那一張哪片
+          batch.update(ref, { status: destColumnId, order: (index + 1) * 1000 }) //要更新排序權重還要更新狀態
         } else {
-          batch.update(ref, { order: (index + 1) * 1000 })
+          batch.update(ref, { order: (index + 1) * 1000 }) //原本就在欄位裡的卡片只更新排序權重即可
         }
       })
 
       // 修正來源欄的 order（中間空了一個位置要補回來）
-      srcTasks.forEach((task, index) => {
+      srcTasks.forEach((task, index) => { //遍歷來源欄位重新排序 更新排序權重
         batch.update(doc(db, "projects", projectId, "tasks", task.id), {
           order: (index + 1) * 1000,
         })
       })
     }
 
-    await batch.commit()
+    await batch.commit() // 提交 batch 進行更新
   }
 
-  const loading = projectLoading || sprintLoading || tasksLoading
+  const loading = projectLoading || sprintLoading || tasksLoading 
   if (loading) return (
     <div className="flex items-center justify-center h-full text-muted-foreground">載入中...</div>
   )
@@ -489,7 +497,7 @@ export default function SprintKanbanPage() {
   return (
     <div className="flex flex-col h-full gap-3 p-5 overflow-hidden">
 
-      {/* ── 上方狀態卡片：單行緊湊佈局 ── */}
+      {/* ── 上方狀態卡片 ── */}
       <div className="bg-card border border-border rounded-2xl shadow-sm px-5 py-3.5 flex items-center gap-3 flex-wrap shrink-0">
 
         {/* 名稱 + 狀態徽章 */}
@@ -506,7 +514,8 @@ export default function SprintKanbanPage() {
 
         {/* 日期 + 目標 */}
         <span className="text-sm text-muted-foreground whitespace-nowrap">
-          {formatDateRange(sprint.startDate, sprint.endDate)}
+            {/* 調 formatDateRange函數 處理日期格式化顯示  */}
+          {formatDateRange(sprint.startDate, sprint.endDate)} 
         </span>
         {sprint.goal && (
           <>
@@ -534,7 +543,7 @@ export default function SprintKanbanPage() {
             {members.map((m, i) => (
               <button
                 key={m.uid}
-                onClick={() => toggleMemberFilter(m.uid)}
+                onClick={() => toggleMemberFilter(m.uid)} // //調用 toggleMemberFilter函數 把uid傳過去 處理頭像選擇 ＋ 篩選問題
                 className={`rounded-full transition-all -ml-1.5 first:ml-0 ${
                   filterMemberIds.includes(m.uid)
                     ? "ring-2 ring-[#F97316] ring-offset-1 z-10"
@@ -542,7 +551,8 @@ export default function SprintKanbanPage() {
                 }`}
                 style={{ zIndex: i }}
               >
-                <MemberAvatar user={m} />
+                {/* 把剛剛篩選出的頭像 傳到MemberAvatar組件裡面讓他渲染出頭像 */}
+                <MemberAvatar user={m} /> 
               </button>
             ))}
           </div>
@@ -563,13 +573,13 @@ export default function SprintKanbanPage() {
           >
             All
           </button>
-          {(["low", "medium", "high", "urgent"] as Priority[]).map((p) => {
-            const cfg = PRIORITY_CONFIG[p]
-            const isActive = filterPriority === p
+          {(["low", "medium", "high", "urgent"] as Priority[]).map((p) => { // 用map映射出四個按鈕
+            const cfg = PRIORITY_CONFIG[p] //用優先級名稱去查表
+            const isActive = filterPriority === p //判斷目前渲染的是不是 active 的
             return (
               <button
                 key={p}
-                onClick={() => setFilterPriority(isActive ? null : p)}
+                onClick={() => setFilterPriority(isActive ? null : p)}  // 處理toggle邏輯
                 className="text-xs px-2.5 py-1 rounded-full font-medium transition-all capitalize"
                 style={{
                   backgroundColor: isActive ? cfg.bg : undefined,
@@ -587,7 +597,7 @@ export default function SprintKanbanPage() {
         {/* 有篩選時的 Clear */}
         {(filterMemberIds.length > 0 || filterPriority !== null) && (
           <button
-            onClick={() => { setFilterMemberIds([]); setFilterPriority(null) }}
+            onClick={() => { setFilterMemberIds([]); setFilterPriority(null) }} //清空兩個篩選列
             className="text-xs text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
           >
             Clear
@@ -597,20 +607,21 @@ export default function SprintKanbanPage() {
         {/* 分隔線 */}
         <div className="w-px h-5 bg-border shrink-0" />
 
-        {/* ⋯ 選單 */}
+        {/* ⋯ 多工能選單 */} 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+          <DropdownMenuTrigger asChild> 
             <button className="p-1 rounded-lg hover:bg-muted transition-colors">
               <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
             </button>
           </DropdownMenuTrigger>
+
           <DropdownMenuContent align="end" className="w-44">
-            {sprint.status === "planning" && (
+            {sprint.status === "planning" && ( // 屬於 planning 的 sprint 才渲染開始 Sprint 
               <DropdownMenuItem onClick={() => startSprint().then(() => toast.success("Sprint 已開始"))}>
                 開始 Sprint
               </DropdownMenuItem>
             )}
-            {sprint.status === "active" && (
+            {sprint.status === "active" && ( 
               <DropdownMenuItem onClick={() => setShowCompleteConfirm(true)}>
                 結束 Sprint
               </DropdownMenuItem>
@@ -633,18 +644,18 @@ export default function SprintKanbanPage() {
 
       {/* ── 下方看板卡片 ── */}
       <div className="flex-1 bg-card border border-border rounded-2xl shadow-sm overflow-auto p-5">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCorners}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
+        <DndContext //dnd-kit拖曳包裝標籤
+          sensors={sensors} // 偵測移動超過5px
+          collisionDetection={closestCorners} //dnd-kit 提供的 碰撞偵測演算法
+          onDragStart={handleDragStart} // 調用前面寫的開始拖曳函數
+          onDragEnd={handleDragEnd} // 調用前面寫的結束拖曳函數
+        > 
           <div className="flex gap-4 h-full">
-            {COLUMNS.map((col) => {
+            {COLUMNS.map((col) => { // 用 map 映射出四個欄位
               const colTasks = sprintTasks
-                .filter((t) => t.status === col.id)
-                .sort((a, b) => a.order - b.order)
-              const colSP = colTasks.reduce((sum, t) => sum + (t.storyPoints ?? 0), 0)
+                .filter((t) => t.status === col.id) //抓出狀態跟欄位名稱匹配的任務
+                .sort((a, b) => a.order - b.order) //排序
+              const colSP = colTasks.reduce((sum, t) => sum + (t.storyPoints ?? 0), 0) //用reduce加總故事點
 
               return (
                 <div key={col.id} className="flex flex-col flex-1 min-w-0">
@@ -660,7 +671,7 @@ export default function SprintKanbanPage() {
                       )}
                     </div>
 
-                    {sprint.status !== "completed" && (
+                    {sprint.status == "completed" && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button className="w-6 h-6 rounded-md hover:bg-muted flex items-center justify-center transition-colors">
@@ -685,9 +696,9 @@ export default function SprintKanbanPage() {
                     )}
                   </div>
 
-                  <SortableContext
-                    items={colTasks.map((t) => t.id)}
-                    strategy={verticalListSortingStrategy}
+                  <SortableContext // 用dnd-kit提供的 SortableContext 讓元素可以被拖動更換順序
+                    items={colTasks.map((t) => t.id)} //要餵給他一個純id字串的陣列 所以用map映射出來 
+                    strategy={verticalListSortingStrategy} //垂直排列的strategy
                   >
                     <DroppableColumn id={col.id}>
                       {colTasks.map((task) => {
@@ -713,14 +724,14 @@ export default function SprintKanbanPage() {
               )
             })}
           </div>
-
+            {/* 處理拖動動畫的渲染 */}
           <DragOverlay dropAnimation={null}>
-            {draggingTask && (
+            {draggingTask && ( //當有卡片被拖拉的時候炫染一張一樣的卡片作為分身
               <div className="shadow-xl rotate-1 opacity-90">
                 <KanbanCard
-                  task={draggingTask}
-                  assignee={members.find((m) => m.uid === draggingTask.assigneeId)}
-                  onClick={() => {}}
+                  task={draggingTask} 
+                  assignee={members.find((m) => m.uid === draggingTask.assigneeId)} // 資料庫只記錄 assigneeId 要撈出其他資料＋重新渲染出頭像
+                  onClick={() => {}} //不要有點擊事件
                 />
               </div>
             )}
@@ -740,8 +751,8 @@ export default function SprintKanbanPage() {
           <div className="flex justify-end gap-3">
             <Button variant="ghost" onClick={() => setShowCompleteConfirm(false)}>取消</Button>
             <Button
-              onClick={handleComplete}
-              disabled={actionLoading}
+              onClick={handleComplete} 
+              disabled={actionLoading} //lodaing 的時候禁用按鈕 
               className="bg-[#F97316] hover:bg-[#ea6c0a] text-white rounded-full px-6"
             >
               {actionLoading ? "處理中..." : "確定結束"}
@@ -829,7 +840,7 @@ export default function SprintKanbanPage() {
           </div>
         </DialogContent>
       </Dialog>
-
+{/* ////////////////////////////////////////// 看到這裡 /////////////////////////////////////////////// */}
       {/* 從 Backlog 選取任務 Modal */}
       <Dialog open={showFromBacklogModal} onOpenChange={setShowFromBacklogModal}>
         <DialogContent className="sm:max-w-md rounded-2xl p-6">

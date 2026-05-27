@@ -53,12 +53,12 @@ function SegmentedBar({ progress, color }: { progress: number; color: string }) 
   const segments = 30
   const filled = Math.round((progress / 100) * segments)
   return (
-    <div className="flex gap-[3px] h-[10px]">
+    <div className="flex gap-[3px] h-[6px]">
       {Array.from({ length: segments }, (_, i) => (
         <div
           key={i}
-          className="flex-1 rounded-[2px]"
-          style={{ backgroundColor: i < filled ? color : "#e5e7eb" }}
+          className="flex-1 rounded-full"
+          style={{ backgroundColor: i < filled ? color : "rgba(0,0,0,0.08)" }}
         />
       ))}
     </div>
@@ -102,7 +102,7 @@ function ProjectCard({ project, onDelete, isOwner }: {
   return (
     <div
       onClick={() => navigate(`/projects/${project.id}`)}
-      className="bg-card border border-border rounded-2xl p-5 hover:shadow-md transition-all cursor-pointer group"
+      className="bg-card border border-border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer group"
     >
       <div className="flex items-center justify-between mb-3">
         <div
@@ -236,7 +236,7 @@ const confirmDelete = async () => {
           <p className="text-sm mt-1">點擊右上角「新增專案」開始吧</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-6">
           {projects.map((project) => (
             <ProjectCard
               key={project.id}
