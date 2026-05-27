@@ -24,6 +24,7 @@ export type Project = {
   ownerId: string
   memberIds: string[]
   roles: Record<string, ProjectRole>
+  joinedAt: Record<string, Date | null>
   inviteCode: string
   createdAt: Date | null
   updatedAt: Date | null
@@ -53,12 +54,21 @@ export function useWorkspace() {
       where("memberIds", "array-contains", user.uid)
     )
     const snap = await getDocs(q)
-    const list = snap.docs.map((d) => ({
-      id: d.id,
-      ...d.data(),
-      createdAt: d.data().createdAt?.toDate() ?? null,
-      updatedAt: d.data().updatedAt?.toDate() ?? null,
-    })) as Project[]
+    const list = snap.docs.map((d) => {
+      const data = d.data()
+      const rawJoinedAt = data.joinedAt ?? {}
+      const joinedAt: Record<string, Date | null> = {}
+      for (const uid in rawJoinedAt) {
+        joinedAt[uid] = rawJoinedAt[uid]?.toDate() ?? null
+      }
+      return {
+        id: d.id,
+        ...data,
+        joinedAt,
+        createdAt: data.createdAt?.toDate() ?? null,
+        updatedAt: data.updatedAt?.toDate() ?? null,
+      }
+    }) as Project[]
     setProjects(list) //把拿到的資料塞到要渲染的陣列裡面
     setLoading(false)
   }
@@ -75,13 +85,15 @@ export function useWorkspace() {
       ownerId: user.uid,
       memberIds: [user.uid],
       roles: { [user.uid]: "owner" },
+      joinedAt: { [user.uid]: now },
       inviteCode,
       createdAt: now,
       updatedAt: now,
     }
     const newDoc = await addDoc(collection(db, "projects"), data) //addDoc -> firebase提供新增資料的方法
-    
+
     //寫一個newproject把剛給firebase的資料直接塞給渲染project的陣列就不用等獲取會卡（樂觀更新）
+    const now2 = new Date()
     const newProject: Project = {
       id: newDoc.id,
       name,
@@ -90,9 +102,10 @@ export function useWorkspace() {
       ownerId: user.uid,
       memberIds: [user.uid],
       roles: { [user.uid]: "owner" },
+      joinedAt: { [user.uid]: now2 },
       inviteCode,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: now2,
+      updatedAt: now2,
     }
     setProjects((prev) => [...prev, newProject])
   }
@@ -116,8 +129,10 @@ export function useWorkspace() {
     const newMemberIds = project.memberIds.filter((id) => id !== uid)
     const newRoles = { ...project.roles }
     delete newRoles[uid]
-    await updateDoc(doc(db, "projects", projectId), { memberIds: newMemberIds, roles: newRoles, updatedAt: serverTimestamp() })
-    setProjects((prev) => prev.map((p) => p.id === projectId ? { ...p, memberIds: newMemberIds, roles: newRoles } : p))
+    const newJoinedAt = { ...project.joinedAt }
+    delete newJoinedAt[uid]
+    await updateDoc(doc(db, "projects", projectId), { memberIds: newMemberIds, roles: newRoles, joinedAt: newJoinedAt, updatedAt: serverTimestamp() })
+    setProjects((prev) => prev.map((p) => p.id === projectId ? { ...p, memberIds: newMemberIds, roles: newRoles, joinedAt: newJoinedAt } : p))
   }
 
   // 成員自行離開專案
@@ -128,9 +143,57 @@ export function useWorkspace() {
     const newMemberIds = project.memberIds.filter((id) => id !== user.uid)
     const newRoles = { ...project.roles }
     delete newRoles[user.uid]
-    await updateDoc(doc(db, "projects", projectId), { memberIds: newMemberIds, roles: newRoles, updatedAt: serverTimestamp() })
+    const newJoinedAt = { ...project.joinedAt }
+    delete newJoinedAt[user.uid]
+    await updateDoc(doc(db, "projects", projectId), { memberIds: newMemberIds, roles: newRoles, joinedAt: newJoinedAt, updatedAt: serverTimestamp() })
     setProjects((prev) => prev.filter((p) => p.id !== projectId))
   }
 
-  return { projects, loading, createProject, deleteProject, updateProject, removeMember, leaveProject }
+  // 重新產生邀請碼
+  const regenerateInviteCode = async (projectId: string) => {
+    const newCode = generateInviteCode()
+    await updateDoc(doc(db, "projects", projectId), { inviteCode: newCode, updatedAt: serverTimestamp() })
+    setProjects((prev) => prev.map((p) => p.id === projectId ? { ...p, inviteCode: newCode } : p))
+  }
+
+  // 透過邀請碼加入專案
+  // 回傳 projectId（成功）、"already"（已是成員）、null（找不到）
+  const joinProject = async (inviteCode: string): Promise<string | "already" | null> => {
+    if (!user) return null
+    const q = query(collection(db, "projects"), where("inviteCode", "==", inviteCode.trim().toLowerCase()))
+    const snap = await getDocs(q)
+    if (snap.empty) return null
+
+    const projectDoc = snap.docs[0]
+    const data = projectDoc.data()
+
+    if (data.memberIds.includes(user.uid)) return "already"
+
+    const now = serverTimestamp()
+    await updateDoc(doc(db, "projects", projectDoc.id), {
+      memberIds: [...data.memberIds, user.uid],
+      roles: { ...data.roles, [user.uid]: "member" },
+      joinedAt: { ...(data.joinedAt ?? {}), [user.uid]: now },
+      updatedAt: now,
+    })
+
+    const nowDate = new Date()
+    const newProject: Project = {
+      id: projectDoc.id,
+      name: data.name,
+      description: data.description,
+      color: data.color,
+      ownerId: data.ownerId,
+      memberIds: [...data.memberIds, user.uid],
+      roles: { ...data.roles, [user.uid]: "member" },
+      joinedAt: { ...(data.joinedAt ?? {}), [user.uid]: nowDate },
+      inviteCode: data.inviteCode,
+      createdAt: data.createdAt?.toDate() ?? null,
+      updatedAt: nowDate,
+    }
+    setProjects((prev) => [...prev, newProject])
+    return projectDoc.id
+  }
+
+  return { projects, loading, createProject, deleteProject, updateProject, removeMember, leaveProject, regenerateInviteCode, joinProject }
 }

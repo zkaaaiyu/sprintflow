@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import SprintsTab from "./tabs/SprintsTab"
 import BacklogTab from "@/pages/tabs/BacklogTab"
 import TeamTab from "@/pages/tabs/TeamTab"
-import { MoreHorizontal, Pencil, LogOut, Trash2, Plus, ListChecks, Zap, ArrowUpDown, Check } from "lucide-react"
+import { MoreHorizontal, Pencil, LogOut, Trash2, Plus, ListChecks, Zap, ArrowUpDown, Check, Copy, RefreshCw } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,7 +55,7 @@ export default function ProjectDetailPage() {
   const { projectId } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { projects, loading, updateProject, deleteProject, removeMember, leaveProject } = useWorkspace()
+  const { projects, loading, updateProject, deleteProject, removeMember, leaveProject, regenerateInviteCode } = useWorkspace()
   const { sprints } = useSprints(projectId!)
   const { tasks } = useTasks(projectId!)
 
@@ -127,6 +127,11 @@ export default function ProjectDetailPage() {
     navigate("/projects")
   }
 
+  const handleRegenerateCode = async () => {
+    await regenerateInviteCode(project.id)
+    toast.success("邀請碼已重新產生")
+  }
+
   const handleRemoveMember = async (uid: string) => {
     await removeMember(project.id, uid)
     toast.success("已移除成員")
@@ -135,7 +140,7 @@ export default function ProjectDetailPage() {
   return (
     <div className="w-full max-w-5xl mx-auto pb-28">
 
-      {/* Info Card — Backlog tab 顯示緊湊單行 bar，其他 tab 顯示完整卡片 */}
+      {/* Info Card — 依 tab 顯示不同上方 bar */}
       {activeTab === "backlog" ? (
         <div className="bg-card border border-border rounded-2xl shadow-sm mb-4 px-5 py-3.5">
           <div className="flex items-center justify-between">
@@ -181,6 +186,48 @@ export default function ProjectDetailPage() {
                 <Plus className="w-3.5 h-3.5" />
                 New Task
               </button>
+            </div>
+          </div>
+        </div>
+      ) : activeTab === "team" ? (
+        <div className="bg-card border border-border rounded-2xl shadow-sm mb-4 px-5 py-3.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: project.color }} />
+              <h1 className="text-lg font-bold">{project.name}</h1>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">Invite Code</span>
+                <span className="font-mono font-bold text-sm">{project.inviteCode}</span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(project.inviteCode)
+                    toast.success("邀請碼已複製")
+                  }}
+                  className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground"
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="w-px h-5 bg-border" />
+              {isOwner ? (
+                <button
+                  onClick={handleRegenerateCode}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border border-border text-muted-foreground hover:bg-accent transition-colors"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Regenerate
+                </button>
+              ) : (
+                <button
+                  onClick={() => setLeaveOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border border-destructive text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  Leave Project
+                </button>
+              )}
             </div>
           </div>
         </div>

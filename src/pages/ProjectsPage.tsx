@@ -3,6 +3,7 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useWorkspace } from "@/hooks/useWorkspace"
 import { useAuth } from "@/contexts/AuthContext"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -162,16 +163,33 @@ function ProjectCard({ project, onDelete, isOwner }: {
 
 // 主頁面
 export default function ProjectsPage() {
+  const navigate = useNavigate()
   const { user } = useAuth()
-  const { projects, loading, createProject, deleteProject } = useWorkspace()
-  
+  const { projects, loading, createProject, deleteProject, joinProject } = useWorkspace()
+
+  type ModalTab = "create" | "join"
+  const [open, setOpen] = useState(false)
+  const [modalTab, setModalTab] = useState<ModalTab>("create")
+
   //create project相關
-  const [open, setOpen] = useState(false)  //create project dialog 的開關
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [color, setColor] = useState(COLOR_OPTIONS[0].value)
   const [submitting, setSubmitting] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null) 
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+
+  // join project相關
+  const [inviteCode, setInviteCode] = useState("")
+  const [joining, setJoining] = useState(false)
+
+  const handleOpenChange = (o: boolean) => {
+    setOpen(o)
+    if (!o) {
+      setModalTab("create")
+      setName(""); setDescription(""); setColor(COLOR_OPTIONS[0].value)
+      setInviteCode("")
+    }
+  }
 
   // create project 函數
   const handleCreate = async () => {
@@ -179,10 +197,27 @@ export default function ProjectsPage() {
     setSubmitting(true) //允許提交
     await createProject(name.trim(), description.trim(), color) //調用自定義hooks useworkSpace 裡面的 create project 處理資料端
     toast.success("專案建立成功")
-    
+
     //清空表單＆關閉
     setName(""); setDescription(""); setColor(COLOR_OPTIONS[0].value)
     setOpen(false); setSubmitting(false)
+  }
+
+  // join project 函數
+  const handleJoin = async () => {
+    if (!inviteCode.trim()) { toast.error("請輸入邀請碼"); return }
+    setJoining(true)
+    const result = await joinProject(inviteCode.trim())
+    if (result === null) {
+      toast.error("找不到此邀請碼，請確認是否正確")
+    } else if (result === "already") {
+      toast.error("你已經是此專案的成員了")
+    } else {
+      toast.success("成功加入專案！")
+      setOpen(false)
+      navigate(`/projects/${result}`)
+    }
+    setJoining(false)
   }
 
 // Delete Alert 
@@ -203,7 +238,7 @@ const confirmDelete = async () => {
 
   return (
 
-  <Dialog open={open} onOpenChange={setOpen}>
+  <Dialog open={open} onOpenChange={handleOpenChange}>
     <div className="max-w-5xl mx-auto">
       <div className="mb-8">
         <h1 className="text-2xl font-bold">Workspace</h1>
@@ -250,63 +285,114 @@ const confirmDelete = async () => {
     </div>
 
   <DialogContent className="sm:max-w-md rounded-2xl p-8">
-    <DialogHeader className="mb-6">
-      <DialogTitle className="text-2xl font-bold">Create Project</DialogTitle>
+    <DialogHeader className="mb-4">
+      <DialogTitle className="text-2xl font-bold">
+        {modalTab === "create" ? "Create Project" : "Join Project"}
+      </DialogTitle>
     </DialogHeader>
-    <div className="space-y-5">
-      <div className="space-y-2">
-        <Label htmlFor="name" className="font-semibold text-sm">Project Name</Label>
-        <Input
-          id="name"
-          placeholder="e.g. SprintFlow"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="rounded-xl bg-muted border-0 h-11 focus-visible:ring-1"
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="desc" className="font-semibold text-sm">Description</Label>
-        <Input
-          id="desc"
-          placeholder="What's this project about..."
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="rounded-xl bg-muted border-0 h-11 focus-visible:ring-1"
-        />
-      </div>
-      <div className="space-y-2">
-        <Label className="font-semibold text-sm">Color Tag</Label>
-        <div className="flex gap-2 flex-wrap">
-          {COLOR_OPTIONS.map((c) => (
-            <button
-              key={c.value}
-              type="button"
-              onClick={() => setColor(c.value)}
-              className="w-8 h-8 rounded-full focus:outline-none transition-all"
-              style={{
-                backgroundColor: c.value,
-                outline: color === c.value ? `2px solid ${c.value}` : "none",
-                outlineOffset: "2px",
-              }}
-              title={c.label}
+
+    {/* Tab 切換 */}
+    <div className="flex gap-1 bg-muted p-1 rounded-xl mb-6">
+      {(["create", "join"] as ModalTab[]).map((tab) => (
+        <button
+          key={tab}
+          type="button"
+          onClick={() => setModalTab(tab)}
+          className={cn(
+            "flex-1 py-1.5 rounded-lg text-sm font-medium transition-all",
+            modalTab === tab ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          {tab === "create" ? "Create Project" : "Join Project"}
+        </button>
+      ))}
+    </div>
+
+    {modalTab === "create" ? (
+      <>
+        <div className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="name" className="font-semibold text-sm">Project Name</Label>
+            <Input
+              id="name"
+              placeholder="e.g. SprintFlow"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="rounded-xl bg-muted border-0 h-11 focus-visible:ring-1"
             />
-          ))}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="desc" className="font-semibold text-sm">Description</Label>
+            <Input
+              id="desc"
+              placeholder="What's this project about..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="rounded-xl bg-muted border-0 h-11 focus-visible:ring-1"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="font-semibold text-sm">Color Tag</Label>
+            <div className="flex gap-2 flex-wrap">
+              {COLOR_OPTIONS.map((c) => (
+                <button
+                  key={c.value}
+                  type="button"
+                  onClick={() => setColor(c.value)}
+                  className="w-8 h-8 rounded-full focus:outline-none transition-all"
+                  style={{
+                    backgroundColor: c.value,
+                    outline: color === c.value ? `2px solid ${c.value}` : "none",
+                    outlineOffset: "2px",
+                  }}
+                  title={c.label}
+                />
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {COLOR_OPTIONS.find((c) => c.value === color)?.label} selected
+            </p>
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground">
-          {COLOR_OPTIONS.find((c) => c.value === color)?.label} selected
-        </p>
-      </div>
-    </div>
-    <div className="flex justify-end gap-3 mt-8">
-      <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-      <Button
-        onClick={handleCreate}
-        disabled={submitting}
-        className="bg-[#F97316] hover:bg-[#ea6c0a] text-white rounded-full px-6"
-      >
-        {submitting ? "Creating..." : "Create"}
-      </Button>
-    </div>
+        <div className="flex justify-end gap-3 mt-8">
+          <Button variant="ghost" onClick={() => handleOpenChange(false)}>Cancel</Button>
+          <Button
+            onClick={handleCreate}
+            disabled={submitting}
+            className="bg-[#F97316] hover:bg-[#ea6c0a] text-white rounded-full px-6"
+          >
+            {submitting ? "Creating..." : "Create"}
+          </Button>
+        </div>
+      </>
+    ) : (
+      <>
+        <div className="space-y-5">
+          <div className="space-y-2">
+            <Label className="font-semibold text-sm">Invite Code</Label>
+            <Input
+              placeholder="Enter invite code..."
+              value={inviteCode}
+              onChange={(e) => setInviteCode(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleJoin()}
+              className="rounded-xl bg-muted border-0 h-11 focus-visible:ring-1"
+              autoFocus
+            />
+            <p className="text-xs text-muted-foreground">向專案 Owner 索取邀請碼</p>
+          </div>
+        </div>
+        <div className="flex justify-end gap-3 mt-8">
+          <Button variant="ghost" onClick={() => handleOpenChange(false)}>Cancel</Button>
+          <Button
+            onClick={handleJoin}
+            disabled={joining}
+            className="bg-[#F97316] hover:bg-[#ea6c0a] text-white rounded-full px-6"
+          >
+            {joining ? "Joining..." : "Join"}
+          </Button>
+        </div>
+      </>
+    )}
   </DialogContent>
 
   <DialogTrigger asChild>
