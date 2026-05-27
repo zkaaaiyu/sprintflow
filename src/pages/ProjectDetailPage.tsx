@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import SprintsTab from "./tabs/SprintsTab"
 import BacklogTab from "@/pages/tabs/BacklogTab"
 import TeamTab from "@/pages/tabs/TeamTab"
-import { MoreHorizontal, Pencil, LogOut, Trash2, Plus } from "lucide-react"
+import { MoreHorizontal, Pencil, LogOut, Trash2, Plus, ListChecks, Zap, ArrowUpDown, Check } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +38,14 @@ import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
 type Tab = "sprints" | "backlog" | "team"
+type SortBy = "priority" | "createdAt" | "dueDate" | "storyPoints"
+
+const SORT_OPTIONS: { value: SortBy; label: string }[] = [
+  { value: "priority",    label: "Priority" },
+  { value: "createdAt",   label: "Created Time" },
+  { value: "dueDate",     label: "Due Date" },
+  { value: "storyPoints", label: "Story Points" },
+]
 
 const COLOR_OPTIONS = [
   "#F97316", "#3B82F6", "#10B981", "#8B5CF6", "#EF4444", "#F59E0B", "#06B6D4", "#EC4899",
@@ -53,6 +61,8 @@ export default function ProjectDetailPage() {
 
   const [activeTab, setActiveTab] = useState<Tab>("sprints")
   const [createSprintOpen, setCreateSprintOpen] = useState(false)
+  const [backlogCreateOpen, setBacklogCreateOpen] = useState(false)
+  const [backlogSort, setBacklogSort] = useState<SortBy>("priority")
 
   // [...] 選單相關狀態
   const [editOpen, setEditOpen] = useState(false)
@@ -84,6 +94,10 @@ export default function ProjectDetailPage() {
     ? Math.round((doneTasks.length / activeSprintTasks.length) * 100)
     : 0
   const totalPoints = activeSprintTasks.reduce((sum, t) => sum + (t.storyPoints ?? 0), 0)
+
+  // Backlog stats
+  const backlogTasks = tasks.filter((t) => t.sprintId === null)
+  const backlogTotalPoints = backlogTasks.reduce((sum, t) => sum + (t.storyPoints ?? 0), 0)
 
   const openEdit = () => {
     setEditName(project.name)
@@ -119,93 +133,141 @@ export default function ProjectDetailPage() {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto pb-28">
+    <div className="w-full max-w-5xl mx-auto pb-28">
 
-      {/* Info Card */}
-      <div className="bg-card border border-border rounded-2xl p-6 mb-4 shadow-sm">
-        {/* Header：專案名稱 + Create Sprint 按鈕 + [...] 選單 */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: project.color }} />
-            <h1 className="text-xl font-bold">{project.name}</h1>
-          </div>
-
-          <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground">
-                <MoreHorizontal className="w-5 h-5" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44">
-              <DropdownMenuItem onClick={openEdit} className="cursor-pointer">
-                <Pencil className="w-4 h-4 mr-2" />
-                編輯專案
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              {!isOwner && (
-                <DropdownMenuItem
-                  onClick={() => setLeaveOpen(true)}
-                  className="text-destructive focus:text-destructive cursor-pointer"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  離開專案
-                </DropdownMenuItem>
-              )}
-              {isOwner && (
-                <DropdownMenuItem
-                  onClick={() => setDeleteOpen(true)}
-                  className="text-destructive focus:text-destructive cursor-pointer"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  刪除專案
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          </div>
-        </div>
-
-        <p className="text-sm text-muted-foreground mb-5">Project overview and active sprints</p>
-
-        {/* Stats 三欄 + Create Sprint 按鈕，四等分橫向空間 */}
-        <div className="grid grid-cols-4 gap-4 items-end">
-          <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5">Total Sprints</p>
-            <p className="text-xl font-bold">{sprints.length}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5">
-              {activeSprint ? `${activeSprint.name} · Completion` : "Completion Rate"}
-            </p>
-            <div className="flex items-center gap-2">
-              <p className="text-xl font-bold">{completionRate}%</p>
-              <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden shrink-0">
-                <div
-                  className="h-full rounded-full transition-all"
-                  style={{ width: `${completionRate}%`, backgroundColor: "#F97316" }}
-                />
+      {/* Info Card — Backlog tab 顯示緊湊單行 bar，其他 tab 顯示完整卡片 */}
+      {activeTab === "backlog" ? (
+        <div className="bg-card border border-border rounded-2xl shadow-sm mb-4 px-5 py-3.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-5">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: project.color }} />
+                <h1 className="text-lg font-bold">{project.name}</h1>
+              </div>
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <ListChecks className="w-3.5 h-3.5" />
+                <span className="text-xs font-semibold uppercase tracking-wide">TASKS: {backlogTasks.length}</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Zap className="w-3.5 h-3.5" />
+                <span className="text-xs font-semibold uppercase tracking-wide">STORY POINTS: {backlogTotalPoints}</span>
               </div>
             </div>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5">Total Points</p>
-            <p className="text-xl font-bold">{totalPoints}</p>
-          </div>
-          {/* Create Sprint 按鈕：對齊數字底部，只在 Sprints tab 顯示 */}
-          <div className="flex justify-end">
-            {activeTab === "sprints" && (
+            <div className="flex items-center gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border border-border text-muted-foreground hover:bg-accent transition-colors">
+                    <ArrowUpDown className="w-3.5 h-3.5" />
+                    Sort
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  {SORT_OPTIONS.map((opt) => (
+                    <DropdownMenuItem
+                      key={opt.value}
+                      onClick={() => setBacklogSort(opt.value)}
+                      className="cursor-pointer"
+                    >
+                      <Check className={cn("w-4 h-4 mr-2", backlogSort === opt.value ? "opacity-100" : "opacity-0")} />
+                      {opt.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
               <button
-                onClick={() => setCreateSprintOpen(true)}
+                onClick={() => setBacklogCreateOpen(true)}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium text-white bg-[#F97316] hover:bg-[#ea6c0a] transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" />
-                Create Sprint
+                New Task
               </button>
-            )}
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="bg-card border border-border rounded-2xl p-6 mb-4 shadow-sm">
+          {/* Header：專案名稱 + [...] 選單 */}
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: project.color }} />
+              <h1 className="text-xl font-bold">{project.name}</h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground">
+                    <MoreHorizontal className="w-5 h-5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44">
+                  <DropdownMenuItem onClick={openEdit} className="cursor-pointer">
+                    <Pencil className="w-4 h-4 mr-2" />
+                    編輯專案
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  {!isOwner && (
+                    <DropdownMenuItem
+                      onClick={() => setLeaveOpen(true)}
+                      className="text-destructive focus:text-destructive cursor-pointer"
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      離開專案
+                    </DropdownMenuItem>
+                  )}
+                  {isOwner && (
+                    <DropdownMenuItem
+                      onClick={() => setDeleteOpen(true)}
+                      className="text-destructive focus:text-destructive cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      刪除專案
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+
+          <p className="text-sm text-muted-foreground mb-5">Project overview and active sprints</p>
+
+          {/* Stats 三欄 + 按鈕，四等分橫向空間 */}
+          <div className="grid grid-cols-4 gap-4 items-end">
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5">Total Sprints</p>
+              <p className="text-xl font-bold">{sprints.length}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5">
+                {activeSprint ? `${activeSprint.name} · Completion` : "Completion Rate"}
+              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-xl font-bold">{completionRate}%</p>
+                <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden shrink-0">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{ width: `${completionRate}%`, backgroundColor: "#F97316" }}
+                  />
+                </div>
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5">Total Points</p>
+              <p className="text-xl font-bold">{totalPoints}</p>
+            </div>
+            <div className="flex justify-end">
+              {activeTab === "sprints" && (
+                <button
+                  onClick={() => setCreateSprintOpen(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium text-white bg-[#F97316] hover:bg-[#ea6c0a] transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Create Sprint
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tab 內容區 */}
       {activeTab === "sprints" && (
@@ -215,7 +277,7 @@ export default function ProjectDetailPage() {
           onCreateOpenChange={setCreateSprintOpen}
         />
       )}
-      {activeTab === "backlog" && <BacklogTab projectId={projectId!} memberIds={project.memberIds} />}
+      {activeTab === "backlog" && <BacklogTab projectId={projectId!} memberIds={project.memberIds} createOpen={backlogCreateOpen} onCreateOpenChange={setBacklogCreateOpen} sortBy={backlogSort} />}
       {activeTab === "team" && <TeamTab project={project} onRemoveMember={handleRemoveMember} />}
 
       {/* 懸浮底部 Tab 列 */}

@@ -57,55 +57,62 @@ export default function SprintsTab({
   return (
     <>
       {/* 下方 Sprint 列表卡片 */}
-      <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden min-h-[calc(100vh-180px)]">
         {sprints.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground">
             <p>No sprints yet</p>
             <p className="text-sm mt-1">Click "+ Create Sprint" to get started</p>
           </div>
         ) : (
-          <div className="p-5 space-y-3">
-            {sprints.map((sprint) => {
-              const cfg = STATUS_CONFIG[sprint.status]
-              const isActive = sprint.status === "active"
-              return (
-                <div
-                  key={sprint.id}
-                  onClick={() => navigate(`/projects/${projectId}/sprints/${sprint.id}`)}
-                  className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer hover:shadow-sm transition-all ${
-                    isActive ? "border-orange-200 bg-orange-50/50 dark:bg-[#F97316]/5" : "border-border bg-background"
-                  }`}
-                >
-                  {/* 狀態圓點 */}
-                  <div
-                    className="w-2.5 h-2.5 rounded-full shrink-0"
-                    style={{ backgroundColor: isActive ? "#F97316" : "#D1D5DB" }}
-                  />
+          <div className="p-5">
+            <div className="relative">
+              {/* 垂直 Timeline 線 */}
+              <div className="absolute left-[5px] top-6 bottom-6 w-0.5 bg-border" />
 
-                  {/* Sprint 資訊 */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="font-semibold text-sm">{sprint.name}</span>
-                      <span
-                        className="text-xs px-2 py-0.5 rounded-full font-medium shrink-0"
-                        style={{ color: cfg.color, backgroundColor: cfg.bg }}
+              <div className="space-y-4">
+                {sprints.map((sprint) => {
+                  const cfg = STATUS_CONFIG[sprint.status]
+                  const isActive = sprint.status === "active"
+                  return (
+                    <div key={sprint.id} className="flex items-center gap-4">
+                      {/* Timeline 圓點 */}
+                      <div
+                        className="relative z-10 w-3 h-3 rounded-full shrink-0"
+                        style={{ backgroundColor: isActive ? "#F97316" : "#D1D5DB" }}
+                      />
+
+                      {/* Sprint 卡片 */}
+                      <div
+                        onClick={() => navigate(`/projects/${projectId}/sprints/${sprint.id}`)}
+                        className={`flex-1 flex items-center gap-4 p-4 rounded-xl border cursor-pointer hover:shadow-sm transition-all ${
+                          isActive ? "border-orange-200 bg-orange-50/50 dark:bg-[#F97316]/5" : "border-border bg-background"
+                        }`}
                       >
-                        {cfg.label}
-                      </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <span className="font-semibold text-sm">{sprint.name}</span>
+                            <span
+                              className="text-xs px-2 py-0.5 rounded-full font-medium shrink-0"
+                              style={{ color: cfg.color, backgroundColor: cfg.bg }}
+                            >
+                              {cfg.label}
+                            </span>
+                          </div>
+                          {sprint.goal && (
+                            <p className="text-xs text-muted-foreground truncate mb-0.5">{sprint.goal}</p>
+                          )}
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Calendar className="w-3 h-3 shrink-0" />
+                            <span>{formatDate(sprint.startDate)} — {formatDate(sprint.endDate)}</span>
+                          </div>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                      </div>
                     </div>
-                    {sprint.goal && (
-                      <p className="text-xs text-muted-foreground truncate mb-0.5">{sprint.goal}</p>
-                    )}
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Calendar className="w-3 h-3 shrink-0" />
-                      <span>{formatDate(sprint.startDate)} — {formatDate(sprint.endDate)}</span>
-                    </div>
-                  </div>
-
-                  <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-                </div>
-              )
-            })}
+                  )
+                })}
+              </div>
+            </div>
           </div>
         )}
       </div>
