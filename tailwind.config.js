@@ -8,8 +8,8 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand: "#F97316",
-        "brand-hover": "#ea6c0a",
+        brand: "#be7559",
+        "brand-hover": "#ac5b41",
         border: "var(--border)",
         input: "var(--input)",
         ring: "var(--ring)",

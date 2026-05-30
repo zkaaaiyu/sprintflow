@@ -50,7 +50,7 @@ const SORT_OPTIONS: { value: SortBy; label: string }[] = [
 
 //創建專案的自定義顏色
 const COLOR_OPTIONS = [
-  "#F97316", "#3B82F6", "#10B981", "#8B5CF6", "#EF4444", "#F59E0B", "#06B6D4", "#EC4899",
+  "#d16e56", "#4A5270", "#8B3A42", "#9B7EC8", "#C96B8E", "#73a38c", "#B8893A", "#5a6438",
 ]
 
 export default function ProjectDetailPage() {
@@ -257,7 +257,7 @@ export default function ProjectDetailPage() {
                     <Pencil className="w-4 h-4 mr-2" />
                     編輯專案
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
+
                   {!isOwner && (
                     <DropdownMenuItem
                       onClick={() => setLeaveOpen(true)}

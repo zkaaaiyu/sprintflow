@@ -31,14 +31,14 @@ import type { Project } from "@/hooks/useWorkspace"
 
 // 顏色定義
 const COLOR_OPTIONS = [
-  { label: "Orange", value: "#F97316" },
-  { label: "Blue", value: "#3B82F6" },
-  { label: "Green", value: "#10B981" },
-  { label: "Purple", value: "#8B5CF6" },
-  { label: "Red", value: "#EF4444" },
-  { label: "Amber", value: "#F59E0B" },
-  { label: "Cyan", value: "#06B6D4" },
-  { label: "Pink", value: "#EC4899" },
+  { label: "Clay",     value: "#d16e56" },
+  { label: "Slate",    value: "#4A5270" },
+  { label: "Wine",     value: "#8B3A42" },
+  { label: "Lavender", value: "#9B7EC8" },
+  { label: "Blush",    value: "#C96B8E" },
+  { label: "Sage",     value: "#73a38c" },
+  { label: "Amber",    value: "#B8893A" },
+  { label: "Olive",    value: "#5a6438" },
 ]
 
 // 顏色減淡作為project cards 左上角標籤

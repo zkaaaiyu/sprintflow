@@ -70,8 +70,8 @@ function getDaysRemaining(dueDate: Date): { label: string; color: string } {
   const now = new Date(); now.setHours(0, 0, 0, 0)
   const due = new Date(dueDate); due.setHours(0, 0, 0, 0)
   const diff = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-  if (diff < 0)   return { label: "Overdue",       color: "#EF4444" }
-  if (diff === 0) return { label: "Due today",     color: "#EF4444" }
+  if (diff < 0)   return { label: "Overdue",       color: "#CC6161" }
+  if (diff === 0) return { label: "Due today",     color: "#CC6161" }
   if (diff <= 3)  return { label: `${diff}d left`, color: BRAND }
   return               { label: `${diff}d left`, color: "#6B7280" }
 }
@@ -160,7 +160,7 @@ function KanbanCard({ task, assignee, onClick }: { task: Task; assignee?: UserPr
     <div
       onClick={onClick}
       className={`bg-card border rounded-xl p-3 cursor-pointer hover:shadow-sm transition-all ${
-        isOverdue ? "border-red-300" : "border-border"
+        isOverdue ? "border-[#CC6161]" : "border-border"
       }`}
     >
       {/* 優先級標籤 + SP */}

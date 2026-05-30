@@ -7,6 +7,7 @@ import { useComments } from "@/hooks/useComments"
 import { useMembers, type UserProfile } from "@/hooks/useMembers"
 import type { Priority, TaskStatus, StoryPoints } from "@/hooks/useTasks"
 import { PRIORITY_CONFIG } from "@/lib/priority"
+import { TASK_STATUS_CONFIG } from "@/lib/taskStatus"
 import { BRAND } from "@/lib/colors"
 import { Pencil, SendHorizontal, Trash2 } from "lucide-react"
 
@@ -37,8 +38,8 @@ function ActivityAvatar({ name, photoURL }: { name: string; photoURL: string | n
 function ValueBadge({ field, value }: { field: string; value: string }) {
   if (!value || value === "—") return <span className="text-xs text-muted-foreground">—</span>
   
-  if (field === "status") {  // 如果變更的是 status，就去 STATUS_CONFIG 查表 渲染對應的樣式
-    const cfg = Object.values(STATUS_CONFIG).find((c) => c.label === value)
+  if (field === "status") {  // 如果變更的是 status，就去 TASK_STATUS_CONFIG 查表 渲染對應的樣式
+    const cfg = Object.values(TASK_STATUS_CONFIG).find((c) => c.label === value)
     if (cfg) return <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ color: cfg.color, backgroundColor: cfg.bg }}>{value}</span>
   }
   if (field === "priority") { //如果變更的是 priority，一樣查表渲染標籤
@@ -47,13 +48,6 @@ function ValueBadge({ field, value }: { field: string; value: string }) {
   }
   // 如果是一般的文字變更 就給一個簡單的灰色底色
   return <span className="text-xs bg-muted px-1.5 py-0.5 rounded font-medium">{value}</span>
-}
-//定義狀態標籤樣式表
-const STATUS_CONFIG = {
-  todo:        { label: "To Do",       color: "#6B7280", bg: "#F3F4F6" },
-  in_progress: { label: "In Progress", color: "#3B82F6", bg: "#EFF6FF" },
-  review:      { label: "Review",      color: "#8B5CF6", bg: "#F5F3FF" },
-  done:        { label: "Done",        color: "#10B981", bg: "#ECFDF5" },
 }
 
 //負責處理任務指派的 member 頭像顯示
@@ -100,7 +94,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
 
   const assignee = task ? members.find((m) => m.uid === task.assigneeId) : undefined
   const priority = task ? PRIORITY_CONFIG[task.priority] : null
-  const status   = task ? STATUS_CONFIG[task.status]     : null
+  const status   = task ? TASK_STATUS_CONFIG[task.status]     : null
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -242,11 +236,11 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                   <p className="text-xs text-muted-foreground mb-1.5">Status</p>
                   {editingField === "status" ? (
                     <div className="flex flex-row flex-wrap gap-1.5 items-center">
-                      {(Object.keys(STATUS_CONFIG) as TaskStatus[]).map((s) => {
-                        const cfg = STATUS_CONFIG[s]
+                      {(Object.keys(TASK_STATUS_CONFIG) as TaskStatus[]).map((s) => {
+                        const cfg = TASK_STATUS_CONFIG[s]
                         return (
                           <button key={s}
-                            onClick={async () => { await updateField("status", s, "狀態", STATUS_CONFIG[task.status].label, cfg.label); stopEditing() }}
+                            onClick={async () => { await updateField("status", s, "狀態", TASK_STATUS_CONFIG[task.status].label, cfg.label); stopEditing() }}
                             className="px-2 py-0.5 rounded-full text-xs font-medium"
                             style={{ color: cfg.color, backgroundColor: cfg.bg, outline: task.status === s ? `2px solid ${cfg.color}` : "none", outlineOffset: "2px" }}>
                             {cfg.label}
@@ -344,7 +338,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                     const due = new Date(task.dueDate); due.setHours(0,0,0,0)
                     const diff = Math.ceil((due.getTime() - now.getTime()) / 86400000)
                     const label = diff < 0 ? "Overdue" : diff === 0 ? "Due today" : `${diff}d left`
-                    const color = diff <= 0 ? "#EF4444" : diff <= 3 ? BRAND : "#6B7280"
+                    const color = diff <= 0 ? "#CC6161" : diff <= 3 ? BRAND : "#6B7280"
                     return <p className="text-sm font-medium" style={{ color }}>{label}</p>
                   })() : <span className="text-muted-foreground">—</span>}
                 </div>
