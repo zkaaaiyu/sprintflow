@@ -1,6 +1,8 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useSprints, type SprintStatus } from "@/hooks/useSprints"
+import { SPRINT_STATUS_CONFIG } from "@/lib/sprintStatus"
+import { BRAND } from "@/lib/colors"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,12 +15,7 @@ import {
 import { Calendar, ChevronRight } from "lucide-react"
 import { toast } from "sonner"
 
-const STATUS_CONFIG: Record<SprintStatus, { label: string; color: string; bg: string }> = {
-  planning:  { label: "Planning",  color: "#6B7280", bg: "#F3F4F6" },
-  active:    { label: "Active",    color: "#F97316", bg: "#FFF7ED" },
-  completed: { label: "Completed", color: "#10B981", bg: "#ECFDF5" },
-}
-
+//日期格式化
 function formatDate(date: Date | null) {
   if (!date) return "—"
   return date.toLocaleDateString("zh-TW", { month: "short", day: "numeric", year: "numeric" })
@@ -35,6 +32,7 @@ export default function SprintsTab({
 }) {
   const navigate = useNavigate()
   const { sprints, loading, createSprint } = useSprints(projectId)
+  //定義新建sprint相關state
   const [name, setName] = useState("")
   const [goal, setGoal] = useState("")
   const [startDate, setStartDate] = useState("")
@@ -71,21 +69,21 @@ export default function SprintsTab({
 
               <div className="space-y-4">
                 {sprints.map((sprint) => {
-                  const cfg = STATUS_CONFIG[sprint.status]
+                  const cfg = SPRINT_STATUS_CONFIG[sprint.status]
                   const isActive = sprint.status === "active"
                   return (
                     <div key={sprint.id} className="flex items-center gap-4">
                       {/* Timeline 圓點 */}
                       <div
                         className="relative z-10 w-3 h-3 rounded-full shrink-0"
-                        style={{ backgroundColor: isActive ? "#F97316" : "#D1D5DB" }}
+                        style={{ backgroundColor: isActive ? BRAND : "#D1D5DB" }}
                       />
 
                       {/* Sprint 卡片 */}
                       <div
                         onClick={() => navigate(`/projects/${projectId}/sprints/${sprint.id}`)}
                         className={`flex-1 flex items-center gap-4 p-4 rounded-xl border cursor-pointer hover:shadow-sm transition-all ${
-                          isActive ? "border-orange-200 bg-orange-50/50 dark:bg-[#F97316]/5" : "border-border bg-background"
+                          isActive ? "border-orange-200 bg-orange-50/50 dark:bg-brand/5" : "border-border bg-background"
                         }`}
                       >
                         <div className="flex-1 min-w-0">
@@ -169,7 +167,7 @@ export default function SprintsTab({
             <Button
               onClick={handleCreate}
               disabled={submitting}
-              className="bg-[#F97316] hover:bg-[#ea6c0a] text-white rounded-full px-6"
+              className="bg-brand hover:bg-brand-hover text-white rounded-full px-6"
             >
               {submitting ? "Creating..." : "Create"}
             </Button>

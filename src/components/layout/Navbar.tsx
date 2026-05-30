@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { Search, Bell, LogOut, Moon, Sun, ChevronLeft, ChevronRight } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
+import { BRAND } from "@/lib/colors"
 import { useWorkspace } from "@/hooks/useWorkspace"
 import {
   DropdownMenu,
@@ -157,7 +158,7 @@ export default function Navbar() {
               <button
                 onClick={() => setDark((d) => !d)}
                 className={`flex items-center w-9 h-5 rounded-full p-0.5 transition-colors shrink-0 focus:outline-none ${
-                  dark ? "bg-[#F97316]" : "bg-gray-300"
+                  dark ? "bg-brand" : "bg-gray-300"
                 }`}
               >
                 <span

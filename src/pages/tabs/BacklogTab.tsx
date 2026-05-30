@@ -1,5 +1,7 @@
 import { useState } from "react"
 import { useTasks, type Task, type Priority, type StoryPoints } from "@/hooks/useTasks"
+import { PRIORITY_CONFIG } from "@/lib/priority"
+import { BRAND } from "@/lib/colors"
 import { useMembers, type UserProfile } from "@/hooks/useMembers"
 import {
   Dialog,
@@ -16,15 +18,9 @@ import TaskDetailModal from "@/components/TaskDetailModal"
 
 type SortBy = "priority" | "createdAt" | "dueDate" | "storyPoints"
 
-const PRIORITY_CONFIG = {
-  low:    { label: "Low",    color: "#6B7280", bg: "#F3F4F6" },
-  medium: { label: "Medium", color: "#3B82F6", bg: "#EFF6FF" },
-  high:   { label: "High",   color: "#F97316", bg: "#FFF7ED" },
-  urgent: { label: "Urgent", color: "#EF4444", bg: "#FEF2F2" },
-}
-
 const PRIORITY_ORDER: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 }
 
+// 計算剩餘天數 函數
 function getDaysRemaining(dueDate: Date): { label: string; color: string } {
   const now = new Date()
   now.setHours(0, 0, 0, 0)
@@ -33,10 +29,10 @@ function getDaysRemaining(dueDate: Date): { label: string; color: string } {
   const diff = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
   if (diff < 0)   return { label: "Overdue",       color: "#EF4444" }
   if (diff === 0) return { label: "Due today",     color: "#EF4444" }
-  if (diff <= 3)  return { label: `${diff}d left`, color: "#F97316" }
+  if (diff <= 3)  return { label: `${diff}d left`, color: BRAND }
   return                 { label: `${diff}d left`, color: "#6B7280" }
 }
-
+// 頭貼渲染 沒照片用名字縮寫
 function MemberAvatar({ user, size = "sm" }: { user: UserProfile; size?: "sm" | "md" }) {
   const sz = size === "sm" ? "w-6 h-6 text-[10px]" : "w-8 h-8 text-xs"
   const initials = user.displayName
@@ -60,6 +56,7 @@ function MemberAvatar({ user, size = "sm" }: { user: UserProfile; size?: "sm" | 
   )
 }
 
+//任務指派選單
 function AssigneePicker({
   members,
   value,
@@ -69,7 +66,7 @@ function AssigneePicker({
   value: string | null
   onChange: (uid: string | null) => void
 }) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false)  
   const selected = members.find((m) => m.uid === value)
 
   return (
@@ -103,7 +100,7 @@ function AssigneePicker({
             <button
               key={m.uid}
               type="button"
-              onClick={() => { onChange(m.uid); setOpen(false) }}
+              onClick={() => { onChange(m.uid); setOpen(false) }} //點擊後修改m.uid 把卡片開關關掉
               className="w-full px-3 py-2.5 flex items-center gap-2 text-sm hover:bg-accent"
             >
               <MemberAvatar user={m} />
@@ -115,9 +112,9 @@ function AssigneePicker({
     </div>
   )
 }
-
+//任務卡片渲染
 function TaskCard({ task, assignee }: { task: Task; assignee?: UserProfile }) {
-  const p = PRIORITY_CONFIG[task.priority]
+  const p = PRIORITY_CONFIG[task.priority] 
   const isOverdue = task.dueDate && new Date() > task.dueDate
 
   return (
@@ -176,13 +173,13 @@ export default function BacklogTab({
   const [submitting, setSubmitting] = useState(false)
 
   const backlogTasks = [...tasks.filter((t) => t.sprintId === null)].sort((a, b) => {
-    switch (sortBy) {
+    switch (sortBy) {     // 用 swich case 處理不同情況的排序問題
       case "priority":
         return PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]
-      case "createdAt": {
-        const aT = a.createdAt?.getTime() ?? 0
+      case "createdAt": { 
+        const aT = a.createdAt?.getTime() ?? 0 
         const bT = b.createdAt?.getTime() ?? 0
-        return bT - aT
+        return bT - aT //比較兩兩卡片建立時間做排序
       }
       case "dueDate": {
         if (!a.dueDate && !b.dueDate) return 0
@@ -197,6 +194,7 @@ export default function BacklogTab({
     }
   })
 
+  //處理創建task
   const handleCreate = async () => {
     if (!title.trim()) { toast.error("Please enter a task title"); return }
     setSubmitting(true)
@@ -308,7 +306,7 @@ export default function BacklogTab({
                     onClick={() => setStoryPoints(storyPoints === sp ? null : sp)}
                     className="w-10 h-10 rounded-lg text-sm font-semibold transition-all"
                     style={{
-                      backgroundColor: storyPoints === sp ? "#F97316" : "#F3F4F6",
+                      backgroundColor: storyPoints === sp ? BRAND : "#F3F4F6",
                       color: storyPoints === sp ? "white" : "#6B7280",
                     }}
                   >
@@ -336,7 +334,7 @@ export default function BacklogTab({
             <Button
               onClick={handleCreate}
               disabled={submitting}
-              className="bg-[#F97316] hover:bg-[#ea6c0a] text-white rounded-full px-6"
+              className="bg-brand hover:bg-brand-hover text-white rounded-full px-6"
             >
               {submitting ? "Creating..." : "Create"}
             </Button>

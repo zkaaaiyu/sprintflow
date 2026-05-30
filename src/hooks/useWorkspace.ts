@@ -14,8 +14,9 @@ import {
 import { db } from "@/lib/firebase"
 import { useAuth } from "@/contexts/AuthContext"
 
+// 定義member型別
 export type ProjectRole = "owner" | "member"
-
+// 定義project型別
 export type Project = {
   id: string
   name: string
@@ -30,7 +31,7 @@ export type Project = {
   updatedAt: Date | null
 }
 
-// 產生隨機邀請碼，例如 "a3f9kx"
+// 處理隨機邀請碼生成
 const generateInviteCode = () => Math.random().toString(36).slice(2, 8)
 
 
@@ -44,14 +45,14 @@ export function useWorkspace() {
   useEffect(() => {
     if (!user) return
     fetchProjects()
-  }, [user])
+  }, [user]) //如果登入狀態改變就要重撈
 
   // 撈資料
   const fetchProjects = async () => {
     if (!user) return
     const q = query(
       collection(db, "projects"),
-      where("memberIds", "array-contains", user.uid)
+      where("memberIds", "array-contains", user.uid) //array-contains 是資料庫的一個欄位 -> 誰在這個專案裡
     )
     const snap = await getDocs(q)
     const list = snap.docs.map((d) => {
@@ -59,7 +60,7 @@ export function useWorkspace() {
       const rawJoinedAt = data.joinedAt ?? {}
       const joinedAt: Record<string, Date | null> = {}
       for (const uid in rawJoinedAt) {
-        joinedAt[uid] = rawJoinedAt[uid]?.toDate() ?? null
+        joinedAt[uid] = rawJoinedAt[uid]?.toDate() ?? null //用todate把firebase的時間轉換成js看得懂的時間格式 
       }
       return {
         id: d.id,
@@ -81,7 +82,7 @@ export function useWorkspace() {
     const data = {
       name,
       description,
-      color,
+      color,  
       ownerId: user.uid,
       memberIds: [user.uid],
       roles: { [user.uid]: "owner" },
@@ -92,8 +93,8 @@ export function useWorkspace() {
     }
     const newDoc = await addDoc(collection(db, "projects"), data) //addDoc -> firebase提供新增資料的方法
 
+    const now2 = new Date() //樂觀更新時間
     //寫一個newproject把剛給firebase的資料直接塞給渲染project的陣列就不用等獲取會卡（樂觀更新）
-    const now2 = new Date()
     const newProject: Project = {
       id: newDoc.id,
       name,
@@ -118,21 +119,21 @@ export function useWorkspace() {
 
   // 編輯專案名稱、描述、顏色
   const updateProject = async (projectId: string, updates: { name?: string; description?: string; color?: string }) => {
-    await updateDoc(doc(db, "projects", projectId), { ...updates, updatedAt: serverTimestamp() })
-    setProjects((prev) => prev.map((p) => (p.id === projectId ? { ...p, ...updates } : p)))
+    await updateDoc(doc(db, "projects", projectId), { ...updates, updatedAt: serverTimestamp() }) //資料庫更新
+    setProjects((prev) => prev.map((p) => (p.id === projectId ? { ...p, ...updates } : p))) //三元運算＋渲染列表更新         
   }
-
+ 
   // Owner 移除成員
   const removeMember = async (projectId: string, uid: string) => {
     const project = projects.find((p) => p.id === projectId)
     if (!project) return
-    const newMemberIds = project.memberIds.filter((id) => id !== uid)
-    const newRoles = { ...project.roles }
-    delete newRoles[uid]
+    const newMemberIds = project.memberIds.filter((id) => id !== uid) //用filter篩掉要踢除的人
+    const newRoles = { ...project.roles } 
+    delete newRoles[uid] // 刪除這個人的角色
     const newJoinedAt = { ...project.joinedAt }
-    delete newJoinedAt[uid]
-    await updateDoc(doc(db, "projects", projectId), { memberIds: newMemberIds, roles: newRoles, joinedAt: newJoinedAt, updatedAt: serverTimestamp() })
-    setProjects((prev) => prev.map((p) => p.id === projectId ? { ...p, memberIds: newMemberIds, roles: newRoles, joinedAt: newJoinedAt } : p))
+    delete newJoinedAt[uid] //刪除這個人的加入時間
+    await updateDoc(doc(db, "projects", projectId), { memberIds: newMemberIds, roles: newRoles, joinedAt: newJoinedAt, updatedAt: serverTimestamp() }) //更新資料庫
+    setProjects((prev) => prev.map((p) => p.id === projectId ? { ...p, memberIds: newMemberIds, roles: newRoles, joinedAt: newJoinedAt } : p)) //更新渲染列表
   }
 
   // 成員自行離開專案
@@ -145,7 +146,8 @@ export function useWorkspace() {
     delete newRoles[user.uid]
     const newJoinedAt = { ...project.joinedAt }
     delete newJoinedAt[user.uid]
-    await updateDoc(doc(db, "projects", projectId), { memberIds: newMemberIds, roles: newRoles, joinedAt: newJoinedAt, updatedAt: serverTimestamp() })
+    //workspace 頁面該 project 卡片會消失
+    await updateDoc(doc(db, "projects", projectId), { memberIds: newMemberIds, roles: newRoles, joinedAt: newJoinedAt, updatedAt: serverTimestamp() }) 
     setProjects((prev) => prev.filter((p) => p.id !== projectId))
   }
 
@@ -162,18 +164,18 @@ export function useWorkspace() {
     if (!user) return null
     const q = query(collection(db, "projects"), where("inviteCode", "==", inviteCode.trim().toLowerCase()))
     const snap = await getDocs(q)
-    if (snap.empty) return null
+    if (snap.empty) return null 
 
     const projectDoc = snap.docs[0]
-    const data = projectDoc.data()
+    const data = projectDoc.data() //拆出專案 
 
     if (data.memberIds.includes(user.uid)) return "already"
 
     const now = serverTimestamp()
     await updateDoc(doc(db, "projects", projectDoc.id), {
-      memberIds: [...data.memberIds, user.uid],
-      roles: { ...data.roles, [user.uid]: "member" },
-      joinedAt: { ...(data.joinedAt ?? {}), [user.uid]: now },
+      memberIds: [...data.memberIds, user.uid], //更新成員
+      roles: { ...data.roles, [user.uid]: "member" }, //更新角色
+      joinedAt: { ...(data.joinedAt ?? {}), [user.uid]: now }, //更新加入時間
       updatedAt: now,
     })
 
@@ -191,7 +193,7 @@ export function useWorkspace() {
       createdAt: data.createdAt?.toDate() ?? null,
       updatedAt: nowDate,
     }
-    setProjects((prev) => [...prev, newProject])
+    setProjects((prev) => [...prev, newProject]) //更新渲染列表
     return projectDoc.id
   }
 

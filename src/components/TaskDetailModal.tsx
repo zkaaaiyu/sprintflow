@@ -6,6 +6,8 @@ import { useActivities } from "@/hooks/useActivities"
 import { useComments } from "@/hooks/useComments"
 import { useMembers, type UserProfile } from "@/hooks/useMembers"
 import type { Priority, TaskStatus, StoryPoints } from "@/hooks/useTasks"
+import { PRIORITY_CONFIG } from "@/lib/priority"
+import { BRAND } from "@/lib/colors"
 import { Pencil, SendHorizontal, Trash2 } from "lucide-react"
 
 // 時間格式化工具 
@@ -45,13 +47,6 @@ function ValueBadge({ field, value }: { field: string; value: string }) {
   }
   // 如果是一般的文字變更 就給一個簡單的灰色底色
   return <span className="text-xs bg-muted px-1.5 py-0.5 rounded font-medium">{value}</span>
-}
-//定義優先級標籤樣式表
-const PRIORITY_CONFIG = {
-  low:    { label: "Low",    color: "#6B7280", bg: "#F3F4F6" },
-  medium: { label: "Medium", color: "#3B82F6", bg: "#EFF6FF" },
-  high:   { label: "High",   color: "#F97316", bg: "#FFF7ED" },
-  urgent: { label: "Urgent", color: "#EF4444", bg: "#FEF2F2" },
 }
 //定義狀態標籤樣式表
 const STATUS_CONFIG = {
@@ -277,7 +272,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                         <button key={sp}
                           onClick={async () => { const newSP = task.storyPoints === sp ? null : sp; await updateField("storyPoints", newSP, "故事點數", String(task.storyPoints ?? "—"), String(newSP ?? "—")); stopEditing() }}
                           className="w-7 h-7 rounded-lg text-xs font-semibold transition-all"
-                          style={{ backgroundColor: task.storyPoints === sp ? "#F97316" : "#F3F4F6", color: task.storyPoints === sp ? "white" : "#6B7280" }}>
+                          style={{ backgroundColor: task.storyPoints === sp ? BRAND : "#F3F4F6", color: task.storyPoints === sp ? "white" : "#6B7280" }}>
                           {sp}
                         </button>
                       ))}
@@ -349,7 +344,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                     const due = new Date(task.dueDate); due.setHours(0,0,0,0)
                     const diff = Math.ceil((due.getTime() - now.getTime()) / 86400000)
                     const label = diff < 0 ? "Overdue" : diff === 0 ? "Due today" : `${diff}d left`
-                    const color = diff <= 0 ? "#EF4444" : diff <= 3 ? "#F97316" : "#6B7280"
+                    const color = diff <= 0 ? "#EF4444" : diff <= 3 ? BRAND : "#6B7280"
                     return <p className="text-sm font-medium" style={{ color }}>{label}</p>
                   })() : <span className="text-muted-foreground">—</span>}
                 </div>
@@ -423,7 +418,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                         setCommentText("")
                         setSubmittingComment(false)
                       }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-[#F97316] disabled:opacity-30 transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-brand disabled:opacity-30 transition-colors"
                     >
                       <SendHorizontal className="w-4 h-4" />
                     </button>

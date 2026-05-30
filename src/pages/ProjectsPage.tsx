@@ -359,7 +359,7 @@ const confirmDelete = async () => {
           <Button
             onClick={handleCreate}
             disabled={submitting}
-            className="bg-[#F97316] hover:bg-[#ea6c0a] text-white rounded-full px-6"
+            className="bg-brand hover:bg-brand-hover text-white rounded-full px-6"
           >
             {submitting ? "Creating..." : "Create"}
           </Button>
@@ -386,7 +386,7 @@ const confirmDelete = async () => {
           <Button
             onClick={handleJoin}
             disabled={joining}
-            className="bg-[#F97316] hover:bg-[#ea6c0a] text-white rounded-full px-6"
+            className="bg-brand hover:bg-brand-hover text-white rounded-full px-6"
           >
             {joining ? "Joining..." : "Join"}
           </Button>
@@ -396,7 +396,7 @@ const confirmDelete = async () => {
   </DialogContent>
 
   <DialogTrigger asChild>
-    <button className="fixed bottom-8 right-8 w-14 h-14 rounded-full bg-[#F97316] hover:bg-[#ea6c0a] text-white shadow-lg hover:shadow-xl transition-all flex items-center justify-center z-40">
+    <button className="fixed bottom-8 right-8 w-14 h-14 rounded-full bg-brand hover:bg-brand-hover text-white shadow-lg hover:shadow-xl transition-all flex items-center justify-center z-40">
       <Plus className="w-6 h-6" />
     </button>
   </DialogTrigger>

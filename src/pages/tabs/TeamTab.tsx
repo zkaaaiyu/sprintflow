@@ -77,7 +77,7 @@ export default function TeamTab({ project, onRemoveMember }: {
               {/* Role */}
               <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium w-fit ${
                 isMemberOwner
-                  ? "bg-orange-100 dark:bg-[#F97316]/15 text-[#F97316]"
+                  ? "bg-orange-100 dark:bg-brand/15 text-brand"
                   : "bg-muted text-muted-foreground"
               }`}>
                 {isMemberOwner ? "Owner" : "Member"}

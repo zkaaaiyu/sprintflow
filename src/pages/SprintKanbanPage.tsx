@@ -24,6 +24,9 @@ import { CSS } from "@dnd-kit/utilities"
 //引入 前面寫好的hook
 import { useSprint } from "@/hooks/useSprint"
 import { useTasks, type TaskStatus, type Task, type Priority, type StoryPoints } from "@/hooks/useTasks"
+import { PRIORITY_CONFIG } from "@/lib/priority"
+import { SPRINT_STATUS_CONFIG } from "@/lib/sprintStatus"
+import { BRAND } from "@/lib/colors"
 import { useWorkspace } from "@/hooks/useWorkspace"
 import { useMembers, type UserProfile } from "@/hooks/useMembers"
 import type { SprintStatus } from "@/hooks/useSprints"
@@ -55,21 +58,6 @@ const COLUMNS: { id: TaskStatus; label: string }[] = [
   { id: "done",        label: "Done" },
 ]
 
-// Sprint 狀態顏色設定
-const STATUS_CONFIG: Record<SprintStatus, { label: string; color: string; bg: string }> = {
-  planning:  { label: "Planning",  color: "#6B7280", bg: "#F3F4F6" },
-  active:    { label: "Active",    color: "#F97316", bg: "#FFF7ED" },
-  completed: { label: "Completed", color: "#10B981", bg: "#ECFDF5" },
-}
-
-// 優先級顏色設定
-const PRIORITY_CONFIG = {
-  low:    { color: "#6B7280", bg: "#F3F4F6" },
-  medium: { color: "#3B82F6", bg: "#EFF6FF" },
-  high:   { color: "#F97316", bg: "#FFF7ED" },
-  urgent: { color: "#EF4444", bg: "#FEF2F2" },
-}
-
 // 日期格式化
 function formatDateRange(start: Date | null, end: Date | null) {
   if (!start || !end) return "—"
@@ -84,7 +72,7 @@ function getDaysRemaining(dueDate: Date): { label: string; color: string } {
   const diff = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
   if (diff < 0)   return { label: "Overdue",       color: "#EF4444" }
   if (diff === 0) return { label: "Due today",     color: "#EF4444" }
-  if (diff <= 3)  return { label: `${diff}d left`, color: "#F97316" }
+  if (diff <= 3)  return { label: `${diff}d left`, color: BRAND }
   return               { label: `${diff}d left`, color: "#6B7280" }
 }
 
@@ -505,11 +493,11 @@ export default function SprintKanbanPage() {
         <span
           className="text-xs px-2.5 py-1 rounded-full font-medium whitespace-nowrap"
           style={{
-            color: STATUS_CONFIG[sprint.status].color,
-            backgroundColor: STATUS_CONFIG[sprint.status].bg,
+            color: SPRINT_STATUS_CONFIG[sprint.status].color,
+            backgroundColor: SPRINT_STATUS_CONFIG[sprint.status].bg,
           }}
         >
-          {STATUS_CONFIG[sprint.status].label}
+          {SPRINT_STATUS_CONFIG[sprint.status].label}
         </span>
 
         {/* 日期 + 目標 */}
@@ -546,7 +534,7 @@ export default function SprintKanbanPage() {
                 onClick={() => toggleMemberFilter(m.uid)} // //調用 toggleMemberFilter函數 把uid傳過去 處理頭像選擇 ＋ 篩選問題
                 className={`rounded-full transition-all -ml-1.5 first:ml-0 ${
                   filterMemberIds.includes(m.uid)
-                    ? "ring-2 ring-[#F97316] ring-offset-1 z-10"
+                    ? "ring-2 ring-brand ring-offset-1 z-10"
                     : "opacity-70 hover:opacity-100"
                 }`}
                 style={{ zIndex: i }}
@@ -671,7 +659,7 @@ export default function SprintKanbanPage() {
                       )}
                     </div>
 
-                    {sprint.status == "completed" && (
+                    {sprint.status !== "completed" && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button className="w-6 h-6 rounded-md hover:bg-muted flex items-center justify-center transition-colors">
@@ -753,7 +741,7 @@ export default function SprintKanbanPage() {
             <Button
               onClick={handleComplete} 
               disabled={actionLoading} //lodaing 的時候禁用按鈕 
-              className="bg-[#F97316] hover:bg-[#ea6c0a] text-white rounded-full px-6"
+              className="bg-brand hover:bg-brand-hover text-white rounded-full px-6"
             >
               {actionLoading ? "處理中..." : "確定結束"}
             </Button>
@@ -833,7 +821,7 @@ export default function SprintKanbanPage() {
             <Button
               onClick={handleUpdate}
               disabled={actionLoading}
-              className="bg-[#F97316] hover:bg-[#ea6c0a] text-white rounded-full px-6"
+              className="bg-brand hover:bg-brand-hover text-white rounded-full px-6"
             >
               {actionLoading ? "儲存中..." : "儲存"}
             </Button>
@@ -939,7 +927,7 @@ export default function SprintKanbanPage() {
                     onClick={() => setNewStoryPoints(newStoryPoints === sp ? null : sp)}
                     className="w-10 h-10 rounded-lg text-sm font-semibold transition-all"
                     style={{
-                      backgroundColor: newStoryPoints === sp ? "#F97316" : "#F3F4F6",
+                      backgroundColor: newStoryPoints === sp ? BRAND : "#F3F4F6",
                       color: newStoryPoints === sp ? "white" : "#6B7280",
                     }}
                   >
@@ -967,7 +955,7 @@ export default function SprintKanbanPage() {
             <Button
               onClick={handleCreateTask}
               disabled={creating}
-              className="bg-[#F97316] hover:bg-[#ea6c0a] text-white rounded-full px-6"
+              className="bg-brand hover:bg-brand-hover text-white rounded-full px-6"
             >
               {creating ? "Creating..." : "Create"}
             </Button>

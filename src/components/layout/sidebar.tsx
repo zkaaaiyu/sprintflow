@@ -11,6 +11,7 @@ import {
   Layers,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { BRAND } from "@/lib/colors"
 import { useSidebar } from "@/contexts/SidebarContext"
 import { useWorkspace } from "@/hooks/useWorkspace"
 import { useSprints } from "@/hooks/useSprints"
@@ -47,8 +48,8 @@ function ProjectNavItem({ project }: { project: Project }) {
           cn(
             "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors",
             isActive
-              ? "bg-orange-100 dark:bg-[#F97316]/15 text-[#F97316]"
-              : "text-gray-600 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-[#F97316]/10 hover:text-[#F97316]"
+              ? "bg-orange-100 dark:bg-brand/15 text-brand"
+              : "text-gray-600 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-brand/10 hover:text-brand"
           )
         }
       >
@@ -63,7 +64,7 @@ function ProjectNavItem({ project }: { project: Project }) {
     <div>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-[#F97316]/10 hover:text-[#F97316] transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-brand/10 hover:text-brand transition-colors"
       >
         <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: project.color }} />
         <span className="flex-1 text-left truncate">{project.name}</span>
@@ -80,12 +81,12 @@ function ProjectNavItem({ project }: { project: Project }) {
             className={({ isActive }) =>
               cn(
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs transition-colors",
-                isActive ? "bg-orange-50 dark:bg-[#F97316]/10 text-[#F97316]" : "text-gray-500 dark:text-gray-400 hover:bg-orange-50 dark:hover:bg-[#F97316]/10 hover:text-[#F97316]"
+                isActive ? "bg-orange-50 dark:bg-brand/10 text-brand" : "text-gray-500 dark:text-gray-400 hover:bg-orange-50 dark:hover:bg-brand/10 hover:text-brand"
               )
             }
           >
-            <Zap className="w-3 h-3 text-[#F97316] shrink-0" />
-            <span className="text-[#F97316] font-medium truncate">{activeSprint.name}</span>
+            <Zap className="w-3 h-3 text-brand shrink-0" />
+            <span className="text-brand font-medium truncate">{activeSprint.name}</span>
           </NavLink>
         </div>
       )}
@@ -127,11 +128,11 @@ export default function Sidebar() {
         {/* Logo + 收縮按鈕 */}
         <div className="h-16 flex items-center px-3 border-b border-border shrink-0">
           {!collapsed && (
-            <span className="text-lg font-bold text-[#F97316] flex-1 truncate">SprintFlow</span>
+            <span className="text-lg font-bold text-brand flex-1 truncate">SprintFlow</span>
           )}
           <button
             onClick={toggle}
-            className="w-8 h-8 rounded-md hover:bg-orange-100 dark:hover:bg-[#F97316]/15 flex items-center justify-center transition-colors shrink-0"
+            className="w-8 h-8 rounded-md hover:bg-orange-100 dark:hover:bg-brand/15 flex items-center justify-center transition-colors shrink-0"
           >
             {collapsed
               ? <ChevronRight className="w-4 h-4 text-gray-500 dark:text-gray-400" />
@@ -152,8 +153,8 @@ export default function Sidebar() {
                 "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
                 collapsed && "justify-center px-0",
                 isActive
-                  ? "bg-orange-100 dark:bg-[#F97316]/15 text-[#F97316]"
-                  : "text-gray-600 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-[#F97316]/10 hover:text-[#F97316]"
+                  ? "bg-orange-100 dark:bg-brand/15 text-brand"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-brand/10 hover:text-brand"
               )
             }
           >
@@ -164,7 +165,7 @@ export default function Sidebar() {
           {/* Workspace：左側點擊導航到 /projects，右側 chevron 收合 project 列表 */}
           <div
             className={cn(
-              "flex items-center rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-[#F97316]/10 hover:text-[#F97316] transition-colors",
+              "flex items-center rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-brand/10 hover:text-brand transition-colors",
               collapsed && "justify-center"
             )}
           >
@@ -184,7 +185,7 @@ export default function Sidebar() {
             {!collapsed && (
               <button
                 onClick={() => setWorkspaceOpen((o) => !o)}
-                className="pr-3 py-2 text-muted-foreground hover:text-[#F97316]"
+                className="pr-3 py-2 text-muted-foreground hover:text-brand"
               >
                 {workspaceOpen
                   ? <ChevronDown className="w-3.5 h-3.5" />
@@ -213,7 +214,7 @@ export default function Sidebar() {
             onClick={() => setShowNewProject(true)}
             title={collapsed ? "新增專案" : undefined}
             className={cn(
-              "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-[#F97316]/10 hover:text-[#F97316] transition-colors",
+              "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-brand/10 hover:text-brand transition-colors",
               collapsed && "justify-center px-0"
             )}
           >
@@ -224,7 +225,7 @@ export default function Sidebar() {
           <button
             title={collapsed ? "設定" : undefined}
             className={cn(
-              "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-[#F97316]/10 hover:text-[#F97316] transition-colors",
+              "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-brand/10 hover:text-brand transition-colors",
               collapsed && "justify-center px-0"
             )}
           >
@@ -283,7 +284,7 @@ export default function Sidebar() {
             <Button
               onClick={handleCreate}
               disabled={creating || !newName.trim()}
-              className="bg-[#F97316] hover:bg-[#ea6c0a] text-white rounded-full px-6"
+              className="bg-brand hover:bg-brand-hover text-white rounded-full px-6"
             >
               {creating ? "建立中..." : "建立"}
             </Button>

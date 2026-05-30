@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom"
 import { useState } from "react"
 import { useWorkspace } from "@/hooks/useWorkspace"
+import { BRAND } from "@/lib/colors"
 import { useSprints } from "@/hooks/useSprints"
 import { useTasks } from "@/hooks/useTasks"
 import { useAuth } from "@/contexts/AuthContext"
@@ -47,12 +48,13 @@ const SORT_OPTIONS: { value: SortBy; label: string }[] = [
   { value: "storyPoints", label: "Story Points" },
 ]
 
+//創建專案的自定義顏色
 const COLOR_OPTIONS = [
   "#F97316", "#3B82F6", "#10B981", "#8B5CF6", "#EF4444", "#F59E0B", "#06B6D4", "#EC4899",
 ]
 
 export default function ProjectDetailPage() {
-  const { projectId } = useParams()
+  const { projectId } = useParams() //用useParams查網址上的查詢參數
   const navigate = useNavigate()
   const { user } = useAuth()
   const { projects, loading, updateProject, deleteProject, removeMember, leaveProject, regenerateInviteCode } = useWorkspace()
@@ -64,7 +66,7 @@ export default function ProjectDetailPage() {
   const [backlogCreateOpen, setBacklogCreateOpen] = useState(false)
   const [backlogSort, setBacklogSort] = useState<SortBy>("priority")
 
-  // [...] 選單相關狀態
+  // [...] 多功能選單相關狀態
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [leaveOpen, setLeaveOpen] = useState(false)
@@ -86,19 +88,20 @@ export default function ProjectDetailPage() {
 
   const isOwner = project.ownerId === user?.uid
 
-  // 計算 Stats（基於 active sprint 的 tasks）
-  const activeSprint = sprints.find((s) => s.status === "active")
-  const activeSprintTasks = tasks.filter((t) => t.sprintId === activeSprint?.id)
-  const doneTasks = activeSprintTasks.filter((t) => t.status === "done")
-  const completionRate = activeSprintTasks.length > 0
+  // sprint tab 上方模塊status 計算＋抓取
+  const activeSprint = sprints.find((s) => s.status === "active") //用find 找出 active 的 sprint  
+  const activeSprintTasks = tasks.filter((t) => t.sprintId === activeSprint?.id) //用filter篩出專案裡的任務
+  const doneTasks = activeSprintTasks.filter((t) => t.status === "done")//用filter篩出專案裡已完成任務
+  const completionRate = activeSprintTasks.length > 0 //計算趴數
     ? Math.round((doneTasks.length / activeSprintTasks.length) * 100)
     : 0
-  const totalPoints = activeSprintTasks.reduce((sum, t) => sum + (t.storyPoints ?? 0), 0)
+  const totalPoints = activeSprintTasks.reduce((sum, t) => sum + (t.storyPoints ?? 0), 0) //計算ＳＰ
 
   // Backlog stats
   const backlogTasks = tasks.filter((t) => t.sprintId === null)
   const backlogTotalPoints = backlogTasks.reduce((sum, t) => sum + (t.storyPoints ?? 0), 0)
 
+  //編輯專案modal原始數據的回填
   const openEdit = () => {
     setEditName(project.name)
     setEditDesc(project.description)
@@ -106,6 +109,7 @@ export default function ProjectDetailPage() {
     setEditOpen(true)
   }
 
+  //處理儲存編輯＋調用updateProject更新資料庫
   const handleSaveEdit = async () => {
     if (!editName.trim()) { toast.error("請輸入專案名稱"); return }
     setSaving(true)
@@ -115,23 +119,25 @@ export default function ProjectDetailPage() {
     setSaving(false)
   }
 
+  //處理刪除project＋調用deleteProject更新資料庫
   const handleDelete = async () => {
     await deleteProject(project.id)
     toast.success(`已刪除「${project.name}」`)
     navigate("/projects")
   }
 
+  //處理自己退出 project＋調用leaveProject更新資料庫
   const handleLeave = async () => {
     await leaveProject(project.id)
     toast.success(`已離開「${project.name}」`)
     navigate("/projects")
   }
-
+  //調用regenerateInviteCode處理重新生成邀請碼
   const handleRegenerateCode = async () => {
     await regenerateInviteCode(project.id)
     toast.success("邀請碼已重新產生")
   }
-
+  //調用removeMember處理踢除 member
   const handleRemoveMember = async (uid: string) => {
     await removeMember(project.id, uid)
     toast.success("已移除成員")
@@ -170,7 +176,7 @@ export default function ProjectDetailPage() {
                   {SORT_OPTIONS.map((opt) => (
                     <DropdownMenuItem
                       key={opt.value}
-                      onClick={() => setBacklogSort(opt.value)}
+                      onClick={() => setBacklogSort(opt.value)} //更新BacklogSort的值為opt.value
                       className="cursor-pointer"
                     >
                       <Check className={cn("w-4 h-4 mr-2", backlogSort === opt.value ? "opacity-100" : "opacity-0")} />
@@ -181,7 +187,7 @@ export default function ProjectDetailPage() {
               </DropdownMenu>
               <button
                 onClick={() => setBacklogCreateOpen(true)}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium text-white bg-[#F97316] hover:bg-[#ea6c0a] transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium text-white bg-brand hover:bg-brand-hover transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" />
                 New Task
@@ -202,7 +208,7 @@ export default function ProjectDetailPage() {
                 <span className="font-mono font-bold text-sm">{project.inviteCode}</span>
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText(project.inviteCode)
+                    navigator.clipboard.writeText(project.inviteCode) //用writeText把邀請碼複製到用戶的剪貼板navigator.clipboard
                     toast.success("邀請碼已複製")
                   }}
                   className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground"
@@ -292,7 +298,7 @@ export default function ProjectDetailPage() {
                 <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden shrink-0">
                   <div
                     className="h-full rounded-full transition-all"
-                    style={{ width: `${completionRate}%`, backgroundColor: "#F97316" }}
+                    style={{ width: `${completionRate}%`, backgroundColor: BRAND }}
                   />
                 </div>
               </div>
@@ -305,7 +311,7 @@ export default function ProjectDetailPage() {
               {activeTab === "sprints" && (
                 <button
                   onClick={() => setCreateSprintOpen(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium text-white bg-[#F97316] hover:bg-[#ea6c0a] transition-colors"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium text-white bg-brand hover:bg-brand-hover transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Create Sprint
@@ -336,7 +342,7 @@ export default function ProjectDetailPage() {
             className={cn(
               "px-5 py-2 rounded-full text-sm font-medium transition-all",
               activeTab === tab
-                ? "bg-[#F97316] text-white shadow-sm"
+                ? "bg-brand text-white shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -392,7 +398,7 @@ export default function ProjectDetailPage() {
             <Button
               onClick={handleSaveEdit}
               disabled={saving}
-              className="bg-[#F97316] hover:bg-[#ea6c0a] text-white rounded-full px-6"
+              className="bg-brand hover:bg-brand-hover text-white rounded-full px-6"
             >
               {saving ? "儲存中..." : "儲存"}
             </Button>
