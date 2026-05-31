@@ -9,7 +9,15 @@ import type { Priority, TaskStatus, StoryPoints } from "@/hooks/useTasks"
 import { PRIORITY_CONFIG } from "@/lib/priority"
 import { TASK_STATUS_CONFIG } from "@/lib/taskStatus"
 import { BRAND } from "@/lib/colors"
-import { Pencil, SendHorizontal, Trash2 } from "lucide-react"
+import { Pencil, SendHorizontal, MoreHorizontal, Trash2 } from "lucide-react"
+import { doc, updateDoc, addDoc, collection, serverTimestamp } from "firebase/firestore"
+import { db } from "@/lib/firebase"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 // 時間格式化工具 
 function formatDateTime(date: Date | null): string {
@@ -92,6 +100,28 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
 
   const stopEditing = () => setEditingField(null)
 
+  const returnToBacklog = async () => {
+    const taskRef = doc(db, "projects", projectId, "tasks", taskId)
+    await updateDoc(taskRef, { sprintId: null, status: "todo" })
+    if (user) {
+      await addDoc(
+        collection(db, "projects", projectId, "tasks", taskId, "activities"),
+        {
+          type: "field_changed",
+          field: "sprintId",
+          label: "Sprint",
+          fromValue: "Sprint",
+          toValue: "Backlog",
+          changedBy: user.uid,
+          changedByName: user.displayName || user.email || "Someone",
+          changedByPhotoURL: user.photoURL ?? null,
+          createdAt: serverTimestamp(),
+        }
+      )
+    }
+    onClose()
+  }
+
   const assignee = task ? members.find((m) => m.uid === task.assigneeId) : undefined
   const priority = task ? PRIORITY_CONFIG[task.priority] : null
   const status   = task ? TASK_STATUS_CONFIG[task.status]     : null
@@ -142,27 +172,45 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                       onClick={() => { setEditTitle(task.title); setEditingField("title") }}
                     >
                       <h1 className="text-2xl font-bold leading-tight flex-1">{task.title}</h1>
-                      <Pencil className="w-4 h-4 opacity-0 group-hover:opacity-50 text-muted-foreground mt-1 shrink-0 transition-opacity" />
+                      <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-40 text-muted-foreground mt-1.5 shrink-0 transition-opacity" />
                     </div>
 
-                    {/* 刪除按鈕 */}
+                    {/* 右側按鈕區 */}
                     {showDeleteConfirm ? (
                       <div className="flex items-center gap-2 shrink-0 mt-1">
-                        <span className="text-xs text-destructive font-medium">確定刪除？</span>
+                        <span className="text-xs text-destructive font-medium">Delete task?</span>
                         <button
                           onClick={async () => { await deleteTask(); onClose() }}
                           className="text-xs font-semibold text-destructive hover:underline"
                         >
-                          確定
+                          Confirm
                         </button>
                         <button
                           onClick={() => setShowDeleteConfirm(false)}
                           className="text-xs text-muted-foreground hover:underline"
                         >
-                          取消
+                          Cancel
                         </button>
                       </div>
+                    ) : task.sprintId !== null ? (
+                      // Kanban task：多功能 dropdown
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="text-muted-foreground hover:text-foreground transition-colors shrink-0 mt-1">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-44">
+                          <DropdownMenuItem onClick={returnToBacklog}>
+                            Return to Backlog
+                          </DropdownMenuItem>
+                          <DropdownMenuItem variant="destructive" onClick={() => setShowDeleteConfirm(true)}>
+                            Delete Task
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     ) : (
+                      // Backlog task：只有垃圾桶，hover 才顯示
                       <button
                         onClick={() => setShowDeleteConfirm(true)}
                         className="opacity-0 group-hover:opacity-40 hover:!opacity-100 text-muted-foreground hover:text-destructive transition-all shrink-0 mt-1"

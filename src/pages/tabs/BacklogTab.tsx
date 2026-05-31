@@ -248,93 +248,107 @@ export default function BacklogTab({
 
       {/* Create Task Dialog — 由 ProjectDetailPage 控制開關 */}
       <Dialog open={createOpen} onOpenChange={onCreateOpenChange}>
-        <DialogContent className="sm:max-w-md rounded-2xl p-8">
+        <DialogContent className="sm:max-w-2xl rounded-2xl p-8">
           <DialogHeader className="mb-6">
-            <DialogTitle className="text-2xl font-bold">Create Task</DialogTitle>
+            <DialogTitle className="text-xl font-bold">Create Task</DialogTitle>
           </DialogHeader>
-          <div className="space-y-5">
-            <div className="space-y-2">
-              <Label className="font-semibold text-sm">Title</Label>
-              <Input
-                placeholder="e.g. Design login page"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="rounded-xl bg-muted border-0 h-11 focus-visible:ring-1"
-                autoFocus
-              />
+
+          <div className="grid grid-cols-2 gap-8">
+            {/* 左欄：標題 + 描述 */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Title</Label>
+                <Input
+                  placeholder="e.g. Design login page"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="rounded-full bg-muted border-0 h-11 focus-visible:ring-1 px-4"
+                  autoFocus
+                />
+              </div>
+              <div className="space-y-2 flex flex-col flex-1">
+                <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Description (Optional)</Label>
+                <textarea
+                  placeholder="What needs to be done..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full rounded-2xl bg-muted border-0 p-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+                  style={{ height: "168px" }}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label className="font-semibold text-sm">Description (optional)</Label>
-              <Input
-                placeholder="What needs to be done..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="rounded-xl bg-muted border-0 h-11 focus-visible:ring-1"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="font-semibold text-sm">Priority</Label>
-              <div className="flex gap-2">
-                {(["low", "medium", "high", "urgent"] as Priority[]).map((p) => {
-                  const cfg = PRIORITY_CONFIG[p]
-                  return (
+
+            {/* 右欄：SP → Priority → Assignee + Due Date */}
+            <div className="flex flex-col justify-between">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Story Points</Label>
+                <div className="flex gap-2">
+                  {([1, 2, 3, 5, 8, 13] as StoryPoints[]).map((sp) => (
                     <button
-                      key={p}
+                      key={sp}
                       type="button"
-                      onClick={() => setPriority(p)}
-                      className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-all"
+                      onClick={() => setStoryPoints(storyPoints === sp ? null : sp)}
+                      className="w-10 h-10 rounded-full text-sm font-semibold transition-all"
                       style={{
-                        backgroundColor: priority === p ? cfg.bg : "#F3F4F6",
-                        color: priority === p ? cfg.color : "#6B7280",
-                        outline: priority === p ? `2px solid ${cfg.color}` : "none",
-                        outlineOffset: "2px",
+                        backgroundColor: storyPoints === sp ? BRAND : "#F3F4F6",
+                        color: storyPoints === sp ? "white" : "#6B7280",
                       }}
                     >
-                      {cfg.label}
+                      {sp}
                     </button>
-                  )
-                })}
+                  ))}
+                </div>
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="font-semibold text-sm">Story Points</Label>
-              <div className="flex gap-2 flex-wrap">
-                {([1, 2, 3, 5, 8, 13] as StoryPoints[]).map((sp) => (
-                  <button
-                    key={sp}
-                    type="button"
-                    onClick={() => setStoryPoints(storyPoints === sp ? null : sp)}
-                    className="w-10 h-10 rounded-lg text-sm font-semibold transition-all"
-                    style={{
-                      backgroundColor: storyPoints === sp ? BRAND : "#F3F4F6",
-                      color: storyPoints === sp ? "white" : "#6B7280",
-                    }}
-                  >
-                    {sp}
-                  </button>
-                ))}
+
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Priority</Label>
+                <div className="flex gap-2">
+                  {(["low", "medium", "high", "urgent"] as Priority[]).map((p) => {
+                    const cfg = PRIORITY_CONFIG[p]
+                    const selected = priority === p
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setPriority(p)}
+                        className="flex-1 py-2 rounded-full text-xs font-medium transition-all border"
+                        style={
+                          selected
+                            ? { backgroundColor: cfg.color, color: "white", borderColor: cfg.color }
+                            : { backgroundColor: "transparent", color: "#6B7280", borderColor: "#E5E7EB" }
+                        }
+                      >
+                        {cfg.label}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="font-semibold text-sm">Assignee (optional)</Label>
-              <AssigneePicker members={members} value={assigneeId} onChange={setAssigneeId} />
-            </div>
-            <div className="space-y-2">
-              <Label className="font-semibold text-sm">Due Date (optional)</Label>
-              <Input
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className="rounded-xl bg-muted border-0 h-11 focus-visible:ring-1"
-              />
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Assignee</Label>
+                  <AssigneePicker members={members} value={assigneeId} onChange={setAssigneeId} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Due Date</Label>
+                  <Input
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    className="rounded-xl bg-muted border-0 h-11 focus-visible:ring-1"
+                  />
+                </div>
+              </div>
             </div>
           </div>
+
           <div className="flex justify-end gap-3 mt-8">
             <Button variant="ghost" onClick={() => onCreateOpenChange(false)}>Cancel</Button>
             <Button
               onClick={handleCreate}
               disabled={submitting}
-              className="bg-brand hover:bg-brand-hover text-white rounded-full px-6"
+              className="bg-brand hover:bg-brand-hover text-white rounded-full px-8"
             >
               {submitting ? "Creating..." : "Create"}
             </Button>

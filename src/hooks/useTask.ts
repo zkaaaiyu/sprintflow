@@ -52,6 +52,13 @@ export function useTask(projectId: string, taskId: string) {
   ) => {
     if (!user) return
 
+    // 新舊值相同就不做任何事
+    const resolvedFrom = fromDisplay ?? ""
+    const resolvedTo   = toDisplay ?? (newValue instanceof Date
+      ? newValue.toLocaleDateString("zh-TW")
+      : String(newValue ?? ""))
+    if (resolvedFrom === resolvedTo) return
+
     const taskRef = doc(db, "projects", projectId, "tasks", taskId) //找到特定id下的任務的資料
     const storeValue = newValue instanceof Date //如果newValue 是 Date 要轉換成 fireStore 的 Timestamp 格式 如果是一般字串就不用動
       ? Timestamp.fromDate(newValue)  
@@ -67,10 +74,8 @@ export function useTask(projectId: string, taskId: string) {
         type: "field_changed",
         field,
         label,
-        fromValue: fromDisplay ?? "",
-        toValue: toDisplay ?? (newValue instanceof Date
-          ? newValue.toLocaleDateString("zh-TW")
-          : String(newValue ?? "")),
+        fromValue: resolvedFrom,
+        toValue: resolvedTo,
         changedBy: user.uid,
         changedByName: user.displayName || user.email || "Someone",
         changedByPhotoURL: user.photoURL ?? null,

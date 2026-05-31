@@ -1,5 +1,5 @@
 //Project 頁面
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { useWorkspace } from "@/hooks/useWorkspace"
 import { useAuth } from "@/contexts/AuthContext"
@@ -12,9 +12,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
-import { Plus, Trash2, Timer } from "lucide-react"
+import { Plus, Trash2, Timer, Sun, Sunset, Moon, ArrowUpDown, Check } from "lucide-react"
 import { // 刪除警告套件
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +27,8 @@ import { // 刪除警告套件
 
 import { toast } from "sonner"
 import type { Project } from "@/hooks/useWorkspace"
+import { useMembers, type UserProfile } from "@/hooks/useMembers"
+import { useSprints } from "@/hooks/useSprints"
 
 // 顏色定義
 const COLOR_OPTIONS = [
@@ -49,43 +50,34 @@ function toAlpha(hex: string, alpha: number) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
-// project cards 進度條
-function SegmentedBar({ progress, color }: { progress: number; color: string }) {
-  const segments = 30
-  const filled = Math.round((progress / 100) * segments)
+function MemberAvatar({ user }: { user: UserProfile }) {
+  const initials = user.displayName
+    ? user.displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
+    : user.email[0].toUpperCase()
+  if (user.photoURL) {
+    return (
+      <img
+        src={user.photoURL}
+        alt={user.displayName}
+        referrerPolicy="no-referrer"
+        className="w-7 h-7 rounded-full object-cover shrink-0"
+      />
+    )
+  }
   return (
-    <div className="flex gap-[3px] h-[6px]">
-      {Array.from({ length: segments }, (_, i) => (
-        <div
-          key={i}
-          className="flex-1 rounded-full"
-          style={{ backgroundColor: i < filled ? color : "rgba(0,0,0,0.08)" }}
-        />
-      ))}
+    <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-[10px] text-primary-foreground font-semibold shrink-0">
+      {initials}
     </div>
   )
 }
 
-// Member 頭像（暫以顏色圓圈代替，之後接用戶資料）
-const AVATAR_COLORS = ["#F97316", "#3B82F6", "#10B981", "#8B5CF6", "#EF4444"]
-// project cards 右下角 member頭像顯示
-function MemberAvatars({ memberIds }: { memberIds: string[] }) {
-  const show = memberIds.slice(0, 3)
+function MemberAvatars({ members, totalCount }: { members: UserProfile[]; totalCount: number }) {
   return (
-    // -space-x-2 (重疊)
-    <div className="flex -space-x-2"> 
-      {show.map((uid, i) => (
-        <div
-          key={uid}
-          className="w-7 h-7 rounded-full border-2 border-card flex items-center justify-center text-[10px] text-white font-semibold"
-          style={{ backgroundColor: AVATAR_COLORS[i % AVATAR_COLORS.length] }}
-        >
-          {i + 1}
-        </div>
-      ))}
-      {memberIds.length > 3 && (
-        <div className="w-7 h-7 rounded-full border-2 border-card bg-muted flex items-center justify-center text-[10px] text-muted-foreground font-semibold">
-          +{memberIds.length - 3}
+    <div className="flex -space-x-2">
+      {members.map((m) => <MemberAvatar key={m.uid} user={m} />)}
+      {totalCount > 3 && (
+        <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-[10px] text-muted-foreground font-semibold">
+          +{totalCount - 3}
         </div>
       )}
     </div>
@@ -99,63 +91,51 @@ function ProjectCard({ project, onDelete, isOwner }: {
   isOwner: boolean
 }) {
   const navigate = useNavigate()
+  const { members } = useMembers(project.memberIds.slice(0, 3))
+  const { sprints } = useSprints(project.id)
+  const activeSprint = sprints.find((s) => s.status === "active")
 
   return (
     <div
       onClick={() => navigate(`/projects/${project.id}`)}
-      className="bg-card border border-border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+      className="border border-border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+      style={{ backgroundColor: toAlpha(project.color, 0.15) }}
     >
-      <div className="flex items-center justify-between mb-3">
-        <div
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
-          style={{
-            backgroundColor: toAlpha(project.color, 0.12),
-            color: project.color,
-          }}
-        >
-          <span
-            className="w-2 h-2 rounded-full"
-            style={{ backgroundColor: project.color }}
-          />
-          Project
+      {/* 標題 + 刪除 */}
+      <div className="flex items-start justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: project.color }} />
+          <h2 className="font-semibold text-base leading-snug">{project.name}</h2>
         </div>
-
         {isOwner && (
           <button
             onClick={onDelete}
-            className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all"
+            className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all shrink-0 ml-2 mt-0.5"
           >
             <Trash2 className="w-4 h-4" />
           </button>
         )}
       </div>
 
-      {/* 標題 + 描述 */}
-      <h2 className="font-semibold text-base mb-1">{project.name}</h2>
       {project.description ? (
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-4 pl-[18px]">
           {project.description}
         </p>
       ) : (
-        <p className="text-sm text-muted-foreground/50 italic mb-4">無描述</p>
+        <p className="text-sm text-muted-foreground/50 italic mb-4 pl-[18px]">無描述</p>
       )}
-
-      {/* 進度條 */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
-          <span>Progress</span>
-          <span style={{ color: project.color }} className="font-medium">0%</span>
-        </div>
-        <SegmentedBar progress={0} color={project.color} />
-      </div>
 
       {/* 底部：Sprint + 頭像 */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Timer className="w-3.5 h-3.5" />
-          <span>尚未開始 Sprint</span>
+        <div className="flex items-center gap-1.5 text-xs">
+          <Timer className="w-3.5 h-3.5" style={{ color: activeSprint ? "#be7559" : undefined }} />
+          {activeSprint ? (
+            <span className="font-medium" style={{ color: "#be7559" }}>{activeSprint.name}</span>
+          ) : (
+            <span className="text-muted-foreground">尚未開始 Sprint</span>
+          )}
         </div>
-        <MemberAvatars memberIds={project.memberIds} />
+        <MemberAvatars members={members} totalCount={project.memberIds.length} />
       </div>
     </div>
   )
@@ -166,10 +146,25 @@ export default function ProjectsPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { projects, loading, createProject, deleteProject, joinProject } = useWorkspace()
+  const { projectOrder, setProjectOrder } = useAuth()
 
   type ModalTab = "create" | "join"
+  type SortMode = "default" | "createdAt" | "custom"
   const [open, setOpen] = useState(false)
   const [modalTab, setModalTab] = useState<ModalTab>("create")
+  const [sortMode, setSortMode] = useState<SortMode>("default")
+  const [sortMenuOpen, setSortMenuOpen] = useState(false)
+  const sortRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!sortMenuOpen) return
+    const handler = (e: MouseEvent) => {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
+        setSortMenuOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [sortMenuOpen])
 
   //create project相關
   const [name, setName] = useState("")
@@ -181,6 +176,29 @@ export default function ProjectsPage() {
   // join project相關
   const [inviteCode, setInviteCode] = useState("")
   const [joining, setJoining] = useState(false)
+
+  const sortedProjects = [...projects].sort((a, b) => {
+    if (sortMode === "createdAt") {
+      return (b.createdAt?.getTime?.() ?? 0) - (a.createdAt?.getTime?.() ?? 0)
+    }
+    if (sortMode === "custom") {
+      const ai = projectOrder.indexOf(a.id)
+      const bi = projectOrder.indexOf(b.id)
+      if (ai === -1 && bi === -1) return 0
+      if (ai === -1) return 1
+      if (bi === -1) return -1
+      return ai - bi
+    }
+    return 0
+  })
+
+  const handleSortChange = (mode: SortMode) => {
+    setSortMode(mode)
+    if (mode === "custom" && projectOrder.length === 0) {
+      setProjectOrder(projects.map((p) => p.id))
+    }
+    setSortMenuOpen(false)
+  }
 
   const handleOpenChange = (o: boolean) => {
     setOpen(o)
@@ -240,9 +258,53 @@ const confirmDelete = async () => {
 
   <Dialog open={open} onOpenChange={handleOpenChange}>
     <div className="max-w-5xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold">Workspace</h1>
-        <p className="text-sm text-muted-foreground mt-1">管理你的所有專案</p>
+      <div className="flex items-start justify-between mb-8">
+        <div>
+        {(() => {
+          const hour = new Date().getHours()
+          const isEvening = hour >= 18 || hour < 5
+          const isAfternoon = hour >= 12 && hour < 18
+          const Icon = isEvening ? Moon : isAfternoon ? Sunset : Sun
+          const greeting = isEvening ? "Good evening" : isAfternoon ? "Good afternoon" : "Good morning"
+          const name = user?.displayName?.split(" ")[0] || user?.email?.split("@")[0] || ""
+          return (
+            <div className="flex items-center gap-2 mb-1">
+              <Icon className="w-5 h-5 text-brand" />
+              <span className="text-2xl font-bold">{greeting}, {name}</span>
+            </div>
+          )
+        })()}
+        <p className="text-sm text-muted-foreground">Here's your workspace. Manage all your projects from here.</p>
+        </div>
+
+        {/* Sort 按鈕 */}
+        <div className="relative mt-1" ref={sortRef}>
+          <button
+            onClick={() => setSortMenuOpen((o) => !o)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-sm text-muted-foreground hover:bg-foreground hover:text-background hover:border-foreground transition-colors duration-500"
+          >
+            <ArrowUpDown className="w-3.5 h-3.5" />
+            <span>Sort</span>
+          </button>
+          {sortMenuOpen && (
+            <div className="absolute right-0 top-full mt-1 w-44 bg-popover border border-border rounded-xl shadow-lg z-50 overflow-hidden">
+              {([
+                { key: "default",   label: "Default" },
+                { key: "createdAt", label: "Created time" },
+                { key: "custom",    label: "Custom order" },
+              ] as { key: SortMode; label: string }[]).map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => handleSortChange(opt.key)}
+                  className="w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-accent transition-colors"
+                >
+                  <span>{opt.label}</span>
+                  {sortMode === opt.key && <Check className="w-3.5 h-3.5 text-brand" />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
       {/* 確認刪除模塊 */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
@@ -265,23 +327,23 @@ const confirmDelete = async () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {projects.length === 0 ? (
-        <div className="text-center py-24 text-muted-foreground">
-          <p className="text-lg">還沒有任何專案</p>
-          <p className="text-sm mt-1">點擊右上角「新增專案」開始吧</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-6">
-          {projects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              isOwner={project.ownerId === user?.uid}
-              onDelete={(e) => handleDelete(e, project.id, project.name)}
-            />
-          ))}
-        </div>
-      )}
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-6">
+        {sortedProjects.map((project) => (
+          <ProjectCard
+            key={project.id}
+            project={project}
+            isOwner={project.ownerId === user?.uid}
+            onDelete={(e) => handleDelete(e, project.id, project.name)}
+          />
+        ))}
+        <button
+          onClick={() => handleOpenChange(true)}
+          className="border-2 border-dashed border-border rounded-2xl p-5 min-h-[140px] flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-brand hover:text-brand transition-colors group"
+        >
+          <Plus className="w-6 h-6" />
+          <span className="text-sm font-medium">New Project</span>
+        </button>
+      </div>
     </div>
 
   <DialogContent className="sm:max-w-md rounded-2xl p-8">
@@ -394,12 +456,6 @@ const confirmDelete = async () => {
       </>
     )}
   </DialogContent>
-
-  <DialogTrigger asChild>
-    <button className="fixed bottom-8 right-8 w-14 h-14 rounded-full bg-brand hover:bg-brand-hover text-white shadow-lg hover:shadow-xl transition-all flex items-center justify-center z-40">
-      <Plus className="w-6 h-6" />
-    </button>
-  </DialogTrigger>
 
   </Dialog>
   )

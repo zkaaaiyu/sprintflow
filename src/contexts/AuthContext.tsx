@@ -11,6 +11,8 @@ type AuthContextType = {
   user: User | null
   loading: boolean
   logout: () => Promise<void>
+  projectOrder: string[]
+  setProjectOrder: (ids: string[]) => void
 }
 
 //建立context容器
@@ -20,6 +22,7 @@ const AuthContext = createContext<AuthContextType | null>(null)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [projectOrder, setProjectOrderState] = useState<string[]>([])
 
   // 用Firebase 內部onAuthStateChanged方法 監聽狀態 登入/登出
   useEffect(() => {
@@ -35,6 +38,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
         { merge: true }
       )
+      // 從 localStorage 讀取該用戶的自定義排序
+      const saved = localStorage.getItem(`projectOrder_${firebaseUser.uid}`)
+      setProjectOrderState(saved ? JSON.parse(saved) : [])
+    } else {
+      setProjectOrderState([])
     }
     setUser(firebaseUser)
     setLoading(false)
@@ -44,9 +52,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => signOut(auth)
 
+  const setProjectOrder = (ids: string[]) => {
+    setProjectOrderState(ids)
+    if (user) localStorage.setItem(`projectOrder_${user.uid}`, JSON.stringify(ids))
+  }
+
   return (
     // 透value 屬性 傳遞user loading logout 給其他組件
-    <AuthContext.Provider value={{ user, loading, logout }}> 
+    <AuthContext.Provider value={{ user, loading, logout, projectOrder, setProjectOrder }}>
       {!loading && children}
     </AuthContext.Provider>
   )

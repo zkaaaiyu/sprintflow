@@ -1,7 +1,7 @@
 import { useState } from "react"
 import type { ReactNode } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { doc, updateDoc, writeBatch } from "firebase/firestore"
+import { doc, updateDoc, writeBatch, addDoc, collection, serverTimestamp } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import {  // 引入拖曳套件 @dnd-kit 
   DndContext,
@@ -49,6 +49,7 @@ import { Label } from "@/components/ui/label"
 import { MoreHorizontal, Plus, ChevronDown } from "lucide-react"
 import { toast } from "sonner"
 import TaskDetailModal from "@/components/TaskDetailModal"
+import { useAuth } from "@/contexts/AuthContext"
 
 // kanban 四個欄位定義
 const COLUMNS: { id: TaskStatus; label: string }[] = [
@@ -245,6 +246,7 @@ export default function SprintKanbanPage() {
   const { projectId = "", sprintId = "" } = useParams() //用useParams拿到網址的查詢參數 才知道是哪一個專案下的哪一個sprint
   const navigate = useNavigate() 
 
+  const { user } = useAuth()
   const { projects, loading: projectLoading } = useWorkspace() //把 loading 改名 projectLoading 避免撞名
   const { sprint, loading: sprintLoading, startSprint, completeSprint, deleteSprint, updateSprint } = useSprint(projectId, sprintId) //要記得傳入projectId 跟sprintId
   const { tasks, loading: tasksLoading, createTask } = useTasks(projectId) 
@@ -284,6 +286,8 @@ export default function SprintKanbanPage() {
   const [activeAddColumn, setActiveAddColumn] = useState<TaskStatus | null>(null)
   const [showFromBacklogModal, setShowFromBacklogModal] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showTodoModal, setShowTodoModal] = useState(false)
+  const [todoTab, setTodoTab] = useState<"create" | "backlog">("create")
   // 新增任務表單欄位
   const [newTitle, setNewTitle]             = useState("")
   const [newDescription, setNewDescription] = useState("")
@@ -472,6 +476,26 @@ export default function SprintKanbanPage() {
     }
 
     await batch.commit() // 提交 batch 進行更新
+
+    // 跨欄拖拉才需要寫入 activity
+    if (!isSameColumn && user) {
+      const fromLabel = COLUMNS.find((c) => c.id === activeTask.status)?.label ?? activeTask.status
+      const toLabel   = COLUMNS.find((c) => c.id === destColumnId)?.label ?? destColumnId
+      await addDoc(
+        collection(db, "projects", projectId, "tasks", activeId, "activities"),
+        {
+          type: "field_changed",
+          field: "status",
+          label: "Status",
+          fromValue: fromLabel,
+          toValue: toLabel,
+          changedBy: user.uid,
+          changedByName: user.displayName || user.email || "Someone",
+          changedByPhotoURL: user.photoURL ?? null,
+          createdAt: serverTimestamp(),
+        }
+      )
+    }
   }
 
   const loading = projectLoading || sprintLoading || tasksLoading 
@@ -659,29 +683,6 @@ export default function SprintKanbanPage() {
                       )}
                     </div>
 
-                    {sprint.status !== "completed" && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button className="w-6 h-6 rounded-md hover:bg-muted flex items-center justify-center transition-colors">
-                            <Plus className="w-4 h-4 text-muted-foreground" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-44">
-                          <DropdownMenuItem onClick={() => {
-                            setActiveAddColumn(col.id)
-                            setShowFromBacklogModal(true)
-                          }}>
-                            從 Backlog 選取
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => {
-                            setActiveAddColumn(col.id)
-                            setShowCreateModal(true)
-                          }}>
-                            直接新增
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
                   </div>
 
                   <SortableContext // 用dnd-kit提供的 SortableContext 讓元素可以被拖動更換順序
@@ -706,6 +707,15 @@ export default function SprintKanbanPage() {
                           </div>
                         )
                       })}
+                      {col.id === "todo" && sprint.status !== "completed" && (
+                        <button
+                          onClick={() => { setActiveAddColumn("todo"); setTodoTab("create"); setShowTodoModal(true) }}
+                          className="w-full border-2 border-dashed border-border rounded-2xl min-h-[80px] flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:border-brand hover:text-brand transition-colors"
+                        >
+                          <Plus className="w-5 h-5" />
+                          <span className="text-xs font-medium">Add Task</span>
+                        </button>
+                      )}
                     </DroppableColumn>
                   </SortableContext>
                 </div>
@@ -828,7 +838,182 @@ export default function SprintKanbanPage() {
           </div>
         </DialogContent>
       </Dialog>
-{/* ////////////////////////////////////////// 看到這裡 /////////////////////////////////////////////// */}
+{/* Todo 欄虛線卡片：New Task / From Backlog 合併 Modal */}
+      <Dialog open={showTodoModal} onOpenChange={(open) => {
+        setShowTodoModal(open)
+        if (!open) { setNewTitle(""); setNewDescription(""); setNewPriority("medium"); setNewStoryPoints(null); setNewAssigneeId(null); setNewDueDate("") }
+      }}>
+        <DialogContent className="sm:max-w-2xl rounded-2xl p-8">
+          {/* Tab 切換 */}
+          <div className="flex gap-1 bg-muted p-1 rounded-xl mb-6">
+            {(["create", "backlog"] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setTodoTab(tab)}
+                className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  todoTab === tab ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {tab === "create" ? "New Task" : "From Backlog"}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ minHeight: "320px" }}>
+          {todoTab === "create" ? (
+            <>
+              <div className="grid grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Title</Label>
+                    <Input
+                      placeholder="e.g. Design login page"
+                      value={newTitle}
+                      onChange={(e) => setNewTitle(e.target.value)}
+                      autoFocus
+                      className="rounded-full bg-muted border-0 h-11 focus-visible:ring-1 px-4"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Description (Optional)</Label>
+                    <textarea
+                      placeholder="What needs to be done..."
+                      value={newDescription}
+                      onChange={(e) => setNewDescription(e.target.value)}
+                      className="w-full rounded-2xl bg-muted border-0 p-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+                      style={{ height: "168px" }}
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Story Points</Label>
+                    <div className="flex gap-2">
+                      {([1, 2, 3, 5, 8, 13] as StoryPoints[]).map((sp) => (
+                        <button
+                          key={sp}
+                          type="button"
+                          onClick={() => setNewStoryPoints(newStoryPoints === sp ? null : sp)}
+                          className="w-10 h-10 rounded-full text-sm font-semibold transition-all"
+                          style={{
+                            backgroundColor: newStoryPoints === sp ? BRAND : "#F3F4F6",
+                            color: newStoryPoints === sp ? "white" : "#6B7280",
+                          }}
+                        >
+                          {sp}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Priority</Label>
+                    <div className="flex gap-2">
+                      {(["low", "medium", "high", "urgent"] as Priority[]).map((p) => {
+                        const cfg = PRIORITY_CONFIG[p]
+                        const selected = newPriority === p
+                        return (
+                          <button
+                            key={p}
+                            type="button"
+                            onClick={() => setNewPriority(p)}
+                            className="flex-1 py-2 rounded-full text-xs font-medium transition-all border"
+                            style={
+                              selected
+                                ? { backgroundColor: cfg.color, color: "white", borderColor: cfg.color }
+                                : { backgroundColor: "transparent", color: "#6B7280", borderColor: "#E5E7EB" }
+                            }
+                          >
+                            {cfg.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Assignee</Label>
+                      <AssigneePicker members={members} value={newAssigneeId} onChange={setNewAssigneeId} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Due Date</Label>
+                      <Input
+                        type="date"
+                        value={newDueDate}
+                        onChange={(e) => setNewDueDate(e.target.value)}
+                        className="rounded-xl bg-muted border-0 h-11 focus-visible:ring-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-8">
+                <Button variant="ghost" onClick={() => setShowTodoModal(false)}>Cancel</Button>
+                <Button
+                  onClick={async () => {
+                    if (!newTitle.trim()) { toast.error("Please enter a task title"); return }
+                    setCreating(true)
+                    await createTask({
+                      title: newTitle.trim(),
+                      description: newDescription,
+                      priority: newPriority,
+                      storyPoints: newStoryPoints,
+                      dueDate: newDueDate ? new Date(newDueDate) : null,
+                      assigneeId: newAssigneeId,
+                      sprintId,
+                      status: "todo",
+                    })
+                    toast.success("任務已建立")
+                    setNewTitle(""); setNewDescription(""); setNewPriority("medium")
+                    setNewStoryPoints(null); setNewAssigneeId(null); setNewDueDate("")
+                    setShowTodoModal(false)
+                    setCreating(false)
+                  }}
+                  disabled={creating}
+                  className="bg-brand hover:bg-brand-hover text-white rounded-full px-8"
+                >
+                  {creating ? "Creating..." : "Create"}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              {backlogTasks.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-12">Backlog 中沒有待排任務</p>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto">
+                  {backlogTasks.map((task) => {
+                    const p = PRIORITY_CONFIG[task.priority]
+                    return (
+                      <button
+                        key={task.id}
+                        onClick={() => { addFromBacklog(task.id); setShowTodoModal(false) }}
+                        className="text-left p-3 rounded-xl border border-border hover:bg-accent transition-colors"
+                      >
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span
+                            className="text-[11px] px-2 py-0.5 rounded-full font-medium"
+                            style={{ color: p.color, backgroundColor: p.bg }}
+                          >
+                            {p.label}
+                          </span>
+                          {task.storyPoints && (
+                            <span className="text-[11px] text-muted-foreground">{task.storyPoints} SP</span>
+                          )}
+                        </div>
+                        <p className="text-sm font-medium line-clamp-2">{task.title}</p>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </>
+          )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ////////////////////////////////////////// 看到這裡 /////////////////////////////////////////////// */}
       {/* 從 Backlog 選取任務 Modal */}
       <Dialog open={showFromBacklogModal} onOpenChange={setShowFromBacklogModal}>
         <DialogContent className="sm:max-w-md rounded-2xl p-6">
@@ -869,93 +1054,107 @@ export default function SprintKanbanPage() {
 
       {/* 直接新增任務 Modal */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="sm:max-w-md rounded-2xl p-8">
+        <DialogContent className="sm:max-w-2xl rounded-2xl p-8">
           <DialogHeader className="mb-6">
-            <DialogTitle className="text-2xl font-bold">新增任務</DialogTitle>
+            <DialogTitle className="text-xl font-bold">Create Task</DialogTitle>
           </DialogHeader>
-          <div className="space-y-5">
-            <div className="space-y-2">
-              <Label className="font-semibold text-sm">Title</Label>
-              <Input
-                placeholder="e.g. Design login page"
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                autoFocus
-                className="rounded-xl bg-muted border-0 h-11 focus-visible:ring-1"
-              />
+
+          <div className="grid grid-cols-2 gap-8">
+            {/* 左欄：標題 + 描述 */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Title</Label>
+                <Input
+                  placeholder="e.g. Design login page"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  autoFocus
+                  className="rounded-full bg-muted border-0 h-11 focus-visible:ring-1 px-4"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Description (Optional)</Label>
+                <textarea
+                  placeholder="What needs to be done..."
+                  value={newDescription}
+                  onChange={(e) => setNewDescription(e.target.value)}
+                  className="w-full rounded-2xl bg-muted border-0 p-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+                  style={{ height: "168px" }}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label className="font-semibold text-sm">Description (optional)</Label>
-              <Input
-                placeholder="What needs to be done..."
-                value={newDescription}
-                onChange={(e) => setNewDescription(e.target.value)}
-                className="rounded-xl bg-muted border-0 h-11 focus-visible:ring-1"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="font-semibold text-sm">Priority</Label>
-              <div className="flex gap-2">
-                {(["low", "medium", "high", "urgent"] as Priority[]).map((p) => {
-                  const cfg = PRIORITY_CONFIG[p]
-                  return (
+
+            {/* 右欄：SP → Priority → Assignee + Due Date */}
+            <div className="flex flex-col justify-between">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Story Points</Label>
+                <div className="flex gap-2">
+                  {([1, 2, 3, 5, 8, 13] as StoryPoints[]).map((sp) => (
                     <button
-                      key={p}
+                      key={sp}
                       type="button"
-                      onClick={() => setNewPriority(p)}
-                      className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-all capitalize"
+                      onClick={() => setNewStoryPoints(newStoryPoints === sp ? null : sp)}
+                      className="w-10 h-10 rounded-full text-sm font-semibold transition-all"
                       style={{
-                        backgroundColor: newPriority === p ? cfg.bg : "#F3F4F6",
-                        color: newPriority === p ? cfg.color : "#6B7280",
-                        outline: newPriority === p ? `2px solid ${cfg.color}` : "none",
-                        outlineOffset: "2px",
+                        backgroundColor: newStoryPoints === sp ? BRAND : "#F3F4F6",
+                        color: newStoryPoints === sp ? "white" : "#6B7280",
                       }}
                     >
-                      {p}
+                      {sp}
                     </button>
-                  )
-                })}
+                  ))}
+                </div>
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="font-semibold text-sm">Story Points</Label>
-              <div className="flex gap-2 flex-wrap">
-                {([1, 2, 3, 5, 8, 13] as StoryPoints[]).map((sp) => (
-                  <button
-                    key={sp}
-                    type="button"
-                    onClick={() => setNewStoryPoints(newStoryPoints === sp ? null : sp)}
-                    className="w-10 h-10 rounded-lg text-sm font-semibold transition-all"
-                    style={{
-                      backgroundColor: newStoryPoints === sp ? BRAND : "#F3F4F6",
-                      color: newStoryPoints === sp ? "white" : "#6B7280",
-                    }}
-                  >
-                    {sp}
-                  </button>
-                ))}
+
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Priority</Label>
+                <div className="flex gap-2">
+                  {(["low", "medium", "high", "urgent"] as Priority[]).map((p) => {
+                    const cfg = PRIORITY_CONFIG[p]
+                    const selected = newPriority === p
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setNewPriority(p)}
+                        className="flex-1 py-2 rounded-full text-xs font-medium transition-all border"
+                        style={
+                          selected
+                            ? { backgroundColor: cfg.color, color: "white", borderColor: cfg.color }
+                            : { backgroundColor: "transparent", color: "#6B7280", borderColor: "#E5E7EB" }
+                        }
+                      >
+                        {cfg.label}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="font-semibold text-sm">Assignee (optional)</Label>
-              <AssigneePicker members={members} value={newAssigneeId} onChange={setNewAssigneeId} />
-            </div>
-            <div className="space-y-2">
-              <Label className="font-semibold text-sm">Due Date (optional)</Label>
-              <Input
-                type="date"
-                value={newDueDate}
-                onChange={(e) => setNewDueDate(e.target.value)}
-                className="rounded-xl bg-muted border-0 h-11 focus-visible:ring-1"
-              />
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Assignee</Label>
+                  <AssigneePicker members={members} value={newAssigneeId} onChange={setNewAssigneeId} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Due Date</Label>
+                  <Input
+                    type="date"
+                    value={newDueDate}
+                    onChange={(e) => setNewDueDate(e.target.value)}
+                    className="rounded-xl bg-muted border-0 h-11 focus-visible:ring-1"
+                  />
+                </div>
+              </div>
             </div>
           </div>
+
           <div className="flex justify-end gap-3 mt-8">
             <Button variant="ghost" onClick={() => setShowCreateModal(false)}>Cancel</Button>
             <Button
               onClick={handleCreateTask}
               disabled={creating}
-              className="bg-brand hover:bg-brand-hover text-white rounded-full px-6"
+              className="bg-brand hover:bg-brand-hover text-white rounded-full px-8"
             >
               {creating ? "Creating..." : "Create"}
             </Button>
