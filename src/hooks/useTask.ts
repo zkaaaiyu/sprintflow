@@ -68,20 +68,25 @@ export function useTask(projectId: string, taskId: string) {
     await updateDoc(taskRef, { [field]: storeValue })  // 更新任務文件 filed 是動態的 可以是 時間、狀態或是其他屬性 storeValue 是判斷好的新值
 
     // 用 addDoc 指向 activities 子集合  在該任務底下新增一筆獨立的歷史紀錄文件
-    await addDoc(
-      collection(db, "projects", projectId, "tasks", taskId, "activities"),
-      {
-        type: "field_changed",
-        field,
-        label,
-        fromValue: resolvedFrom,
-        toValue: resolvedTo,
-        changedBy: user.uid,
-        changedByName: user.displayName || user.email || "Someone",
-        changedByPhotoURL: user.photoURL ?? null,
-        createdAt: serverTimestamp(),
-      }
-    )
+    const activityData = {
+      type: "field_changed",
+      field,
+      label,
+      fromValue: resolvedFrom,
+      toValue: resolvedTo,
+      changedBy: user.uid,
+      changedByName: user.displayName || user.email || "Someone",
+      changedByPhotoURL: user.photoURL ?? null,
+      createdAt: serverTimestamp(),
+    }
+    await addDoc(collection(db, "projects", projectId, "tasks", taskId, "activities"), activityData)
+    // 同時寫入頂層 activities collection，供 Dashboard 跨專案查詢
+    await addDoc(collection(db, "activities"), {
+      ...activityData,
+      projectId,
+      taskId,
+      taskTitle: task?.title ?? "",
+    })
   }
 
   const deleteTask = async () => {

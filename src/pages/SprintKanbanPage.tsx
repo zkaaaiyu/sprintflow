@@ -481,20 +481,26 @@ export default function SprintKanbanPage() {
     if (!isSameColumn && user) {
       const fromLabel = COLUMNS.find((c) => c.id === activeTask.status)?.label ?? activeTask.status
       const toLabel   = COLUMNS.find((c) => c.id === destColumnId)?.label ?? destColumnId
-      await addDoc(
-        collection(db, "projects", projectId, "tasks", activeId, "activities"),
-        {
-          type: "field_changed",
-          field: "status",
-          label: "Status",
-          fromValue: fromLabel,
-          toValue: toLabel,
-          changedBy: user.uid,
-          changedByName: user.displayName || user.email || "Someone",
-          changedByPhotoURL: user.photoURL ?? null,
-          createdAt: serverTimestamp(),
-        }
-      )
+      const activityData = {
+        type: "field_changed",
+        field: "status",
+        label: "Status",
+        fromValue: fromLabel,
+        toValue: toLabel,
+        changedBy: user.uid,
+        changedByName: user.displayName || user.email || "Someone",
+        changedByPhotoURL: user.photoURL ?? null,
+        createdAt: serverTimestamp(),
+      }
+      // 寫入 task 層級的 activity（task detail 側欄顯示用）
+      await addDoc(collection(db, "projects", projectId, "tasks", activeId, "activities"), activityData)
+      // 同時寫入頂層 activities collection，供 Dashboard 跨專案查詢
+      await addDoc(collection(db, "activities"), {
+        ...activityData,
+        projectId,
+        taskId: activeId,
+        taskTitle: activeTask.title,
+      })
     }
   }
 

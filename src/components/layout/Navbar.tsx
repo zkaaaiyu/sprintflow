@@ -4,6 +4,7 @@ import { Search, Bell, LogOut, Moon, Sun, ChevronLeft, ChevronRight } from "luci
 import { useAuth } from "@/contexts/AuthContext"
 import { BRAND } from "@/lib/colors"
 import { useWorkspace } from "@/hooks/useWorkspace"
+import { useGlobalActivities, type GlobalActivity } from "@/hooks/useGlobalActivities"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,13 +12,56 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { toast } from "sonner"
+
+// 相對時間格式化
+function timeAgo(date: Date | null): string {
+  if (!date) return ""
+  const diff = (Date.now() - date.getTime()) / 1000
+  if (diff < 60)     return "just now"
+  if (diff < 3600)   return `${Math.floor(diff / 60)}m ago`
+  if (diff < 86400)  return `${Math.floor(diff / 3600)}h ago`
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+}
+
+// activity 描述文字
+function formatActivityMessage(act: GlobalActivity): string {
+  if (act.field === "status")     return `moved '${act.taskTitle}' to ${act.toValue}`
+  if (act.field === "sprintId")   return `returned '${act.taskTitle}' to Backlog`
+  if (act.field === "assigneeId") return `reassigned '${act.taskTitle}'`
+  return `updated '${act.taskTitle}'`
+}
+
+// 小頭像
+function MiniAvatar({ name, photoURL }: { name: string; photoURL: string | null }) {
+  const initial = name[0]?.toUpperCase() ?? "?"
+  if (photoURL) {
+    return <img src={photoURL} referrerPolicy="no-referrer" className="w-7 h-7 rounded-full object-cover shrink-0" />
+  }
+  return (
+    <div className="w-7 h-7 rounded-full bg-muted border border-border flex items-center justify-center text-[10px] font-semibold shrink-0">
+      {initial}
+    </div>
+  )
+}
 
 export default function Navbar() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const { pathname } = useLocation()
-  const { projects } = useWorkspace()
+  const { projects, loading: projectsLoading } = useWorkspace()
+
+  // 跨專案 activity feed（鈴鐺通知用）
+  const projectIds = projects.map((p) => p.id)
+  const { activities } = useGlobalActivities(projectIds, projectsLoading)
+  // 用 projectId 查專案顏色與名稱
+  const projectMap = Object.fromEntries(projects.map((p) => [p.id, p]))
 
   // 深色模式：讀 localStorage 初始值，切換時寫回並更新 html class
   const [dark, setDark] = useState(() => localStorage.getItem("theme") === "dark")
@@ -115,10 +159,65 @@ export default function Navbar() {
           <Search className="w-4 h-4 text-muted-foreground" />
         </button>
 
-        {/* 鈴鐺 */}
-        <button className="p-2 rounded-md hover:bg-accent transition-colors">
-          <Bell className="w-4 h-4 text-muted-foreground" />
-        </button>
+        {/* 鈴鐺通知 Popover */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className="relative p-2 rounded-md hover:bg-accent transition-colors">
+              <Bell className="w-4 h-4 text-muted-foreground" />
+              {/* 有 activity 時顯示紅點 */}
+              {activities.length > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-destructive" />
+              )}
+            </button>
+          </PopoverTrigger>
+
+          {/* ring-0 覆蓋 PopoverContent 預設的 ring-1（藍色外框來源） */}
+          <PopoverContent align="end" className="w-80 p-0 rounded-2xl overflow-hidden ring-0 shadow-lg border border-border">
+            {/* 面板標題 */}
+            <div className="px-4 py-3 border-b border-border">
+              <p className="text-sm font-semibold">Notifications</p>
+            </div>
+
+            {/* Activity 列表，最多顯示 20 筆 */}
+            <div className="overflow-y-auto max-h-[420px]">
+              {activities.length === 0 ? (
+                <p className="text-xs text-muted-foreground px-4 py-6 text-center">
+                  No recent activity
+                </p>
+              ) : (
+                activities.map((act) => {
+                  const project = projectMap[act.projectId]
+                  return (
+                    <div
+                      key={act.id}
+                      className="flex gap-3 px-4 py-3 hover:bg-accent transition-colors"
+                    >
+                      <MiniAvatar name={act.changedByName} photoURL={act.changedByPhotoURL} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs leading-snug">
+                          <span className="font-semibold">{act.changedByName}</span>
+                          {" "}
+                          <span className="text-muted-foreground">{formatActivityMessage(act)}</span>
+                        </p>
+                        {/* 時間 + 專案標示 */}
+                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                          <span className="text-[10px] text-muted-foreground">{timeAgo(act.createdAt)}</span>
+                          {project && (
+                            <>
+                              <span className="text-[10px] text-muted-foreground">·</span>
+                              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: project.color }} />
+                              <span className="text-[10px] text-muted-foreground truncate">{project.name}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
 
         {/* 頭像下拉選單 */}
         <DropdownMenu>

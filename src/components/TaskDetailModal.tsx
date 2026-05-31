@@ -104,20 +104,26 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
     const taskRef = doc(db, "projects", projectId, "tasks", taskId)
     await updateDoc(taskRef, { sprintId: null, status: "todo" })
     if (user) {
-      await addDoc(
-        collection(db, "projects", projectId, "tasks", taskId, "activities"),
-        {
-          type: "field_changed",
-          field: "sprintId",
-          label: "Sprint",
-          fromValue: "Sprint",
-          toValue: "Backlog",
-          changedBy: user.uid,
-          changedByName: user.displayName || user.email || "Someone",
-          changedByPhotoURL: user.photoURL ?? null,
-          createdAt: serverTimestamp(),
-        }
-      )
+      const activityData = {
+        type: "field_changed",
+        field: "sprintId",
+        label: "Sprint",
+        fromValue: "Sprint",
+        toValue: "Backlog",
+        changedBy: user.uid,
+        changedByName: user.displayName || user.email || "Someone",
+        changedByPhotoURL: user.photoURL ?? null,
+        createdAt: serverTimestamp(),
+      }
+      // 寫入 task 層級的 activity（task detail 側欄顯示用）
+      await addDoc(collection(db, "projects", projectId, "tasks", taskId, "activities"), activityData)
+      // 同時寫入頂層 activities collection，供 Dashboard 跨專案查詢
+      await addDoc(collection(db, "activities"), {
+        ...activityData,
+        projectId,
+        taskId,
+        taskTitle: task?.title ?? "",
+      })
     }
     onClose()
   }
