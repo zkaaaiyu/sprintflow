@@ -13,7 +13,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Plus, Trash2, Timer, Sun, Sunset, Moon, ArrowUpDown, Check } from "lucide-react"
+import { Plus, Trash2, Timer, Sun, Sunset, Moon, ArrowUpDown, Check, CalendarDays, CalendarClock, CheckCircle2, Zap } from "lucide-react"
+import { useWorkspaceStats } from "@/hooks/useWorkspaceStats"
 import { // 刪除警告套件
   AlertDialog,
   AlertDialogAction,
@@ -98,8 +99,7 @@ function ProjectCard({ project, onDelete, isOwner }: {
   return (
     <div
       onClick={() => navigate(`/projects/${project.id}`)}
-      className="border border-border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer group"
-      style={{ backgroundColor: toAlpha(project.color, 0.15) }}
+      className="border border-border rounded-2xl p-4 shadow-sm hover:scale-[1.02] hover:shadow-md transition-all cursor-pointer group flex flex-col aspect-[3/2] bg-card"
     >
       {/* 標題 + 刪除 */}
       <div className="flex items-start justify-between mb-2">
@@ -118,11 +118,11 @@ function ProjectCard({ project, onDelete, isOwner }: {
       </div>
 
       {project.description ? (
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-4 pl-[18px]">
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-4 pl-[18px] flex-1">
           {project.description}
         </p>
       ) : (
-        <p className="text-sm text-muted-foreground/50 italic mb-4 pl-[18px]">無描述</p>
+        <p className="text-sm text-muted-foreground/50 italic mb-4 pl-[18px] flex-1">無描述</p>
       )}
 
       {/* 底部：Sprint + 頭像 */}
@@ -141,12 +141,31 @@ function ProjectCard({ project, onDelete, isOwner }: {
   )
 }
 
+// 根據任務狀態產生幽默互動短句
+function getStatusMessage(
+  overdueCount: number,
+  dueTodayCount: number,
+  completedThisWeekCount: number,
+  loading: boolean,
+  firstName: string
+): string {
+  if (loading) return ""
+  if (overdueCount > 0)
+    return `You have ${overdueCount} overdue task${overdueCount > 1 ? "s" : ""} — your past self is judging you. Time to make things right. 😬`
+  if (dueTodayCount > 0)
+    return `${dueTodayCount} task${dueTodayCount > 1 ? "s" : ""} need${dueTodayCount === 1 ? "s" : ""} you today, ${firstName}. The deadline gods are watching. 🔥`
+  if (completedThisWeekCount > 0)
+    return `All caught up! ${completedThisWeekCount} task${completedThisWeekCount > 1 ? "s" : ""} crushed in active sprints. You're basically a productivity ninja. 🎉`
+  return "No tasks assigned yet — living the dream. Enjoy the calm before the storm. ☁️"
+}
+
 // 主頁面
 export default function ProjectsPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { projects, loading, createProject, deleteProject, joinProject } = useWorkspace()
   const { projectOrder, setProjectOrder } = useAuth()
+  const wsStats = useWorkspaceStats(projects, loading)
 
   type ModalTab = "create" | "join"
   type SortMode = "default" | "createdAt" | "custom"
@@ -257,28 +276,67 @@ const confirmDelete = async () => {
   return (
 
   <Dialog open={open} onOpenChange={handleOpenChange}>
-    <div className="max-w-5xl mx-auto">
-      <div className="flex items-start justify-between mb-8">
-        <div>
-        {(() => {
-          const hour = new Date().getHours()
-          const isEvening = hour >= 18 || hour < 5
-          const isAfternoon = hour >= 12 && hour < 18
-          const Icon = isEvening ? Moon : isAfternoon ? Sunset : Sun
-          const greeting = isEvening ? "Good evening" : isAfternoon ? "Good afternoon" : "Good morning"
-          const name = user?.displayName?.split(" ")[0] || user?.email?.split("@")[0] || ""
-          return (
-            <div className="flex items-center gap-2 mb-1">
-              <Icon className="w-5 h-5 text-brand" />
-              <span className="text-2xl font-bold">{greeting}, {name}</span>
+    <div className="max-w-6xl mx-auto">
+
+      {/* ── 新版 Header ── */}
+      {(() => {
+        const hour = new Date().getHours()
+        const isEvening = hour >= 18 || hour < 5
+        const isAfternoon = hour >= 12 && hour < 18
+        const TimeIcon = isEvening ? Moon : isAfternoon ? Sunset : Sun
+        const greeting = isEvening ? "GOOD EVENING," : isAfternoon ? "GOOD AFTERNOON," : "GOOD MORNING,"
+        const firstName = user?.displayName?.split(" ")[0] || user?.email?.split("@")[0] || "there"
+        const formattedDate = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })
+        const statusMsg = getStatusMessage(wsStats.overdueCount, wsStats.dueTodayCount, wsStats.completedThisWeekCount, wsStats.loading, firstName)
+
+        return (
+          <div className="mb-6">
+            {/* 問候語 + 名字同一列，右側日期 */}
+            <div className="flex items-center justify-between mb-3">
+              <h1 className="flex items-center gap-3 text-4xl font-bold">
+                <TimeIcon className="text-brand shrink-0" style={{ width: 36, height: 36 }} />
+                <span className="text-muted-foreground font-bold">{greeting}</span>
+                <span>{firstName}</span>
+              </h1>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground border border-border rounded-lg px-3 py-1.5 shrink-0">
+                <CalendarDays className="w-3.5 h-3.5" />
+                <span>{formattedDate}</span>
+              </div>
             </div>
-          )
-        })()}
-        <p className="text-sm text-muted-foreground">Here's your workspace. Manage all your projects from here.</p>
-        </div>
+
+            {/* 互動短句 */}
+            <p className="text-sm text-muted-foreground mb-14">{statusMsg || " "}</p>
+
+            {/* 三個統計面板 */}
+            <div className="grid grid-cols-3 gap-10">
+              {[
+                { icon: CalendarClock, label: "Tasks due today",    value: wsStats.dueTodayCount },
+                { icon: CheckCircle2, label: "Completed in sprints", value: wsStats.completedThisWeekCount },
+                { icon: Zap,          label: "Active sprints",      value: wsStats.activeSprintsCount },
+              ].map(({ icon: Icon, label, value }) => (
+                <div key={label} className="flex items-center gap-4 border border-border rounded-2xl px-5 py-4 bg-card hover:scale-[1.02] hover:shadow-md transition-all">
+                  <div className="w-10 h-10 rounded-full bg-brand/10 flex items-center justify-center shrink-0">
+                    <Icon className="w-4.5 h-4.5 text-brand" style={{ width: 18, height: 18 }} />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold leading-none mb-0.5">
+                      {wsStats.loading ? "—" : value}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{label}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* 專案列表標題列：Sort 按鈕 */}
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-sm font-medium text-muted-foreground">Projects</p>
 
         {/* Sort 按鈕 */}
-        <div className="relative mt-1" ref={sortRef}>
+        <div className="relative" ref={sortRef}>
           <button
             onClick={() => setSortMenuOpen((o) => !o)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-sm text-muted-foreground hover:bg-foreground hover:text-background hover:border-foreground transition-colors duration-500"
@@ -327,7 +385,7 @@ const confirmDelete = async () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-6">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-7">
         {sortedProjects.map((project) => (
           <ProjectCard
             key={project.id}
@@ -338,7 +396,7 @@ const confirmDelete = async () => {
         ))}
         <button
           onClick={() => handleOpenChange(true)}
-          className="border-2 border-dashed border-border rounded-2xl p-5 min-h-[140px] flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-brand hover:text-brand transition-colors group"
+          className="border-2 border-dashed border-border rounded-2xl p-4 aspect-[3/2] flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-brand hover:text-brand transition-colors group"
         >
           <Plus className="w-6 h-6" />
           <span className="text-sm font-medium">New Project</span>

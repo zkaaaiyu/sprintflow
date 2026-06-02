@@ -42,9 +42,9 @@ type Tab = "sprints" | "backlog" | "team"
 type SortBy = "priority" | "createdAt" | "dueDate" | "storyPoints"
 
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
-  { value: "priority",    label: "Priority" },
-  { value: "createdAt",   label: "Created Time" },
-  { value: "dueDate",     label: "Due Date" },
+  { value: "priority", label: "Priority" },
+  { value: "createdAt", label: "Created Time" },
+  { value: "dueDate", label: "Due Date" },
   { value: "storyPoints", label: "Story Points" },
 ]
 
@@ -269,7 +269,7 @@ export default function ProjectDetailPage() {
                   )}
                   {isOwner && (
                     <DropdownMenuItem
-                      onClick={() => setDeleteOpen(true)}
+                      onClick={() => setDeleteOpen(true)} 
                       className="text-destructive focus:text-destructive cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />

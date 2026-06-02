@@ -1,11 +1,12 @@
 // useDashboardStats — 彙整用戶所有專案中 active sprint 的任務狀態分佈
-// 查詢流程：projects → active sprints → tasks → 只計算指派給當前用戶的任務
+// 查詢流程：projects → active sprints → tasks  （只計算指派給當前登入用戶的任務）
 import { useState, useEffect } from "react"
 import { collection, query, where, getDocs } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { useAuth } from "@/contexts/AuthContext"
 import type { Project } from "@/hooks/useWorkspace"
 
+//定義 DashboardStats 型別
 export type DashboardStats = {
   total: number
   todo: number
@@ -27,20 +28,20 @@ export function useDashboardStats(projects: Project[], projectsLoading: boolean)
   useEffect(() => {
     if (projectsLoading) return // 等 workspace 載入完再查
 
-    if (projects.length === 0) {
+    if (projects.length === 0) { //使用者沒加入任何專案直接退出
       setStats({ total: 0, todo: 0, in_progress: 0, review: 0, done: 0, loading: false })
       return
     }
-
+    //取得狀態的函數
     const fetchStats = async () => {
-      let todo = 0, in_progress = 0, review = 0, done = 0
+      let todo = 0, in_progress = 0, review = 0, done = 0 //先歸零
 
       // 對每個專案查詢 active sprint，再查詢其任務
       for (const project of projects) {
         const sprintsSnap = await getDocs(
           query(
             collection(db, "projects", project.id, "sprints"),
-            where("status", "==", "active")
+            where("status", "==", "active") //查詢active 的 sprint 
           )
         )
 
@@ -48,14 +49,14 @@ export function useDashboardStats(projects: Project[], projectsLoading: boolean)
           const tasksSnap = await getDocs(
             query(
               collection(db, "projects", project.id, "tasks"),
-              where("sprintId", "==", sprintDoc.id)
+              where("sprintId", "==", sprintDoc.id) //查詢任務
             )
           )
 
-          // 只計算指派給當前用戶的任務
+          // 只計算當前登入用戶的任務
           tasksSnap.docs
-            .filter((t) => t.data().assigneeId === user?.uid)
-            .forEach((t) => {
+            .filter((t) => t.data().assigneeId === user?.uid) //用filter篩出 指派人等於當前登入用戶id的
+            .forEach((t) => { //遍歷任務取出狀態 計算狀態數量
               const s = t.data().status
               if (s === "todo") todo++
               else if (s === "in_progress") in_progress++
@@ -70,7 +71,7 @@ export function useDashboardStats(projects: Project[], projectsLoading: boolean)
     }
 
     fetchStats()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [projectIdsKey, projectsLoading])
 
   return stats

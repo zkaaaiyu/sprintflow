@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom"
 import { BRAND } from "@/lib/colors"
 import type { UpcomingTask } from "@/hooks/useUpcomingTasks"
 
@@ -17,7 +18,17 @@ function formatDueDate(date: Date): { label: string; color: string } {
   return                 { label: dateStr,  color: "#6B7280" }
 }
 
+const MAX_VISIBLE = 2
+
 export default function UpcomingDeadlines({ tasks }: { tasks: UpcomingTask[] }) {
+  const navigate = useNavigate()
+
+  const visibleTasks = tasks.slice(0, MAX_VISIBLE)
+  const hiddenTasks  = tasks.slice(MAX_VISIBLE)
+
+  // 隱藏任務中最早到期且有 sprintId 的任務
+  const targetTask = hiddenTasks.find((t) => t.sprintId !== null)
+
   return (
     <div className="flex flex-col min-w-0">
       <p className="text-sm font-semibold mb-3">Upcoming Deadlines</p>
@@ -25,13 +36,15 @@ export default function UpcomingDeadlines({ tasks }: { tasks: UpcomingTask[] }) 
       {tasks.length === 0 ? (
         <p className="text-xs text-muted-foreground mt-2">No deadlines in the next 7 days</p>
       ) : (
-        <div className="space-y-0">
-          {tasks.slice(0, 5).map((task) => {
+        <div className="space-y-1">
+          {visibleTasks.map((task) => {
             const { label, color } = formatDueDate(task.dueDate)
+            const canNavigate = task.sprintId !== null
             return (
               <div
                 key={task.id}
-                className="flex items-center justify-between gap-3 py-2.5 border-b border-border last:border-0"
+                onClick={() => canNavigate && navigate(`/projects/${task.projectId}/sprints/${task.sprintId}`)}
+                className={`flex items-center justify-between gap-3 px-2 py-2 rounded-lg transition-all ${canNavigate ? "cursor-pointer hover:scale-[1.02]" : ""}`}
               >
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">{task.title}</p>
@@ -54,6 +67,18 @@ export default function UpcomingDeadlines({ tasks }: { tasks: UpcomingTask[] }) 
               </div>
             )
           })}
+
+          {/* 超過 3 筆時顯示「view N more」連結，靠右對齊 */}
+          {hiddenTasks.length > 0 && targetTask && (
+            <div className="flex justify-center pt-1">
+              <button
+                onClick={() => navigate(`/projects/${targetTask.projectId}/sprints/${targetTask.sprintId}`)}
+                className="text-[11px] text-muted-foreground hover:text-brand hover:scale-110 transition-all inline-block"
+              >
+                view {hiddenTasks.length} more task{hiddenTasks.length > 1 ? "s" : ""} in sprint →
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

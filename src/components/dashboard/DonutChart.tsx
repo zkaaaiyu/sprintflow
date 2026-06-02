@@ -25,7 +25,7 @@ export default function DonutChart({ total, todo, in_progress, review, done }: P
 
   return (
     // min-w-0 讓 flex 子元素可以縮小到 0，不被內容撐開
-    <div className="flex items-center gap-4 min-w-0">
+    <div className="flex items-center gap-8 min-w-0">
       {/* Donut 圖：shrink-0 保持固定大小 */}
       <div className="relative w-32 h-32 shrink-0">
         <ResponsiveContainer width="100%" height="100%">
@@ -56,16 +56,16 @@ export default function DonutChart({ total, todo, in_progress, review, done }: P
         </div>
       </div>
 
-      {/* 狀態統計 2x2：min-w-0 + overflow-hidden 允許縮放，whitespace-nowrap 防止換行 */}
-      <div className="grid grid-cols-2 gap-x-4 gap-y-3 min-w-0 overflow-hidden flex-1">
+      {/* 狀態統計 2x2 */}
+      <div className="grid grid-cols-2 gap-x-6 gap-y-5 min-w-0 overflow-hidden">
         {data.map((d) => {
           const pct = total > 0 ? Math.round((d.value / total) * 100) : 0
           return (
-            <div key={d.key} className="flex items-center gap-1.5 min-w-0">
+            <div key={d.key} className="flex items-center gap-1.5 min-w-0 hover:scale-[1.05] origin-left transition-all cursor-default">
               <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
               <div className="min-w-0 overflow-hidden">
                 <p className="text-[10px] text-muted-foreground whitespace-nowrap">{d.label}</p>
-                <p className="text-lg font-bold leading-none whitespace-nowrap">{pct}%</p>
+                <p className="text-sm font-bold leading-none whitespace-nowrap">{pct}%</p>
               </div>
             </div>
           )

@@ -48,9 +48,9 @@ export function useUpcomingTasks(projects: Project[], projectsLoading: boolean) 
           )
         )
 
-        // 只保留指派給當前用戶的任務
+        // 只保留指派給當前用戶且未完成的任務
         snap.docs
-          .filter((d) => d.data().assigneeId === user?.uid)
+          .filter((d) => d.data().assigneeId === user?.uid && d.data().status !== "done")
           .forEach((d) => {
             const data = d.data()
             allTasks.push({

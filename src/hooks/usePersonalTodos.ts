@@ -34,21 +34,21 @@ export function usePersonalTodos() {
     // 監聽當前用戶的待辦清單，按建立時間由舊到新排列
     const q = query(
       collection(db, "users", user.uid, "todos"),
-      orderBy("createdAt", "asc")
+      orderBy("createdAt", "asc") //依據建立時間 舊到新排序
     )
 
-    const unsubscribe = onSnapshot(q, (snap) => {
+    const unsubscribe = onSnapshot(q, (snap) => { //調用onSnapshot函數會回傳一個退訂函數unsubscribe
       const list = snap.docs.map((d) => ({
         id: d.id,
         ...d.data(),
-        createdAt: (d.data().createdAt as Timestamp)?.toDate() ?? null,
+        createdAt: (d.data().createdAt as Timestamp)?.toDate() ?? null, //用 todate 處理時間 如果沒有時間就用null
       })) as PersonalTodo[]
-      setTodos(list)
+      setTodos(list) 
       setLoading(false)
     })
 
-    return () => unsubscribe()
-  }, [user])
+    return () => unsubscribe() //使用者離開頁面時退訂
+  }, [user]) //使用者變更時重新渲染
 
   // 新增待辦事項
   const createTodo = async (title: string) => {

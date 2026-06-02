@@ -44,7 +44,7 @@ export default function PersonalTodos() {
         {todos.map((todo) => (
           <div
             key={todo.id}
-            className="group flex items-center gap-3 py-2 px-1 rounded-lg hover:bg-accent/50 transition-colors"
+            className="group flex items-center gap-3 py-2 px-1 rounded-lg hover:bg-accent/50 hover:scale-[1.02] transition-all"
           >
             {/* 圓形打勾按鈕 */}
             <button
