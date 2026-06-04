@@ -5,6 +5,7 @@ import { db } from "@/lib/firebase"
 import { useAuth } from "@/contexts/AuthContext"
 import type { Project } from "@/hooks/useWorkspace"
 
+
 export type UpcomingTask = {
   id: string
   title: string
@@ -20,21 +21,21 @@ export function useUpcomingTasks(projects: Project[], projectsLoading: boolean) 
   const [tasks, setTasks] = useState<UpcomingTask[]>([])
   const [loading, setLoading] = useState(true)
 
-  const projectIdsKey = projects.map((p) => p.id).join(",")
+  const projectIdsKey = projects.map((p) => p.id).join(",") //把引用類型轉換成純字串（基本數據類型）避免useefect 依賴項的變動 一直重新渲染
 
   useEffect(() => {
     if (projectsLoading) return
 
-    if (projects.length === 0) {
+    if (projects.length === 0) { //如果沒有專案就清空upcomming task陣列
       setTasks([])
       setLoading(false)
       return
     }
 
-    const fetchTasks = async () => {
+    const fetchTasks = async () => { //從資料庫撈任務
       const now = new Date()
       const in7Days = new Date()
-      in7Days.setDate(now.getDate() + 7)
+      in7Days.setDate(now.getDate() + 7) //算出7天內的日期
 
       const allTasks: UpcomingTask[] = []
 
@@ -50,8 +51,8 @@ export function useUpcomingTasks(projects: Project[], projectsLoading: boolean) 
 
         // 只保留指派給當前用戶且未完成的任務
         snap.docs
-          .filter((d) => d.data().assigneeId === user?.uid && d.data().status !== "done")
-          .forEach((d) => {
+          .filter((d) => d.data().assigneeId === user?.uid && d.data().status !== "done") //用filter篩出id=當前用戶 且 狀態不等於 done 
+          .forEach((d) => {  //foreach遍歷把任務物件用push方法 塞到alltask陣列裡面
             const data = d.data()
             allTasks.push({
               id: d.id,
@@ -71,9 +72,9 @@ export function useUpcomingTasks(projects: Project[], projectsLoading: boolean) 
       setLoading(false)
     }
 
-    fetchTasks()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectIdsKey, projectsLoading])
+    fetchTasks() //調用定義好的獲取即將到期任務函數
+
+  }, [projectIdsKey, projectsLoading]) 
 
   return { tasks, loading }
 }

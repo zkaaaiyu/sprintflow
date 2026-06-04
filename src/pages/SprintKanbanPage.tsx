@@ -13,7 +13,7 @@ import {  // 引入拖曳套件 @dnd-kit
   useSensor,
   useSensors,
 } from "@dnd-kit/core"
-import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core"
+import type { DragEndEvent, DragStartEvent, DragOverEvent } from "@dnd-kit/core"
 import {
   SortableContext,
   useSortable,
@@ -125,7 +125,7 @@ function AssigneePicker({ members, value, onChange }: {
         <ChevronDown className="w-4 h-4 ml-auto text-muted-foreground shrink-0" />
       </button>
       {open && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-xl shadow-lg z-50 overflow-hidden">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-xl shadow-lg z-50 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150">
           <button
             type="button"
             onClick={() => { onChange(null); setOpen(false) }}
@@ -160,7 +160,7 @@ function KanbanCard({ task, assignee, onClick }: { task: Task; assignee?: UserPr
     // 卡片內容渲染
     <div
       onClick={onClick}
-      className={`bg-card border rounded-xl p-3 cursor-pointer hover:shadow-sm transition-all ${
+      className={`bg-card border rounded-xl p-3 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all ${
         isOverdue ? "border-[#CC6161]" : "border-border"
       }`}
     >
@@ -236,7 +236,7 @@ function SortableKanbanCard({ task, assignee, onClick, disabled }: {
 function DroppableColumn({ id, children }: { id: string; children: ReactNode }) {
   const { setNodeRef } = useDroppable({ id }) 
   return (
-    <div ref={setNodeRef} className="flex flex-col gap-2 flex-1 overflow-y-auto pr-1 min-h-20">
+    <div ref={setNodeRef} className="flex flex-col gap-2 flex-1 pr-1 min-h-20">
       {children}
     </div>
   )
@@ -299,6 +299,7 @@ export default function SprintKanbanPage() {
 
   // 拖拉中的任務（用來渲染 DragOverlay 浮動卡片）
   const [draggingTask, setDraggingTask] = useState<Task | null>(null)
+  const [overColumnId, setOverColumnId] = useState<string | null>(null) // 拖拉時目前懸停的欄位
 
   // 篩選列狀態：可多選成員、單選優先級
   const [filterMemberIds, setFilterMemberIds] = useState<string[]>([])
@@ -403,9 +404,18 @@ export default function SprintKanbanPage() {
     setDraggingTask(task ?? null)
   }
 
+  const COLUMN_IDS = new Set(["todo", "in_progress", "review", "done"])
+  const handleDragOver = ({ over }: DragOverEvent) => {
+    // over.id 可能是 task id（拖到別張卡上）或 column id（拖到空欄位）
+    // 只有當 over.id 是欄位本身時才標亮
+    const overId = over?.id as string | undefined
+    setOverColumnId(overId && COLUMN_IDS.has(overId) ? overId : null)
+  }
+
   // 拖拉結束：計算新位置，批次更新 Firestore
   const handleDragEnd = async ({ active, over }: DragEndEvent) => { //參數 active 跟 over 是 dnd-kit 在拖曳結束提供的事件包 active就是正在拖拉的那一張哪片 over 是拖拉到哪一個位置（可能是被壓住的卡片或是空欄位） 
     setDraggingTask(null)
+    setOverColumnId(null)
     if (!over) return  //如果拖到的不是卡片上面或是空欄位 -> 也就是拖到看板外了 -> 直接結束
 
     const activeId = active.id as string
@@ -477,7 +487,7 @@ export default function SprintKanbanPage() {
 
     await batch.commit() // 提交 batch 進行更新
 
-    // 跨欄拖拉才需要寫入 activity
+    // kanbanpage 跨欄位拖拉卡片要庚新到activity裡面
     if (!isSameColumn && user) {
       const fromLabel = COLUMNS.find((c) => c.id === activeTask.status)?.label ?? activeTask.status
       const toLabel   = COLUMNS.find((c) => c.id === destColumnId)?.label ?? destColumnId
@@ -666,6 +676,7 @@ export default function SprintKanbanPage() {
           sensors={sensors} // 偵測移動超過5px
           collisionDetection={closestCorners} //dnd-kit 提供的 碰撞偵測演算法
           onDragStart={handleDragStart} // 調用前面寫的開始拖曳函數
+          onDragOver={handleDragOver}   // 追蹤目前拖到哪個欄位，用來標亮 Drop task here
           onDragEnd={handleDragEnd} // 調用前面寫的結束拖曳函數
         > 
           <div className="flex gap-4 h-full">
@@ -676,7 +687,7 @@ export default function SprintKanbanPage() {
               const colSP = colTasks.reduce((sum, t) => sum + (t.storyPoints ?? 0), 0) //用reduce加總故事點
 
               return (
-                <div key={col.id} className="flex flex-col flex-1 min-w-0">
+                <div key={col.id} className="flex flex-col flex-1 min-w-0 relative hover:z-10">
                   {/* 欄位標題列 */}
                   <div className="flex items-center justify-between mb-3 px-1">
                     <div className="flex items-center gap-2">
@@ -721,6 +732,16 @@ export default function SprintKanbanPage() {
                           <Plus className="w-5 h-5" />
                           <span className="text-xs font-medium">Add Task</span>
                         </button>
+                      )}
+                      {col.id !== "todo" && colTasks.length === 0 && (
+                        <div className={`flex-1 border-2 border-dashed rounded-2xl min-h-[120px] flex flex-col items-center justify-center gap-1.5 transition-colors cursor-default select-none ${
+                          overColumnId === col.id
+                            ? "border-brand text-brand"
+                            : "border-border text-muted-foreground"
+                        }`}>
+                          <Plus className="w-5 h-5" />
+                          <span className="text-xs font-medium">Drop task here</span>
+                        </div>
                       )}
                     </DroppableColumn>
                   </SortableContext>
@@ -849,7 +870,7 @@ export default function SprintKanbanPage() {
         setShowTodoModal(open)
         if (!open) { setNewTitle(""); setNewDescription(""); setNewPriority("medium"); setNewStoryPoints(null); setNewAssigneeId(null); setNewDueDate("") }
       }}>
-        <DialogContent className="sm:max-w-2xl rounded-2xl p-8">
+        <DialogContent className="sm:max-w-2xl rounded-2xl p-8 min-h-[520px] flex flex-col">
           {/* Tab 切換 */}
           <div className="flex gap-1 bg-muted p-1 rounded-xl mb-6">
             {(["create", "backlog"] as const).map((tab) => (
@@ -866,9 +887,9 @@ export default function SprintKanbanPage() {
             ))}
           </div>
 
-          <div style={{ minHeight: "320px" }}>
+          <div style={{ minHeight: "320px" }} className="flex-1">
           {todoTab === "create" ? (
-            <>
+            <div key="create" className="animate-in fade-in duration-200">
               <div className="grid grid-cols-2 gap-8">
                 <div className="space-y-4">
                   <div className="space-y-2">
@@ -981,9 +1002,9 @@ export default function SprintKanbanPage() {
                   {creating ? "Creating..." : "Create"}
                 </Button>
               </div>
-            </>
+            </div>
           ) : (
-            <>
+            <div key="backlog" className="animate-in fade-in duration-200">
               {backlogTasks.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-12">Backlog 中沒有待排任務</p>
               ) : (
@@ -1013,7 +1034,7 @@ export default function SprintKanbanPage() {
                   })}
                 </div>
               )}
-            </>
+            </div>
           )}
           </div>
         </DialogContent>

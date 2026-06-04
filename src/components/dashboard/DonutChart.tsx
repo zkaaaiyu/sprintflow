@@ -1,3 +1,4 @@
+//dashboard 左上角donut chart
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
 
 type Props = {
@@ -8,7 +9,7 @@ type Props = {
   done: number
 }
 
-// 各狀態對應顏色
+// 各狀態對應顏色 （後續要集中管理）
 const STATUS_CONFIG = [
   { key: "in_progress", label: "IN PROGRESS", color: "#F97316" },
   { key: "done",        label: "DONE",        color: "#73a38c" },

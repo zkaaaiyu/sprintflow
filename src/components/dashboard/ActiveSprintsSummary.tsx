@@ -1,3 +1,4 @@
+// dashboard 左下角 active sprint 管理
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Clock } from "lucide-react"
@@ -11,8 +12,7 @@ type Props = {
 
 export default function ActiveSprintsSummary({ summaries, loading }: Props) {
   const navigate = useNavigate()
-  // 控制進度條是否展開：loading 結束後短暫延遲再設為 true，讓 CSS transition 從 0 跑到目標寬度
-  const [animated, setAnimated] = useState(false)
+  const [animated, setAnimated] = useState(false)  // 控制進度條動畫
 
   useEffect(() => {
     if (!loading && summaries.length > 0) {

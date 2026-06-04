@@ -1,6 +1,10 @@
 //Project 頁面
 import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragOverlay } from "@dnd-kit/core"
+import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core"
+import { SortableContext, useSortable, rectSortingStrategy, arrayMove } from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import { useWorkspace } from "@/hooks/useWorkspace"
 import { useAuth } from "@/contexts/AuthContext"
 import { cn } from "@/lib/utils"
@@ -141,6 +145,28 @@ function ProjectCard({ project, onDelete, isOwner }: {
   )
 }
 
+// 拖拉排序包裝層（永遠啟用，拖拉後自動切換 custom 模式）
+function SortableProjectCard({ project, onDelete, isOwner }: {
+  project: Project
+  onDelete: (e: React.MouseEvent) => void
+  isOwner: boolean
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: project.id,
+  })
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition, visibility: isDragging ? "hidden" : "visible" }}
+      className="cursor-grab active:cursor-grabbing"
+      {...attributes}
+      {...listeners}
+    >
+      <ProjectCard project={project} onDelete={onDelete} isOwner={isOwner} />
+    </div>
+  )
+}
+
 // 根據任務狀態產生幽默互動短句
 function getStatusMessage(
   overdueCount: number,
@@ -166,6 +192,9 @@ export default function ProjectsPage() {
   const { projects, loading, createProject, deleteProject, joinProject } = useWorkspace()
   const { projectOrder, setProjectOrder } = useAuth()
   const wsStats = useWorkspaceStats(projects, loading)
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+  const [draggingProject, setDraggingProject] = useState<Project | null>(null)
 
   type ModalTab = "create" | "join"
   type SortMode = "default" | "createdAt" | "custom"
@@ -269,6 +298,21 @@ const confirmDelete = async () => {
   toast.success(`已刪除「${deleteTarget.name}」`)
   setDeleteTarget(null)
 }
+  const handleDragStart = ({ active }: DragStartEvent) => {
+    setDraggingProject(sortedProjects.find((p) => p.id === active.id) ?? null)
+  }
+
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    setDraggingProject(null)
+    if (!over || active.id === over.id) return
+    const ids = sortedProjects.map((p) => p.id)
+    const oldIndex = ids.indexOf(active.id as string)
+    const newIndex = ids.indexOf(over.id as string)
+    const newOrder = arrayMove(ids, oldIndex, newIndex)
+    setSortMode("custom")   // 拖拉後自動切換到自定義排序
+    setProjectOrder(newOrder)
+  }
+
   if (loading) return (
     <div className="flex items-center justify-center h-full text-muted-foreground">載入中...</div>
   )
@@ -345,7 +389,7 @@ const confirmDelete = async () => {
             <span>Sort</span>
           </button>
           {sortMenuOpen && (
-            <div className="absolute right-0 top-full mt-1 w-44 bg-popover border border-border rounded-xl shadow-lg z-50 overflow-hidden">
+            <div className="absolute right-0 top-full mt-1 w-44 bg-popover border border-border rounded-xl shadow-lg z-50 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150">
               {([
                 { key: "default",   label: "Default" },
                 { key: "createdAt", label: "Created time" },
@@ -385,26 +429,42 @@ const confirmDelete = async () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-7">
-        {sortedProjects.map((project) => (
-          <ProjectCard
-            key={project.id}
-            project={project}
-            isOwner={project.ownerId === user?.uid}
-            onDelete={(e) => handleDelete(e, project.id, project.name)}
-          />
-        ))}
-        <button
-          onClick={() => handleOpenChange(true)}
-          className="border-2 border-dashed border-border rounded-2xl p-4 aspect-[3/2] flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-brand hover:text-brand transition-colors group"
-        >
-          <Plus className="w-6 h-6" />
-          <span className="text-sm font-medium">New Project</span>
-        </button>
-      </div>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext items={sortedProjects.map((p) => p.id)} strategy={rectSortingStrategy}>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-7">
+            {sortedProjects.map((project) => (
+              <SortableProjectCard
+                key={project.id}
+                project={project}
+                isOwner={project.ownerId === user?.uid}
+                onDelete={(e) => handleDelete(e, project.id, project.name)}
+              />
+            ))}
+            <button
+              onClick={() => handleOpenChange(true)}
+              className="border-2 border-dashed border-border rounded-2xl p-4 aspect-[3/2] flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-brand hover:text-brand transition-colors group"
+            >
+              <Plus className="w-6 h-6" />
+              <span className="text-sm font-medium">New Project</span>
+            </button>
+          </div>
+        </SortableContext>
+        <DragOverlay dropAnimation={null}>
+          {draggingProject && (
+            <div className="shadow-xl rotate-1 opacity-90">
+              <ProjectCard project={draggingProject} isOwner={false} onDelete={() => {}} />
+            </div>
+          )}
+        </DragOverlay>
+      </DndContext>
     </div>
 
-  <DialogContent className="sm:max-w-md rounded-2xl p-8">
+  <DialogContent className="sm:max-w-md rounded-2xl p-8 min-h-[500px] flex flex-col">
     <DialogHeader className="mb-4">
       <DialogTitle className="text-2xl font-bold">
         {modalTab === "create" ? "Create Project" : "Join Project"}
@@ -429,7 +489,7 @@ const confirmDelete = async () => {
     </div>
 
     {modalTab === "create" ? (
-      <>
+      <div key="create" className="animate-in fade-in duration-200 flex flex-col flex-1">
         <div className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="name" className="font-semibold text-sm">Project Name</Label>
@@ -484,9 +544,9 @@ const confirmDelete = async () => {
             {submitting ? "Creating..." : "Create"}
           </Button>
         </div>
-      </>
+      </div>
     ) : (
-      <>
+      <div key="join" className="animate-in fade-in duration-200 flex flex-col flex-1">
         <div className="space-y-5">
           <div className="space-y-2">
             <Label className="font-semibold text-sm">Invite Code</Label>
@@ -511,7 +571,7 @@ const confirmDelete = async () => {
             {joining ? "Joining..." : "Join"}
           </Button>
         </div>
-      </>
+      </div>
     )}
   </DialogContent>
 

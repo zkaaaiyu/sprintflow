@@ -88,7 +88,7 @@ function AssigneePicker({
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-xl shadow-lg z-50 overflow-hidden">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-xl shadow-lg z-50 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150">
           <button
             type="button"
             onClick={() => { onChange(null); setOpen(false) }}
