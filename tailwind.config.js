@@ -8,8 +8,15 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand: "#be7559",
-        "brand-hover": "#ac5b41",
+        brand: "var(--brand)",
+        "brand-hover": "var(--brand-hover)",
+        "navbar-bg": "var(--navbar-bg)",
+        overdue: "var(--overdue)",
+        "stat-due": "var(--stat-due)",
+        "stat-done": "var(--stat-done)",
+        "subtle-bg": "var(--subtle-bg)",
+        "progress-track": "var(--progress-track)",
+        "subtle-foreground": "var(--subtle-foreground)",
         border: "var(--border)",
         input: "var(--input)",
         ring: "var(--ring)",

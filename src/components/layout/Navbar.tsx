@@ -59,9 +59,28 @@ export default function Navbar() {
 
   // 跨專案 activity feed（鈴鐺通知用）
   const projectIds = projects.map((p) => p.id)
-  const { activities } = useGlobalActivities(projectIds, projectsLoading)
-  // 用 projectId 查專案顏色與名稱
+  // 整理每個 project 的使用者加入時間，用來過濾加入前的舊紀錄
+  const joinedAtMap: Record<string, Date | null> = Object.fromEntries(
+    projects.map((p) => [p.id, user ? (p.joinedAt?.[user.uid] ?? null) : null])
+  )
+  const { activities } = useGlobalActivities(projectIds, projectsLoading, joinedAtMap)
   const projectMap = Object.fromEntries(projects.map((p) => [p.id, p]))
+
+  // 已讀狀態：記錄上次已讀的時間點（存 localStorage）
+  const [lastReadAt, setLastReadAt] = useState<number>(() =>
+    parseInt(localStorage.getItem("notificationLastRead") ?? "0")
+  )
+  const [notifOpen, setNotifOpen] = useState(false)
+
+  const hasUnread = activities.some(
+    (act) => act.createdAt && act.createdAt.getTime() > lastReadAt
+  )
+
+  const markAsRead = () => {
+    const now = Date.now()
+    localStorage.setItem("notificationLastRead", String(now))
+    setLastReadAt(now)
+  }
 
   // 深色模式：讀 localStorage 初始值，切換時寫回並更新 html class
   const [dark, setDark] = useState(() => localStorage.getItem("theme") === "dark")
@@ -160,60 +179,80 @@ export default function Navbar() {
         </button>
 
         {/* 鈴鐺通知 Popover */}
-        <Popover>
+        <Popover open={notifOpen} onOpenChange={setNotifOpen}>
           <PopoverTrigger asChild>
             <button className="relative p-2 rounded-md hover:bg-accent transition-colors">
               <Bell className="w-4 h-4 text-muted-foreground" />
-              {/* 有 activity 時顯示紅點 */}
-              {activities.length > 0 && (
+              {hasUnread && (
                 <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-destructive" />
               )}
             </button>
           </PopoverTrigger>
 
-          {/* ring-0 覆蓋 PopoverContent 預設的 ring-1（藍色外框來源） */}
           <PopoverContent align="end" className="w-80 p-0 rounded-2xl overflow-hidden ring-0 shadow-lg border border-border">
-            {/* 面板標題 */}
-            <div className="px-4 py-3 border-b border-border">
+            {/* 面板標題 + 已讀按鈕 */}
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
               <p className="text-sm font-semibold">Notifications</p>
+              {hasUnread && (
+                <button
+                  onClick={markAsRead}
+                  className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Mark all as read
+                </button>
+              )}
             </div>
 
-            {/* Activity 列表，最多顯示 20 筆 */}
-            <div className="overflow-y-auto max-h-[420px]">
+            {/* Activity 列表，固定高度，內容不足時不縮小 */}
+            <div className="overflow-y-auto h-[420px]">
               {activities.length === 0 ? (
-                <p className="text-xs text-muted-foreground px-4 py-6 text-center">
-                  No recent activity
-                </p>
+                <div className="h-full flex items-center justify-center">
+                  <p className="text-xs text-muted-foreground">No recent activity</p>
+                </div>
               ) : (
-                activities.map((act) => {
-                  const project = projectMap[act.projectId]
-                  return (
-                    <div
-                      key={act.id}
-                      className="flex gap-3 px-4 py-3 hover:bg-accent transition-colors"
-                    >
-                      <MiniAvatar name={act.changedByName} photoURL={act.changedByPhotoURL} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs leading-snug">
-                          <span className="font-semibold">{act.changedByName}</span>
-                          {" "}
-                          <span className="text-muted-foreground">{formatActivityMessage(act)}</span>
-                        </p>
-                        {/* 時間 + 專案標示 */}
-                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                          <span className="text-[10px] text-muted-foreground">{timeAgo(act.createdAt)}</span>
-                          {project && (
-                            <>
-                              <span className="text-[10px] text-muted-foreground">·</span>
-                              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: project.color }} />
-                              <span className="text-[10px] text-muted-foreground truncate">{project.name}</span>
-                            </>
-                          )}
+                <>
+                  {activities.map((act) => {
+                    const project = projectMap[act.projectId]
+                    const isUnread = act.createdAt && act.createdAt.getTime() > lastReadAt
+                    return (
+                      <div
+                        key={act.id}
+                        onClick={() => {
+                          navigate(`/projects/${act.projectId}`)
+                          setNotifOpen(false)
+                        }}
+                        className={`flex gap-3 px-4 py-3 cursor-pointer hover:bg-accent transition-colors ${
+                          isUnread ? "bg-accent/40" : ""
+                        }`}
+                      >
+                        <MiniAvatar name={act.changedByName} photoURL={act.changedByPhotoURL} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs leading-snug">
+                            <span className="font-semibold">{act.changedByName}</span>
+                            {" "}
+                            <span className="text-muted-foreground">{formatActivityMessage(act)}</span>
+                          </p>
+                          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                            <span className="text-[10px] text-muted-foreground">{timeAgo(act.createdAt)}</span>
+                            {project && (
+                              <>
+                                <span className="text-[10px] text-muted-foreground">·</span>
+                                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: project.color }} />
+                                <span className="text-[10px] text-muted-foreground truncate">{project.name}</span>
+                              </>
+                            )}
+                          </div>
                         </div>
+                        {isUnread && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 mt-1.5" />
+                        )}
                       </div>
-                    </div>
-                  )
-                })
+                    )
+                  })}
+                  <p className="text-[10px] text-center px-4 py-2" style={{ color: "var(--subtle-foreground)" }}>
+                    — Only showing notifications from the last 7 days —
+                  </p>
+                </>
               )}
             </div>
           </PopoverContent>

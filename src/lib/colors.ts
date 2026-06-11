@@ -1,2 +1,2 @@
-export const BRAND = "#be7559"
-export const BRAND_HOVER = "#ac5b41"
+export const BRAND = "#B3795F"
+export const BRAND_HOVER = "#9A6450"

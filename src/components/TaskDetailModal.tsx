@@ -320,7 +320,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                         <button key={sp}
                           onClick={async () => { const newSP = task.storyPoints === sp ? null : sp; await updateField("storyPoints", newSP, "故事點數", String(task.storyPoints ?? "—"), String(newSP ?? "—")); stopEditing() }}
                           className="w-7 h-7 rounded-lg text-xs font-semibold transition-all"
-                          style={{ backgroundColor: task.storyPoints === sp ? BRAND : "#F3F4F6", color: task.storyPoints === sp ? "white" : "#6B7280" }}>
+                          style={{ backgroundColor: task.storyPoints === sp ? BRAND : "var(--subtle-bg)", color: task.storyPoints === sp ? "white" : "var(--muted-foreground)" }}>
                           {sp}
                         </button>
                       ))}
@@ -392,7 +392,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                     const due = new Date(task.dueDate); due.setHours(0,0,0,0)
                     const diff = Math.ceil((due.getTime() - now.getTime()) / 86400000)
                     const label = diff < 0 ? "Overdue" : diff === 0 ? "Due today" : `${diff}d left`
-                    const color = diff <= 0 ? "#CC6161" : diff <= 3 ? BRAND : "#6B7280"
+                    const color = diff <= 0 ? "var(--overdue)" : diff <= 3 ? BRAND : "var(--muted-foreground)"
                     return <p className="text-sm font-medium" style={{ color }}>{label}</p>
                   })() : <span className="text-muted-foreground">—</span>}
                 </div>

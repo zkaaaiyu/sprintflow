@@ -42,26 +42,24 @@ export default function ActiveSprintsSummary({ summaries, loading }: Props) {
       ) : summaries.length === 0 ? (
         <p className="text-xs text-muted-foreground py-2">No active sprints</p>
       ) : (
-        <div className="space-y-3">
+        <div className={`space-y-3 py-1 overflow-x-hidden overscroll-contain ${summaries.length > 4 ? "max-h-[380px] overflow-y-auto" : ""}`}>
           {summaries.map((s) => (
-            // 每個 sprint 用卡片包起來
             <div
               key={s.sprintId}
-              className="border border-border rounded-xl p-4 cursor-pointer hover:scale-[1.02] hover:shadow-md transition-all"
+              className="border border-border rounded-xl p-3 cursor-pointer hover:scale-[1.02] hover:shadow-md transition-all mx-2"
               onClick={() => navigate(`/projects/${s.projectId}/sprints/${s.sprintId}`)}
             >
-              {/* 標題列：專案名稱 + 剩餘天數 */}
-              <div className="flex items-start justify-between gap-2 mb-3">
+              {/* 標題列：專案名稱 · Sprint 名稱（同一行）+ 剩餘天數 */}
+              <div className="flex items-center justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2 min-w-0">
-                  {/* 專案顏色圓點 */}
                   <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: s.projectColor }} />
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold truncate">{s.projectName}</p>
-                    <p className="text-xs text-muted-foreground truncate">{s.sprintName}</p>
-                  </div>
+                  <p className="text-sm font-semibold truncate">
+                    {s.projectName}
+                    <span className="font-normal text-muted-foreground mx-1">·</span>
+                    {s.sprintName}
+                  </p>
                 </div>
 
-                {/* 剩餘天數 */}
                 {s.daysLeft !== null && (
                   <div className={`flex items-center gap-1 shrink-0 text-xs ${s.daysLeft <= 2 ? "text-destructive" : "text-muted-foreground"}`}>
                     <Clock className="w-3 h-3" />
@@ -72,7 +70,7 @@ export default function ActiveSprintsSummary({ summaries, loading }: Props) {
 
               {/* 進度條（縮短，不佔滿整行） + 百分比 + SP 統計 */}
               <div className="flex items-center gap-3">
-                <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                <div className="flex-1 h-1.5 rounded-full bg-progress-track overflow-hidden">
                   <div
                     className="h-full rounded-full"
                     style={{

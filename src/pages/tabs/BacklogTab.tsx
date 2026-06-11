@@ -27,10 +27,10 @@ function getDaysRemaining(dueDate: Date): { label: string; color: string } {
   const due = new Date(dueDate)
   due.setHours(0, 0, 0, 0)
   const diff = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-  if (diff < 0)   return { label: "Overdue",       color: "#CC6161" }
-  if (diff === 0) return { label: "Due today",     color: "#CC6161" }
+  if (diff < 0)   return { label: "Overdue",       color: "var(--overdue)" }
+  if (diff === 0) return { label: "Due today",     color: "var(--overdue)" }
   if (diff <= 3)  return { label: `${diff}d left`, color: BRAND }
-  return                 { label: `${diff}d left`, color: "#6B7280" }
+  return                 { label: `${diff}d left`, color: "var(--muted-foreground)" }
 }
 // 頭貼渲染 沒照片用名字縮寫
 function MemberAvatar({ user, size = "sm" }: { user: UserProfile; size?: "sm" | "md" }) {
@@ -118,8 +118,8 @@ function TaskCard({ task, assignee }: { task: Task; assignee?: UserProfile }) {
   const isOverdue = task.dueDate && new Date() > task.dueDate
 
   return (
-    <div className={`bg-card border rounded-xl p-3 cursor-pointer hover:shadow-sm transition-all ${
-      isOverdue ? "border-[#CC6161]" : "border-border"
+    <div className={`bg-card border rounded-xl p-3 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all ${
+      isOverdue ? "border-overdue" : "border-border"
     }`}>
       <div className="flex items-center justify-between mb-2">
         <span
@@ -290,8 +290,8 @@ export default function BacklogTab({
                       onClick={() => setStoryPoints(storyPoints === sp ? null : sp)}
                       className="w-10 h-10 rounded-full text-sm font-semibold transition-all"
                       style={{
-                        backgroundColor: storyPoints === sp ? BRAND : "#F3F4F6",
-                        color: storyPoints === sp ? "white" : "#6B7280",
+                        backgroundColor: storyPoints === sp ? BRAND : "var(--subtle-bg)",
+                        color: storyPoints === sp ? "white" : "var(--muted-foreground)",
                       }}
                     >
                       {sp}
@@ -315,7 +315,7 @@ export default function BacklogTab({
                         style={
                           selected
                             ? { backgroundColor: cfg.color, color: "white", borderColor: cfg.color }
-                            : { backgroundColor: "transparent", color: "#6B7280", borderColor: "#E5E7EB" }
+                            : { backgroundColor: "transparent", color: "var(--muted-foreground)", borderColor: "var(--border)" }
                         }
                       >
                         {cfg.label}

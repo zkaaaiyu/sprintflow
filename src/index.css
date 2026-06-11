@@ -7,73 +7,135 @@
     --font-heading: var(--font-sans);
     --font-sans: 'Geist Variable', sans-serif
   }
+
+  /* ── Light Mode ── */
   :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
+    /* 基礎色 */
+    --background: #F7F6F3;
+    --foreground: #5F5A55;
+    --card: #F7F7F7;
+    --card-foreground: #5F5A55;
+    --popover: #F7F7F7;
+    --popover-foreground: #5F5A55;
+    --navbar-bg: #F7F7F7;
+
+    /* 文字階層 */
+    --muted-foreground: #6A6562;
+    --subtle-foreground: #A09C97;
+
+    /* Shadcn 系統色（配合新底色調整） */
+    --primary: #5F5A55;
+    --primary-foreground: #F7F7F7;
+    --secondary: #EEEEEC;
+    --secondary-foreground: #5F5A55;
+    --muted: #EEEEEC;
+    --accent: #EEEEEC;
+    --accent-foreground: #5F5A55;
+
+    /* 邊框 / 輸入框 */
+    --border: #E4E4E4;
+    --input: #E4E4E4;
+    --ring: #B3795F;
     --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0)
+
+    /* 品牌色 */
+    --brand: #B3795F;
+    --brand-hover: #9A6450;
+    /* active sprint card */
+    --brand-subtle-bg: rgba(204, 119, 62, 0.06); 
+    --brand-subtle-border: rgba(179, 121, 95, 0.6);
+    
+    /* 狀態色 */
+    --destructive: #A85C5C;
+    --overdue: #A85C5C;
+    --stat-due: #D1AE5E;
+    --stat-done: #108E65;
+
+    /* 介面元素 */
+    --subtle-bg: #F3F4F6;
+    --progress-track: #E2E2E2;
+
+    /* Sidebar（在 light mode 也是深色） */
+    --sidebar: #33322E;
+    --sidebar-foreground: #D4CFC8;
+    --sidebar-primary: #B3795F;
+    --sidebar-primary-foreground: #F7F7F7;
+    --sidebar-accent: #3E3C38;
+    --sidebar-accent-foreground: #D4CFC8;
+    --sidebar-border: #3E3C38;
+    --sidebar-ring: #B3795F;
+
+    /* Chart */
+    --chart-1: #B3795F;
+    --chart-2: #6A8CAF;
+    --chart-3: #73A38C;
+    --chart-4: #D1AE5E;
+    --chart-5: #A85C5C;
   }
+
+  /* ── Dark Mode ── */
   .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0)
+    /* 基礎色 */
+    --background: #1C1A18;
+    --foreground: #D4CFC8;
+    --card: #242220;
+    --card-foreground: #D4CFC8;
+    --popover: #242220;
+    --popover-foreground: #D4CFC8;
+    --navbar-bg: #242220;
+
+    /* 文字階層 */
+    --muted-foreground: #8A8480;
+    --subtle-foreground: #6B6560;
+
+    /* Shadcn 系統色 */
+    --primary: #D4CFC8;
+    --primary-foreground: #242220;
+    --secondary: #2E2C2A;
+    --secondary-foreground: #D4CFC8;
+    --muted: #2E2C2A;
+    --accent: #2E2C2A;
+    --accent-foreground: #D4CFC8;
+
+    /* 邊框 / 輸入框 */
+    --border: #3A3836;
+    --input: #3A3836;
+    --ring: #C4896F;
+
+    /* 品牌色（dark 下略亮） */
+    --brand: #C4896F;
+    --brand-hover: #D09A7F;
+    --brand-subtle-bg: rgba(196, 137, 111, 0.08);
+    --brand-subtle-border: rgba(196, 137, 111, 0.30);
+
+    /* 狀態色 */
+    --destructive: #C47070;
+    --overdue: #C47070;
+    --stat-due: #D4B86A;
+    --stat-done: #2EAD7A;
+
+    /* 介面元素 */
+    --subtle-bg: #2E2C2A;
+    --progress-track: #3A3836;
+
+    /* Sidebar */
+    --sidebar: #1A1816;
+    --sidebar-foreground: #D4CFC8;
+    --sidebar-primary: #C4896F;
+    --sidebar-primary-foreground: #F7F7F7;
+    --sidebar-accent: #2A2826;
+    --sidebar-accent-foreground: #D4CFC8;
+    --sidebar-border: #2A2826;
+    --sidebar-ring: #C4896F;
+
+    /* Chart */
+    --chart-1: #C4896F;
+    --chart-2: #7A9DBF;
+    --chart-3: #85B5A0;
+    --chart-4: #D4B86A;
+    --chart-5: #C47070;
   }
+
   * {
     @apply border-border outline-ring;
   }
@@ -82,5 +144,27 @@
   }
   html {
     @apply font-sans;
+  }
+
+  /* 全域捲動條：細條半透明，hover 才加深 */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: oklch(0 0 0 / 12%);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0 0 0 / 25%);
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: oklch(1 0 0 / 15%);
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: oklch(1 0 0 / 30%);
   }
 }

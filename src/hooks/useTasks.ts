@@ -27,6 +27,7 @@ export type Task = {
   status: TaskStatus
   assigneeId: string | null
   dueDate: Date | null
+  doneAt: Date | null
   labels: string[]
   order: number
   createdBy: string
@@ -51,6 +52,7 @@ export function useTasks(projectId: string) {
         id: d.id,
         ...d.data(),
         dueDate: (d.data().dueDate as Timestamp)?.toDate() ?? null,
+        doneAt: (d.data().doneAt as Timestamp)?.toDate() ?? null,
         createdAt: (d.data().createdAt as Timestamp)?.toDate() ?? null,
       })) as Task[]
       setTasks(list) //更新列表

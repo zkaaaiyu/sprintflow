@@ -13,10 +13,10 @@ function formatDueDate(date: Date): { label: string; color: string } {
 
   const dateStr = date.toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase()
 
-  if (diff < 0)  return { label: "OVERDUE", color: "#CC6161" }
-  if (diff === 0) return { label: "TODAY",  color: "#CC6161" }
+  if (diff < 0)  return { label: "OVERDUE", color: "var(--overdue)" }
+  if (diff === 0) return { label: "TODAY",  color: "var(--overdue)" }
   if (diff <= 3)  return { label: dateStr,  color: BRAND }
-  return                 { label: dateStr,  color: "#6B7280" }
+  return                 { label: dateStr,  color: "var(--muted-foreground)" }
 }
 
 const MAX_VISIBLE = 2

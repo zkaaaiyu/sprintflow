@@ -71,10 +71,10 @@ function getDaysRemaining(dueDate: Date): { label: string; color: string } {
   const now = new Date(); now.setHours(0, 0, 0, 0)
   const due = new Date(dueDate); due.setHours(0, 0, 0, 0)
   const diff = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-  if (diff < 0)   return { label: "Overdue",       color: "#CC6161" }
-  if (diff === 0) return { label: "Due today",     color: "#CC6161" }
+  if (diff < 0)   return { label: "Overdue",       color: "var(--overdue)" }
+  if (diff === 0) return { label: "Due today",     color: "var(--overdue)" }
   if (diff <= 3)  return { label: `${diff}d left`, color: BRAND }
-  return               { label: `${diff}d left`, color: "#6B7280" }
+  return               { label: `${diff}d left`, color: "var(--muted-foreground)" }
 }
 
 // 渲染成員頭像
@@ -160,8 +160,8 @@ function KanbanCard({ task, assignee, onClick }: { task: Task; assignee?: UserPr
     // 卡片內容渲染
     <div
       onClick={onClick}
-      className={`bg-card border rounded-xl p-3 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all ${
-        isOverdue ? "border-[#CC6161]" : "border-border"
+      className={`bg-card border rounded-xl p-3 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all animate-in fade-in-0 duration-300 ${
+        isOverdue ? "border-overdue" : "border-border"
       }`}
     >
       {/* 優先級標籤 + SP */}
@@ -471,7 +471,11 @@ export default function SprintKanbanPage() {
       newDestTasks.forEach((task, index) => { 
         const ref = doc(db, "projects", projectId, "tasks", task.id)
         if (task.id === activeId) { //如果是新加入的那一張哪片
-          batch.update(ref, { status: destColumnId, order: (index + 1) * 1000 }) //要更新排序權重還要更新狀態
+          batch.update(ref, {
+            status: destColumnId,
+            order: (index + 1) * 1000,
+            doneAt: destColumnId === "done" ? serverTimestamp() : null,
+          })
         } else {
           batch.update(ref, { order: (index + 1) * 1000 }) //原本就在欄位裡的卡片只更新排序權重即可
         }
@@ -611,7 +615,7 @@ export default function SprintKanbanPage() {
                 className="text-xs px-2.5 py-1 rounded-full font-medium transition-all capitalize"
                 style={{
                   backgroundColor: isActive ? cfg.bg : undefined,
-                  color: isActive ? cfg.color : "#6B7280",
+                  color: isActive ? cfg.color : "var(--muted-foreground)",
                   outline: isActive ? `1.5px solid ${cfg.color}` : undefined,
                   outlineOffset: isActive ? "2px" : undefined,
                 }}
@@ -924,8 +928,8 @@ export default function SprintKanbanPage() {
                           onClick={() => setNewStoryPoints(newStoryPoints === sp ? null : sp)}
                           className="w-10 h-10 rounded-full text-sm font-semibold transition-all"
                           style={{
-                            backgroundColor: newStoryPoints === sp ? BRAND : "#F3F4F6",
-                            color: newStoryPoints === sp ? "white" : "#6B7280",
+                            backgroundColor: newStoryPoints === sp ? BRAND : "var(--subtle-bg)",
+                            color: newStoryPoints === sp ? "white" : "var(--muted-foreground)",
                           }}
                         >
                           {sp}
@@ -948,7 +952,7 @@ export default function SprintKanbanPage() {
                             style={
                               selected
                                 ? { backgroundColor: cfg.color, color: "white", borderColor: cfg.color }
-                                : { backgroundColor: "transparent", color: "#6B7280", borderColor: "#E5E7EB" }
+                                : { backgroundColor: "transparent", color: "var(--muted-foreground)", borderColor: "var(--border)" }
                             }
                           >
                             {cfg.label}
@@ -1123,8 +1127,8 @@ export default function SprintKanbanPage() {
                       onClick={() => setNewStoryPoints(newStoryPoints === sp ? null : sp)}
                       className="w-10 h-10 rounded-full text-sm font-semibold transition-all"
                       style={{
-                        backgroundColor: newStoryPoints === sp ? BRAND : "#F3F4F6",
-                        color: newStoryPoints === sp ? "white" : "#6B7280",
+                        backgroundColor: newStoryPoints === sp ? BRAND : "var(--subtle-bg)",
+                        color: newStoryPoints === sp ? "white" : "var(--muted-foreground)",
                       }}
                     >
                       {sp}
@@ -1148,7 +1152,7 @@ export default function SprintKanbanPage() {
                         style={
                           selected
                             ? { backgroundColor: cfg.color, color: "white", borderColor: cfg.color }
-                            : { backgroundColor: "transparent", color: "#6B7280", borderColor: "#E5E7EB" }
+                            : { backgroundColor: "transparent", color: "var(--muted-foreground)", borderColor: "var(--border)" }
                         }
                       >
                         {cfg.label}

@@ -21,11 +21,16 @@ export type GlobalActivity = {
   createdAt: Date | null
 }
 
-export function useGlobalActivities(projectIds: string[], projectsLoading: boolean) {
+// joinedAtMap：{ [projectId]: Date | null }，用來過濾加入前的舊紀錄
+export function useGlobalActivities(
+  projectIds: string[],
+  projectsLoading: boolean,
+  joinedAtMap: Record<string, Date | null> = {}
+) {
   const [activities, setActivities] = useState<GlobalActivity[]>([])
   const [loading, setLoading] = useState(true)
 
-  const projectIdsKey = projectIds.join(",") //同樣把引用類型數據轉成基本數據類型避免useffect不斷觸發型別比較
+  const projectIdsKey = projectIds.join(",")
 
   useEffect(() => {
     if (projectsLoading) return
@@ -36,14 +41,12 @@ export function useGlobalActivities(projectIds: string[], projectsLoading: boole
       return
     }
 
-    // Firestore 的 'in' 查詢 只支援 30 個值
-    const ids = projectIds.slice(0, 30) //所以取前三十個
+    const ids = projectIds.slice(0, 30)
     const q = query(
-      collection(db, "activities"), //從activities撈出對應這30個id的資料
+      collection(db, "activities"),
       where("projectId", "in", ids)
     )
 
-    // 用 onSnapshot 監聽，有新 activity 時即時更新
     const unsubscribe = onSnapshot(q, (snap) => {
       const list: GlobalActivity[] = snap.docs.map((d) => ({
         id: d.id,
@@ -51,9 +54,18 @@ export function useGlobalActivities(projectIds: string[], projectsLoading: boole
         createdAt: (d.data().createdAt as Timestamp)?.toDate() ?? null,
       })) as GlobalActivity[]
 
-      // 用 JS 排序 繞開firestore的複合索引
-      list.sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0)) //用gettime方法把獲取到的時間轉換成純數字時間做加減排序  
-      setActivities(list.slice(0, 30)) // 塞進渲染陣列中
+      // 過濾掉早於使用者加入時間，或超過 7 天的 activity
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      const filtered = list.filter((act) => {
+        if (!act.createdAt) return false
+        if (act.createdAt < sevenDaysAgo) return false
+        const joinedAt = joinedAtMap[act.projectId]
+        if (joinedAt && act.createdAt < joinedAt) return false
+        return true
+      })
+
+      filtered.sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0))
+      setActivities(filtered.slice(0, 30))
       setLoading(false)
     })
 

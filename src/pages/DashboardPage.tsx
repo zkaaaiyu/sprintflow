@@ -7,6 +7,7 @@ import UpcomingDeadlines from "@/components/dashboard/UpcomingDeadlines"
 import CalendarPanel from "@/components/dashboard/CalendarPanel"
 import PersonalTodos from "@/components/dashboard/PersonalTodos"
 import ActiveSprintsSummary from "@/components/dashboard/ActiveSprintsSummary"
+import BurndownChart from "@/components/dashboard/BurndownChart"
 
 export default function DashboardPage() {
   const { projects, loading: projectsLoading } = useWorkspace()
@@ -26,7 +27,7 @@ export default function DashboardPage() {
 
           {/* 上：Donut Chart + Upcoming Deadlines */}
           {/* overflow-hidden 防止子元素撐破 card，min-w-0 讓 flex 子項可縮放 */}
-          <div className="bg-card border border-border rounded-2xl p-6 flex gap-6 overflow-hidden">
+          <div className="bg-card border border-border rounded-3xl p-6 flex gap-6 overflow-hidden shadow-sm">
             {/* Donut + 統計數字：flex-1 min-w-0 允許隨容器縮小 */}
             <div className="flex-1 min-w-0 flex items-center justify-center">
               {stats.loading ? (
@@ -51,9 +52,20 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* 下：Active Sprints 總覽：flex-1 撐滿左欄剩餘高度 */}
-          <div className="bg-card border border-border rounded-2xl p-6 flex-1 overflow-y-auto">
-            <ActiveSprintsSummary summaries={sprintSummaries} loading={sprintsLoading} />
+          {/* 下：Active Sprints + My Todos 合併：flex-1 撐滿左欄剩餘高度 */}
+          <div className="bg-card border border-border rounded-3xl p-6 flex-1 overflow-hidden shadow-sm flex gap-6">
+            {/* Active Sprints：flex-1 可縮放，overflow-hidden 避免 hover 放大觸發捲動條 */}
+            <div className="flex-1 min-w-0 overflow-hidden">
+              <ActiveSprintsSummary summaries={sprintSummaries} loading={sprintsLoading} />
+            </div>
+
+            {/* 垂直分隔線 */}
+            <div className="w-px bg-border self-stretch shrink-0" />
+
+            {/* My Todos：固定寬度，overflow-hidden 避免捲動條，文字自動換行 */}
+            <div className="w-56 shrink-0 overflow-hidden">
+              <PersonalTodos />
+            </div>
           </div>
 
         </div>
@@ -62,13 +74,13 @@ export default function DashboardPage() {
         <div className="col-span-1 flex flex-col gap-6">
 
           {/* 月曆面板 */}
-          <div className="bg-card border border-border rounded-2xl p-6">
+          <div className="bg-card border border-border rounded-3xl p-6 shadow-sm">
             <CalendarPanel />
           </div>
 
-          {/* 個人待辦清單：flex-1 撐滿右欄剩餘高度 */}
-          <div className="bg-card border border-border rounded-2xl p-6 flex-1 overflow-y-auto">
-            <PersonalTodos />
+          {/* Burndown Chart：flex-1 撐滿右欄剩餘高度 */}
+          <div className="bg-card border border-border rounded-3xl p-6 flex-1 shadow-sm">
+            <BurndownChart summaries={sprintSummaries} />
           </div>
         </div>
 

@@ -50,9 +50,9 @@ export default function PersonalTodos() {
             {/* 圓形打勾按鈕 */}
             <button
               onClick={() => toggleTodo(todo.id, todo.done)}
-              className="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all"
+              className="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all group-hover:border-brand"
               style={{
-                borderColor: todo.done ? BRAND : "#D1D5DB",
+                borderColor: todo.done ? BRAND : undefined,
                 backgroundColor: todo.done ? BRAND : "transparent",
               }}
             >

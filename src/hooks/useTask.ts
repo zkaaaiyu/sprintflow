@@ -61,11 +61,16 @@ export function useTask(projectId: string, taskId: string) {
 
     const taskRef = doc(db, "projects", projectId, "tasks", taskId) //找到特定id下的任務的資料
     const storeValue = newValue instanceof Date //如果newValue 是 Date 要轉換成 fireStore 的 Timestamp 格式 如果是一般字串就不用動
-      ? Timestamp.fromDate(newValue)  
+      ? Timestamp.fromDate(newValue)
       : newValue
 
-    // 只更新該任務中「特定一個欄位」，而不覆蓋其他資料
-    await updateDoc(taskRef, { [field]: storeValue })  // 更新任務文件 filed 是動態的 可以是 時間、狀態或是其他屬性 storeValue 是判斷好的新值
+    // 若更新的是 status 欄位，同時寫入 doneAt（完成時間）
+    const extraFields: Record<string, unknown> = {}
+    if (field === "status") {
+      extraFields.doneAt = newValue === "done" ? serverTimestamp() : null
+    }
+
+    await updateDoc(taskRef, { [field]: storeValue, ...extraFields })  // 更新任務文件 filed 是動態的 可以是 時間、狀態或是其他屬性 storeValue 是判斷好的新值
 
     // 用 addDoc 指向 activities 子集合  在該任務底下新增一筆獨立的歷史紀錄文件
     const activityData = {

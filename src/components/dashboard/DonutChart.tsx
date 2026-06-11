@@ -9,12 +9,12 @@ type Props = {
   done: number
 }
 
-// 各狀態對應顏色 （後續要集中管理）
+// DonutChart 專用色盤，與 badge 顏色獨立管理
 const STATUS_CONFIG = [
-  { key: "in_progress", label: "IN PROGRESS", color: "#F97316" },
-  { key: "done",        label: "DONE",        color: "#73a38c" },
-  { key: "review",      label: "REVIEW",      color: "#9B7EC8" },
-  { key: "todo",        label: "TO DO",       color: "#E5E7EB" },
+  { key: "in_progress", label: "IN PROGRESS", color: "#B3795F" },
+  { key: "done",        label: "DONE",        color: "#6F9E8A" },
+  { key: "review",      label: "REVIEW",      color: "#E2BF6A" },
+  { key: "todo",        label: "TO DO",       color: "#6B7280" },
 ]
 
 export default function DonutChart({ total, todo, in_progress, review, done }: Props) {
@@ -32,7 +32,7 @@ export default function DonutChart({ total, todo, in_progress, review, done }: P
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
-              data={hasData ? data : [{ value: 1, color: "#F3F4F6", key: "empty", label: "" }]}
+              data={hasData ? data : [{ value: 1, color: "var(--subtle-bg)", key: "empty", label: "" }]}
               cx="50%"
               cy="50%"
               innerRadius={38}
@@ -44,7 +44,7 @@ export default function DonutChart({ total, todo, in_progress, review, done }: P
             >
               {hasData
                 ? data.map((entry) => <Cell key={entry.key} fill={entry.color} />)
-                : <Cell fill="#F3F4F6" />
+                : <Cell fill="var(--subtle-bg)" />
               }
             </Pie>
           </PieChart>

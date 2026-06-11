@@ -1,5 +1,6 @@
 //Project 頁面
 import { useState, useEffect, useRef } from "react"
+import { motion } from "framer-motion"
 import { useNavigate } from "react-router-dom"
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragOverlay } from "@dnd-kit/core"
 import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core"
@@ -103,14 +104,13 @@ function ProjectCard({ project, onDelete, isOwner }: {
   return (
     <div
       onClick={() => navigate(`/projects/${project.id}`)}
-      className="border border-border rounded-2xl p-4 shadow-sm hover:scale-[1.02] hover:shadow-md transition-all cursor-pointer group flex flex-col aspect-[3/2] bg-card"
+      className="border border-border rounded-2xl p-4 shadow-sm hover:scale-[1.02] hover:shadow-md transition-all cursor-pointer group flex flex-col aspect-[3/2] bg-card overflow-hidden"
     >
+      {/* 頂部顏色條 */}
+      <div className="-mx-4 -mt-4 mb-4 h-3" style={{ backgroundColor: project.color }} />
       {/* 標題 + 刪除 */}
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: project.color }} />
-          <h2 className="font-semibold text-base leading-snug">{project.name}</h2>
-        </div>
+      <div className="flex items-start justify-between mb-1.5">
+        <h2 className="font-semibold text-base leading-snug">{project.name}</h2>
         {isOwner && (
           <button
             onClick={onDelete}
@@ -122,19 +122,19 @@ function ProjectCard({ project, onDelete, isOwner }: {
       </div>
 
       {project.description ? (
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-4 pl-[18px] flex-1">
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-4 flex-1">
           {project.description}
         </p>
       ) : (
-        <p className="text-sm text-muted-foreground/50 italic mb-4 pl-[18px] flex-1">無描述</p>
+        <p className="text-sm text-muted-foreground/50 italic mb-4 flex-1">無描述</p>
       )}
 
       {/* 底部：Sprint + 頭像 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-xs">
-          <Timer className="w-3.5 h-3.5" style={{ color: activeSprint ? "#be7559" : undefined }} />
+          <Timer className="w-3.5 h-3.5" style={{ color: activeSprint ? "var(--brand)" : undefined }} />
           {activeSprint ? (
-            <span className="font-medium" style={{ color: "#be7559" }}>{activeSprint.name}</span>
+            <span className="font-medium" style={{ color: "var(--brand)" }}>{activeSprint.name}</span>
           ) : (
             <span className="text-muted-foreground">尚未開始 Sprint</span>
           )}
@@ -203,6 +203,8 @@ export default function ProjectsPage() {
   const [sortMode, setSortMode] = useState<SortMode>("default")
   const [sortMenuOpen, setSortMenuOpen] = useState(false)
   const sortRef = useRef<HTMLDivElement>(null)
+  const [iconAnimKey, setIconAnimKey] = useState(0)
+  const iconAnimating = useRef(false)
   useEffect(() => {
     if (!sortMenuOpen) return
     const handler = (e: MouseEvent) => {
@@ -320,7 +322,7 @@ const confirmDelete = async () => {
   return (
 
   <Dialog open={open} onOpenChange={handleOpenChange}>
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto pt-4">
 
       {/* ── 新版 Header ── */}
       {(() => {
@@ -334,42 +336,71 @@ const confirmDelete = async () => {
         const statusMsg = getStatusMessage(wsStats.overdueCount, wsStats.dueTodayCount, wsStats.completedThisWeekCount, wsStats.loading, firstName)
 
         return (
-          <div className="mb-6">
-            {/* 問候語 + 名字同一列，右側日期 */}
-            <div className="flex items-center justify-between mb-3">
-              <h1 className="flex items-center gap-3 text-4xl font-bold">
-                <TimeIcon className="text-brand shrink-0" style={{ width: 36, height: 36 }} />
-                <span className="text-muted-foreground font-bold">{greeting}</span>
+          <div className="mb-20">
+            {/* Row 1：問候語左側，統計數字右側 */}
+            <div className="flex items-center justify-between">
+              <h1 className="flex items-center gap-3 text-4xl font-bold" style={{ color: "var(--foreground)" }}>
+                <span>{greeting}</span>
                 <span>{firstName}</span>
+                <motion.span
+                  key={iconAnimKey}
+                  className="inline-flex shrink-0 cursor-default select-none"
+                  animate={
+                    isEvening
+                      ? { rotate: [0, -18, 22, -12, 10, 0], scale: [1, 1.15, 1.1, 1.12, 1.05, 1] }
+                      : isAfternoon
+                      ? { y: [0, -7, -4, -6, 0],            scale: [1, 1.15, 1.1, 1.12, 1.05, 1] }
+                      : { rotate: [0, 120, 260, 360],        scale: [1, 1.25, 1.15, 1] }
+                  }
+                  transition={{ duration: isEvening ? 0.6 : 0.7, ease: "easeInOut" }}
+                  onHoverStart={() => {
+                    if (iconAnimating.current) return
+                    iconAnimating.current = true
+                    setIconAnimKey((k) => k + 1)
+                    setTimeout(() => { iconAnimating.current = false }, 750)
+                  }}
+                >
+                  <TimeIcon className="text-brand" style={{ width: 32, height: 32 }} />
+                </motion.span>
               </h1>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground border border-border rounded-lg px-3 py-1.5 shrink-0">
-                <CalendarDays className="w-3.5 h-3.5" />
-                <span>{formattedDate}</span>
+
+              <div className="flex items-center gap-9 text-lg text-muted-foreground shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <CalendarClock className="w-6 h-6" style={{ color: "var(--stat-due)" }} />
+                  <span>
+                    <strong className="text-foreground">{wsStats.loading ? "\u2014" : wsStats.dueTodayCount}</strong>
+                    {" "}Tasks due
+                  </span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <CheckCircle2 className="w-6 h-6" style={{ color: "var(--stat-done)" }} />
+                  <span>
+                    <strong className="text-foreground">{wsStats.loading ? "\u2014" : wsStats.completedThisWeekCount}</strong>
+                    {" "}Done
+                  </span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <Zap className="w-6 h-6" style={{ color: "var(--brand)" }} />
+                  <span>
+                    <strong className="text-foreground">{wsStats.loading ? "\u2014" : wsStats.activeSprintsCount}</strong>
+                    {" "}Sprint
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* 互動短句 */}
-            <p className="text-sm text-muted-foreground mb-14">{statusMsg || " "}</p>
+            {/* Row 2：互動短句 */}
+            <p className="mt-2 text-sm text-muted-foreground">{statusMsg || " "}</p>
 
-            {/* 三個統計面板 */}
-            <div className="grid grid-cols-3 gap-10">
-              {[
-                { icon: CalendarClock, label: "Tasks due today",    value: wsStats.dueTodayCount },
-                { icon: CheckCircle2, label: "Completed in sprints", value: wsStats.completedThisWeekCount },
-                { icon: Zap,          label: "Active sprints",      value: wsStats.activeSprintsCount },
-              ].map(({ icon: Icon, label, value }) => (
-                <div key={label} className="flex items-center gap-4 border border-border rounded-2xl px-5 py-4 bg-card hover:scale-[1.02] hover:shadow-md transition-all">
-                  <div className="w-10 h-10 rounded-full bg-brand/10 flex items-center justify-center shrink-0">
-                    <Icon className="w-4.5 h-4.5 text-brand" style={{ width: 18, height: 18 }} />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold leading-none mb-0.5">
-                      {wsStats.loading ? "—" : value}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{label}</p>
-                  </div>
-                </div>
-              ))}
+            {/* Row 3：workspace 簡介左側，日期右側 */}
+            <div className="flex items-center justify-between mt-3">
+              <p className="text-sm" style={{ color: "var(--subtle-foreground)" }}>
+                Here's your workspace — all your projects, sprints, and tasks live here. Pick up where you left off, or start something new.
+              </p>
+              <div className="flex items-center gap-2 text-base text-muted-foreground shrink-0 ml-8">
+                <CalendarDays className="w-5 h-5" />
+                <span>{formattedDate}</span>
+              </div>
             </div>
           </div>
         )
@@ -389,7 +420,7 @@ const confirmDelete = async () => {
             <span>Sort</span>
           </button>
           {sortMenuOpen && (
-            <div className="absolute right-0 top-full mt-1 w-44 bg-popover border border-border rounded-xl shadow-lg z-50 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150">
+            <div className="absolute right-0 top-full mt-3 w-44 bg-popover border border-border rounded-xl shadow-lg z-50 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150">
               {([
                 { key: "default",   label: "Default" },
                 { key: "createdAt", label: "Created time" },

@@ -1,8 +1,8 @@
 import type { Priority } from "@/hooks/useTasks"
 
 export const PRIORITY_CONFIG: Record<Priority, { label: string; color: string; bg: string }> = {
-  low:    { label: "Low",    color: "#6B7280", bg: "#F3F4F6" },
-  medium: { label: "Medium", color: "#688CB7", bg: "#EFF6FF" },
-  high:   { label: "High",   color: "#D87A4A", bg: "#FFF7ED" },
-  urgent: { label: "Urgent", color: "#D86464", bg: "#FEF2F2" },
+  low:    { label: "Low",    color: "white", bg: "rgba(149, 144, 142, 0.85)" },
+  medium: { label: "Medium", color: "white", bg: "rgba(125, 153, 177, 0.85)" },
+  high:   { label: "High",   color: "white", bg: "rgba(181, 132, 119, 0.85)" },
+  urgent: { label: "Urgent", color: "white", bg: "rgba(194, 125, 126, 0.85)" },
 }

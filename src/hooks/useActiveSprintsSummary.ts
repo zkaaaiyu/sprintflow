@@ -17,7 +17,10 @@ export type ActiveSprintSummary = {
   projectColor: string
   sprintId: string
   sprintName: string
+  startDate: Date | null
+  endDate: Date | null
   daysLeft: number | null   // null = 無截止日
+  totalTasks: number
   totalSP: number
   doneSP: number
   percentage: number        // doneSP / totalSP * 100，無 SP 時為 0
@@ -82,7 +85,10 @@ export function useActiveSprintsSummary(projects: Project[], projectsLoading: bo
             projectColor: project.color,
             sprintId: sprintDoc.id,
             sprintName: sprintData.name ?? "Active Sprint",
+            startDate: sprintData.startDate ? (sprintData.startDate as Timestamp).toDate() : null,
+            endDate: sprintData.endDate ? (sprintData.endDate as Timestamp).toDate() : null,
             daysLeft,
+            totalTasks: tasksSnap.size,
             totalSP,
             doneSP,
             percentage,

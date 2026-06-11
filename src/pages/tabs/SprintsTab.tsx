@@ -2,7 +2,6 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useSprints, type SprintStatus } from "@/hooks/useSprints"
 import { SPRINT_STATUS_CONFIG } from "@/lib/sprintStatus"
-import { BRAND } from "@/lib/colors"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -76,15 +75,17 @@ export default function SprintsTab({
                       {/* Timeline 圓點 */}
                       <div
                         className="relative z-10 w-3 h-3 rounded-full shrink-0"
-                        style={{ backgroundColor: isActive ? BRAND : "#D1D5DB" }}
+                        style={{ backgroundColor: isActive ? "var(--brand)" : "var(--border)" }}
                       />
 
                       {/* Sprint 卡片 */}
                       <div
                         onClick={() => navigate(`/projects/${projectId}/sprints/${sprint.id}`)}
-                        className={`flex-1 flex items-center gap-4 p-4 rounded-xl border cursor-pointer hover:shadow-sm transition-all ${
-                          isActive ? "border-orange-200 bg-orange-50/50 dark:bg-brand/5" : "border-border bg-background"
-                        }`}
+                        className="flex-1 flex items-center gap-4 p-4 rounded-xl border cursor-pointer hover:shadow-md hover:scale-[1.01] transition-all"
+                        style={isActive ? {
+                          backgroundColor: "var(--brand-subtle-bg)",
+                          borderColor: "var(--brand-subtle-border)",
+                        } : {}}
                       >
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">
