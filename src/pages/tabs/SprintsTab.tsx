@@ -82,10 +82,13 @@ export default function SprintsTab({
                       <div
                         onClick={() => navigate(`/projects/${projectId}/sprints/${sprint.id}`)}
                         className="flex-1 flex items-center gap-4 p-4 rounded-xl border cursor-pointer hover:shadow-md hover:scale-[1.01] transition-all"
-                        style={isActive ? {
-                          backgroundColor: "var(--brand-subtle-bg)",
-                          borderColor: "var(--brand-subtle-border)",
-                        } : {}}
+                        style={
+                          isActive
+                            ? { borderColor: "var(--brand-subtle-border)" }
+                            : sprint.status === "completed"
+                            ? { borderColor: `${cfg.bg}99` }
+                            : {}
+                        }
                       >
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">

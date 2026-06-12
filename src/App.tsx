@@ -8,6 +8,7 @@ import SprintPage from "@/pages/SprintPage"
 import MembersPage from "@/pages/MembersPage"
 import ProjectDetailPage from "./pages/ProjectDetailPage"
 import SprintKanbanPage from "./pages/SprintKanbanPage"
+import SettingsPage from "./pages/SettingsPage"
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/projects/:projectId/sprints/:sprintId" element={<SprintKanbanPage />} />
           <Route path="/sprint" element={<SprintPage />} />
           <Route path="/members" element={<MembersPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

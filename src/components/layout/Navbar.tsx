@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
-import { Search, Bell, LogOut, Moon, Sun, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, Bell, LogOut, Moon, Sun, ChevronLeft, ChevronRight, Settings } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { BRAND } from "@/lib/colors"
 import { useWorkspace } from "@/hooks/useWorkspace"
@@ -115,6 +115,8 @@ export default function Navbar() {
       }
     } else if (parts[0] === "members") {
       crumbs.push({ label: "Members", to: "/members" })
+    } else if (parts[0] === "settings") {
+      crumbs.push({ label: "Settings", to: "/settings" })
     }
 
     return crumbs
@@ -284,6 +286,16 @@ export default function Navbar() {
               <p className="text-sm font-medium truncate">{user?.displayName || "使用者"}</p>
               <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
             </div>
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem
+              onClick={() => navigate("/settings")}
+              className="cursor-pointer"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              設定
+            </DropdownMenuItem>
+
             <DropdownMenuSeparator />
 
             {/* 深色模式 toggle（不是 DropdownMenuItem，點擊不會關閉選單） */}

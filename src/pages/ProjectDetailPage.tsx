@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom"
+import { useParams, useNavigate, useLocation } from "react-router-dom"
 import { useState } from "react"
 import { useWorkspace } from "@/hooks/useWorkspace"
 import { BRAND } from "@/lib/colors"
@@ -61,7 +61,10 @@ export default function ProjectDetailPage() {
   const { sprints } = useSprints(projectId!)
   const { tasks } = useTasks(projectId!)
 
-  const [activeTab, setActiveTab] = useState<Tab>("sprints")
+  const location = useLocation()
+  const [activeTab, setActiveTab] = useState<Tab>(
+    (location.state as { tab?: Tab } | null)?.tab ?? "sprints"
+  )
   const [createSprintOpen, setCreateSprintOpen] = useState(false)
   const [backlogCreateOpen, setBacklogCreateOpen] = useState(false)
   const [backlogSort, setBacklogSort] = useState<SortBy>("priority")
@@ -144,7 +147,7 @@ export default function ProjectDetailPage() {
   }
 
   return (
-    <div className="w-full max-w-5xl mx-auto pb-28">
+    <div className="w-full max-w-[1100px] mx-auto pb-28">
 
       {/* Info Card — 依 tab 顯示不同上方 bar */}
       {activeTab === "backlog" ? (

@@ -531,7 +531,7 @@ export default function SprintKanbanPage() {
 
   return (
     <div
-      className="flex flex-col h-full gap-3 p-5 overflow-hidden"
+      className="flex flex-col gap-3 p-5"
       onClick={() => {
         if (filterMemberIds.length > 0 || filterPriority !== null) {
           setFilterMemberIds([])
@@ -675,7 +675,7 @@ export default function SprintKanbanPage() {
       </div>
 
       {/* ── 下方看板卡片 ── */}
-      <div className="flex-1 bg-card border border-border rounded-2xl shadow-sm overflow-auto p-5 min-h-[640px]">
+      <div className="bg-card border border-border rounded-2xl shadow-sm p-5 min-h-[640px]">
         <DndContext //dnd-kit拖曳包裝標籤
           sensors={sensors} // 偵測移動超過5px
           collisionDetection={closestCorners} //dnd-kit 提供的 碰撞偵測演算法
@@ -683,7 +683,7 @@ export default function SprintKanbanPage() {
           onDragOver={handleDragOver}   // 追蹤目前拖到哪個欄位，用來標亮 Drop task here
           onDragEnd={handleDragEnd} // 調用前面寫的結束拖曳函數
         > 
-          <div className="flex gap-4 h-full">
+          <div className="flex gap-4 items-start">
             {COLUMNS.map((col) => { // 用 map 映射出四個欄位
               const colTasks = sprintTasks
                 .filter((t) => t.status === col.id) //抓出狀態跟欄位名稱匹配的任務

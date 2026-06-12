@@ -146,6 +146,18 @@
     @apply font-sans;
   }
 
+  /* Bell shake 動畫（通知設定點擊用） */
+  @keyframes bell-shake {
+    0%, 100% { transform: rotate(0deg); }
+    15%       { transform: rotate(-22deg); }
+    30%       { transform: rotate(22deg); }
+    45%       { transform: rotate(-14deg); }
+    60%       { transform: rotate(14deg); }
+    75%       { transform: rotate(-6deg); }
+    90%       { transform: rotate(6deg); }
+  }
+  .bell-shake { animation: bell-shake 0.55s ease-in-out; }
+
   /* 全域捲動條：細條半透明，hover 才加深 */
   ::-webkit-scrollbar {
     width: 5px;

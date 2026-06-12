@@ -40,12 +40,18 @@ export default function UpcomingDeadlines({ tasks }: { tasks: UpcomingTask[] }) 
         <div className="space-y-1">
           {visibleTasks.map((task) => {
             const { label, color } = formatDueDate(task.dueDate)
-            const canNavigate = task.sprintId !== null
+            const handleClick = () => {
+              if (task.sprintId) {
+                navigate(`/projects/${task.projectId}/sprints/${task.sprintId}`)
+              } else {
+                navigate(`/projects/${task.projectId}`, { state: { tab: "backlog" } })
+              }
+            }
             return (
               <div
                 key={task.id}
-                onClick={() => canNavigate && navigate(`/projects/${task.projectId}/sprints/${task.sprintId}`)}
-                className={`flex items-center justify-between gap-3 px-2 py-2 rounded-lg transition-all ${canNavigate ? "cursor-pointer hover:scale-[1.02]" : ""}`}
+                onClick={handleClick}
+                className="flex items-center justify-between gap-3 px-2 py-2 rounded-lg transition-all cursor-pointer hover:scale-[1.02]"
               >
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">{task.title}</p>

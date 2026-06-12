@@ -268,16 +268,18 @@ export default function Sidebar() {
             {!collapsed && <span>New Project</span>}
           </button>
 
-          <button
+          <NavLink
+            to="/settings"
             title={collapsed ? "Settings" : undefined}
-            className={cn(
-              "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:bg-white/10 hover:text-white transition-colors",
+            className={({ isActive }) => cn(
+              "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+              isActive ? "bg-brand text-white" : "text-gray-300 hover:bg-white/10 hover:text-white",
               collapsed && "justify-center px-0"
             )}
           >
             <Settings className="w-5 h-5 shrink-0" />
             {!collapsed && <span>Settings</span>}
-          </button>
+          </NavLink>
         </div>
       </aside>
 

@@ -63,10 +63,10 @@ export default function DonutChart({ total, todo, in_progress, review, done }: P
           const pct = total > 0 ? Math.round((d.value / total) * 100) : 0
           return (
             <div key={d.key} className="flex items-center gap-1.5 min-w-0 hover:scale-[1.05] origin-left transition-all cursor-default">
-              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
+              <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
               <div className="min-w-0 overflow-hidden">
-                <p className="text-[10px] text-muted-foreground whitespace-nowrap">{d.label}</p>
-                <p className="text-sm font-bold leading-none whitespace-nowrap">{pct}%</p>
+                <p className="text-xs text-muted-foreground whitespace-nowrap">{d.label}</p>
+                <p className="text-base font-bold leading-none whitespace-nowrap">{pct}%</p>
               </div>
             </div>
           )
