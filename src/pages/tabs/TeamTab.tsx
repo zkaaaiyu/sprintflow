@@ -1,7 +1,12 @@
+import { useState } from "react"
 import { Download, UserMinus } from "lucide-react"
 import { useMembers } from "@/hooks/useMembers"
 import { useAuth } from "@/contexts/AuthContext"
 import type { Project } from "@/hooks/useWorkspace"
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 
 const AVATAR_COLORS = ["#F97316", "#3B82F6", "#10B981", "#8B5CF6", "#EF4444"]
 
@@ -12,6 +17,9 @@ export default function TeamTab({ project, onRemoveMember }: {
   const { user } = useAuth()
   const { members, loading } = useMembers(project.memberIds)
   const isOwner = project.ownerId === user?.uid
+  const [confirmUid, setConfirmUid] = useState<string | null>(null)
+
+  const confirmTarget = members.find((m) => m.uid === confirmUid)
 
   if (loading) return <div className="text-muted-foreground text-sm py-8 text-center">載入中...</div>
 
@@ -75,11 +83,13 @@ export default function TeamTab({ project, onRemoveMember }: {
               </div>
 
               {/* Role */}
-              <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium w-fit ${
-                isMemberOwner
-                  ? "bg-orange-100 dark:bg-brand/15 text-brand"
-                  : "bg-muted text-muted-foreground"
-              }`}>
+              <span
+                className="text-xs px-2.5 py-0.5 rounded-full font-medium w-fit"
+                style={isMemberOwner
+                  ? { backgroundColor: "var(--brand)", color: "white" }
+                  : { backgroundColor: "var(--muted)", color: "var(--muted-foreground)" }
+                }
+              >
                 {isMemberOwner ? "Owner" : "Member"}
               </span>
 
@@ -94,7 +104,7 @@ export default function TeamTab({ project, onRemoveMember }: {
               <div className="flex justify-end">
                 {isOwner && !isMemberOwner ? (
                   <button
-                    onClick={() => onRemoveMember(member.uid)}
+                    onClick={() => setConfirmUid(member.uid)}
                     className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                   >
                     <UserMinus className="w-4 h-4" />
@@ -107,6 +117,31 @@ export default function TeamTab({ project, onRemoveMember }: {
           )
         })}
       </div>
+
+      {/* 確認移除成員 */}
+      <Dialog open={!!confirmUid} onOpenChange={(o) => { if (!o) setConfirmUid(null) }}>
+        <DialogContent className="sm:max-w-sm rounded-2xl p-8">
+          <DialogHeader className="mb-4">
+            <DialogTitle>移除成員</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground mb-6">
+            確定要將 <span className="font-semibold text-foreground">{confirmTarget?.displayName || confirmTarget?.email}</span> 從專案中移除嗎？
+          </p>
+          <div className="flex justify-end gap-3">
+            <Button variant="ghost" onClick={() => setConfirmUid(null)}>取消</Button>
+            <Button
+              variant="destructive"
+              className="rounded-full px-6"
+              onClick={() => {
+                if (confirmUid) onRemoveMember(confirmUid)
+                setConfirmUid(null)
+              }}
+            >
+              確認移除
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

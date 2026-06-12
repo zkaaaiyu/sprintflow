@@ -314,7 +314,7 @@ export default function BacklogTab({
                         className="flex-1 py-2 rounded-full text-xs font-medium transition-all border"
                         style={
                           selected
-                            ? { backgroundColor: cfg.color, color: "white", borderColor: cfg.color }
+                            ? { backgroundColor: cfg.bg, color: cfg.color, borderColor: cfg.bg }
                             : { backgroundColor: "transparent", color: "var(--muted-foreground)", borderColor: "var(--border)" }
                         }
                       >

@@ -46,7 +46,7 @@ export default function ActiveSprintsSummary({ summaries, loading }: Props) {
           {summaries.map((s) => (
             <div
               key={s.sprintId}
-              className="border border-border rounded-xl p-3 cursor-pointer hover:scale-[1.02] hover:shadow-md transition-all mx-2"
+              className="px-2 py-3 rounded-xl cursor-pointer hover:bg-accent/50 hover:scale-[1.02] transition-all"
               onClick={() => navigate(`/projects/${s.projectId}/sprints/${s.sprintId}`)}
             >
               {/* 標題列：專案名稱 · Sprint 名稱（同一行）+ 剩餘天數 */}

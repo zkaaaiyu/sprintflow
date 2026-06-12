@@ -25,6 +25,7 @@ import { CSS } from "@dnd-kit/utilities"
 import { useSprint } from "@/hooks/useSprint"
 import { useTasks, type TaskStatus, type Task, type Priority, type StoryPoints } from "@/hooks/useTasks"
 import { PRIORITY_CONFIG } from "@/lib/priority"
+import { TASK_STATUS_CONFIG } from "@/lib/taskStatus"
 import { SPRINT_STATUS_CONFIG } from "@/lib/sprintStatus"
 import { BRAND } from "@/lib/colors"
 import { useWorkspace } from "@/hooks/useWorkspace"
@@ -46,7 +47,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { MoreHorizontal, Plus, ChevronDown } from "lucide-react"
+import { MoreHorizontal, Plus, ChevronDown, TriangleAlert } from "lucide-react"
 import { toast } from "sonner"
 import TaskDetailModal from "@/components/TaskDetailModal"
 import { useAuth } from "@/contexts/AuthContext"
@@ -160,18 +161,14 @@ function KanbanCard({ task, assignee, onClick }: { task: Task; assignee?: UserPr
     // 卡片內容渲染
     <div
       onClick={onClick}
-      className={`bg-card border rounded-xl p-3 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all animate-in fade-in-0 duration-300 ${
-        isOverdue ? "border-overdue" : "border-border"
-      }`}
+      className="bg-card border border-border rounded-xl p-4 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all animate-in fade-in-0 duration-300 min-h-[110px] flex flex-col"
     >
-      {/* 優先級標籤 + SP */}
-      <div className="flex items-center justify-between mb-2">
+      {/* 優先級圓點 + SP */}
+      <div className="flex items-center justify-between mb-3">
         <span
-          className="text-[11px] px-2 py-0.5 rounded-full font-medium capitalize"
-          style={{ color: p.color, backgroundColor: p.bg }}
-        >
-          {task.priority}
-        </span>
+          className="w-2.5 h-2.5 rounded-full shrink-0"
+          style={{ backgroundColor: p.bg }}
+        />
         {task.storyPoints && (
           <span className="text-[11px] font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
             {task.storyPoints} SP
@@ -180,13 +177,19 @@ function KanbanCard({ task, assignee, onClick }: { task: Task; assignee?: UserPr
       </div>
 
       {/* 標題 */}
-      <p className="text-sm font-medium mb-2 line-clamp-2">{task.title}</p>
+      <p className="text-sm font-medium mb-3 line-clamp-2 flex-1">{task.title}</p>
 
       {/* 底部：到期日 + 指派人頭像 */}
       <div className="flex items-center justify-between">
         {task.dueDate ? (() => {
-          const { label, color } = getDaysRemaining(task.dueDate) //調getDaysRemaining函數 傳入到期日 計算剩餘天數
-          return <span className="text-[11px] font-medium" style={{ color }}>{label}</span>
+          const { label, color } = getDaysRemaining(task.dueDate)
+          const overdue = label === "Overdue"
+          return (
+            <span className="flex items-center gap-0.5 text-[11px] font-medium" style={{ color }}>
+              {overdue && <TriangleAlert className="w-3 h-3 shrink-0" />}
+              {label}
+            </span>
+          )
         })() : <span />}
         {assignee && <MemberAvatar user={assignee} />}
       </div>
@@ -216,15 +219,15 @@ function SortableKanbanCard({ task, assignee, onClick, disabled }: {
     // isDragging：是否正在被拖動
   return (
     <div
-      ref={setNodeRef} //用setNodeRef告訴dnd-kit是這一個元素要被拖動
+      ref={setNodeRef}
       style={{
         transform: CSS.Transform.toString(transform),
-        transition: isDragging ? undefined : transition, //判斷要不要給動畫
+        transition: isDragging ? undefined : transition,
       }}
-      {...attributes} //直接展開dnd-kit封裝好的 無障礙跟監聽屬性
+      {...attributes}
       {...listeners}
-      onClick={onClick}  // 保留點擊事件（距離 < 5px 不會觸發拖動）
-      className={isDragging ? "opacity-0" : ""} //dnd-kit 默認拖動的時候原地會有一個殘影 讓他透明度為零不顯示
+      onClick={(e) => { e.stopPropagation(); onClick() }}
+      className={isDragging ? "opacity-0" : ""}
     >
       {/* 把 onClick 傳空值 讓原本卡片的點擊事件也由包裝函數負責 避免重複觸發 */}
       <KanbanCard task={task} assignee={assignee} onClick={() => {}} />
@@ -527,7 +530,15 @@ export default function SprintKanbanPage() {
   )
 
   return (
-    <div className="flex flex-col h-full gap-3 p-5 overflow-hidden">
+    <div
+      className="flex flex-col h-full gap-3 p-5 overflow-hidden"
+      onClick={() => {
+        if (filterMemberIds.length > 0 || filterPriority !== null) {
+          setFilterMemberIds([])
+          setFilterPriority(null)
+        }
+      }}
+    >
 
       {/* ── 上方狀態卡片 ── */}
       <div className="bg-card border border-border rounded-2xl shadow-sm px-5 py-3.5 flex items-center gap-3 flex-wrap shrink-0">
@@ -569,72 +580,61 @@ export default function SprintKanbanPage() {
         {/* 彈性空間，讓右側靠右 */}
         <div className="flex-1" />
 
-        {/* 成員頭像篩選 */}
-        {members.length > 0 && (
-          <div className="flex items-center">
-            {members.map((m, i) => (
-              <button
-                key={m.uid}
-                onClick={() => toggleMemberFilter(m.uid)} // //調用 toggleMemberFilter函數 把uid傳過去 處理頭像選擇 ＋ 篩選問題
-                className={`rounded-full transition-all -ml-1.5 first:ml-0 ${
-                  filterMemberIds.includes(m.uid)
-                    ? "ring-2 ring-brand ring-offset-1 z-10"
-                    : "opacity-70 hover:opacity-100"
-                }`}
-                style={{ zIndex: i }}
-              >
-                {/* 把剛剛篩選出的頭像 傳到MemberAvatar組件裡面讓他渲染出頭像 */}
-                <MemberAvatar user={m} /> 
-              </button>
-            ))}
+        {/* 成員頭像 + 優先級篩選（stopPropagation 防止點按鈕時觸發外層清除） */}
+        <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+          {members.length > 0 && (
+            <div className="flex items-center">
+              {members.map((m, i) => (
+                <button
+                  key={m.uid}
+                  onClick={() => toggleMemberFilter(m.uid)}
+                  className={`rounded-full transition-all -ml-1.5 first:ml-0 ${
+                    filterMemberIds.includes(m.uid)
+                      ? "ring-2 ring-brand ring-offset-1 z-10"
+                      : "opacity-70 hover:opacity-100"
+                  }`}
+                  style={{ zIndex: i }}
+                >
+                  <MemberAvatar user={m} />
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="w-px h-5 bg-border shrink-0" />
+
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setFilterPriority(null)}
+              className={`text-xs px-2.5 py-1 rounded-full font-medium transition-all ${
+                filterPriority === null
+                  ? "bg-foreground text-background"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              }`}
+            >
+              All
+            </button>
+            {(["low", "medium", "high", "urgent"] as Priority[]).map((p) => {
+              const cfg = PRIORITY_CONFIG[p]
+              const isActive = filterPriority === p
+              return (
+                <button
+                  key={p}
+                  onClick={() => setFilterPriority(isActive ? null : p)}
+                  className="text-xs px-2.5 py-1 rounded-full font-medium transition-all capitalize"
+                  style={{
+                    backgroundColor: isActive ? cfg.bg : undefined,
+                    color: isActive ? cfg.color : "var(--muted-foreground)",
+                    outline: isActive ? `1.5px solid ${cfg.color}` : undefined,
+                    outlineOffset: isActive ? "2px" : undefined,
+                  }}
+                >
+                  {p}
+                </button>
+              )
+            })}
           </div>
-        )}
-
-        {/* 分隔線 */}
-        <div className="w-px h-5 bg-border shrink-0" />
-
-        {/* 優先級篩選按鈕 */}
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setFilterPriority(null)}
-            className={`text-xs px-2.5 py-1 rounded-full font-medium transition-all ${
-              filterPriority === null
-                ? "bg-foreground text-background"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            }`}
-          >
-            All
-          </button>
-          {(["low", "medium", "high", "urgent"] as Priority[]).map((p) => { // 用map映射出四個按鈕
-            const cfg = PRIORITY_CONFIG[p] //用優先級名稱去查表
-            const isActive = filterPriority === p //判斷目前渲染的是不是 active 的
-            return (
-              <button
-                key={p}
-                onClick={() => setFilterPriority(isActive ? null : p)}  // 處理toggle邏輯
-                className="text-xs px-2.5 py-1 rounded-full font-medium transition-all capitalize"
-                style={{
-                  backgroundColor: isActive ? cfg.bg : undefined,
-                  color: isActive ? cfg.color : "var(--muted-foreground)",
-                  outline: isActive ? `1.5px solid ${cfg.color}` : undefined,
-                  outlineOffset: isActive ? "2px" : undefined,
-                }}
-              >
-                {p}
-              </button>
-            )
-          })}
         </div>
-
-        {/* 有篩選時的 Clear */}
-        {(filterMemberIds.length > 0 || filterPriority !== null) && (
-          <button
-            onClick={() => { setFilterMemberIds([]); setFilterPriority(null) }} //清空兩個篩選列
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
-          >
-            Clear
-          </button>
-        )}
 
         {/* 分隔線 */}
         <div className="w-px h-5 bg-border shrink-0" />
@@ -675,7 +675,7 @@ export default function SprintKanbanPage() {
       </div>
 
       {/* ── 下方看板卡片 ── */}
-      <div className="flex-1 bg-card border border-border rounded-2xl shadow-sm overflow-auto p-5">
+      <div className="flex-1 bg-card border border-border rounded-2xl shadow-sm overflow-auto p-5 min-h-[640px]">
         <DndContext //dnd-kit拖曳包裝標籤
           sensors={sensors} // 偵測移動超過5px
           collisionDetection={closestCorners} //dnd-kit 提供的 碰撞偵測演算法
@@ -693,17 +693,19 @@ export default function SprintKanbanPage() {
               return (
                 <div key={col.id} className="flex flex-col flex-1 min-w-0 relative hover:z-10">
                   {/* 欄位標題列 */}
-                  <div className="flex items-center justify-between mb-3 px-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm">{col.label}</span>
-                      <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
-                        {colTasks.length}
-                      </span>
+                  <div className="px-1 mb-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm">{col.label}</span>
+                        <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                          {colTasks.length}
+                        </span>
+                      </div>
                       {colSP > 0 && (
                         <span className="text-xs text-muted-foreground">{colSP} SP</span>
                       )}
                     </div>
-
+                    <div className="h-0.5 rounded-full" style={{ backgroundColor: TASK_STATUS_CONFIG[col.id].bg }} />
                   </div>
 
                   <SortableContext // 用dnd-kit提供的 SortableContext 讓元素可以被拖動更換順序
@@ -874,7 +876,12 @@ export default function SprintKanbanPage() {
         setShowTodoModal(open)
         if (!open) { setNewTitle(""); setNewDescription(""); setNewPriority("medium"); setNewStoryPoints(null); setNewAssigneeId(null); setNewDueDate("") }
       }}>
-        <DialogContent className="sm:max-w-2xl rounded-2xl p-8 min-h-[520px] flex flex-col">
+        <DialogContent className="sm:max-w-2xl rounded-2xl p-8 flex flex-col min-h-[580px]">
+          <DialogHeader className="mb-4">
+            <DialogTitle className="text-2xl font-bold">
+              {todoTab === "create" ? "New Task" : "From Backlog"}
+            </DialogTitle>
+          </DialogHeader>
           {/* Tab 切換 */}
           <div className="flex gap-1 bg-muted p-1 rounded-xl mb-6">
             {(["create", "backlog"] as const).map((tab) => (
@@ -891,92 +898,95 @@ export default function SprintKanbanPage() {
             ))}
           </div>
 
-          <div style={{ minHeight: "320px" }} className="flex-1">
+          <div className="flex-1">
           {todoTab === "create" ? (
-            <div key="create" className="animate-in fade-in duration-200">
-              <div className="grid grid-cols-2 gap-8">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Title</Label>
-                    <Input
-                      placeholder="e.g. Design login page"
-                      value={newTitle}
-                      onChange={(e) => setNewTitle(e.target.value)}
-                      autoFocus
-                      className="rounded-full bg-muted border-0 h-11 focus-visible:ring-1 px-4"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Description (Optional)</Label>
-                    <textarea
-                      placeholder="What needs to be done..."
-                      value={newDescription}
-                      onChange={(e) => setNewDescription(e.target.value)}
-                      className="w-full rounded-2xl bg-muted border-0 p-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring"
-                      style={{ height: "168px" }}
-                    />
+            <div key="create" className="animate-in fade-in duration-200 space-y-6">
+              {/* Title */}
+              <div className="space-y-1.5">
+                <Label className="font-semibold text-sm">Title</Label>
+                <Input
+                  placeholder="e.g. Design login page"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  autoFocus
+                  className="rounded-full bg-muted border-0 h-11 focus-visible:ring-1 px-4"
+                />
+              </div>
+
+              {/* SP + Priority */}
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-1.5">
+                  <Label className="font-semibold text-sm">Story points</Label>
+                  <div className="flex gap-1.5">
+                    {([1, 2, 3, 5, 8, 13] as StoryPoints[]).map((sp) => (
+                      <button
+                        key={sp}
+                        type="button"
+                        onClick={() => setNewStoryPoints(newStoryPoints === sp ? null : sp)}
+                        className="w-9 h-9 rounded-full text-sm font-semibold transition-all"
+                        style={{
+                          backgroundColor: newStoryPoints === sp ? BRAND : "var(--subtle-bg)",
+                          color: newStoryPoints === sp ? "white" : "var(--muted-foreground)",
+                        }}
+                      >
+                        {sp}
+                      </button>
+                    ))}
                   </div>
                 </div>
-                <div className="flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Story Points</Label>
-                    <div className="flex gap-2">
-                      {([1, 2, 3, 5, 8, 13] as StoryPoints[]).map((sp) => (
+                <div className="space-y-1.5">
+                  <Label className="font-semibold text-sm">Priority</Label>
+                  <div className="flex gap-1.5">
+                    {(["low", "medium", "high", "urgent"] as Priority[]).map((p) => {
+                      const cfg = PRIORITY_CONFIG[p]
+                      const selected = newPriority === p
+                      return (
                         <button
-                          key={sp}
+                          key={p}
                           type="button"
-                          onClick={() => setNewStoryPoints(newStoryPoints === sp ? null : sp)}
-                          className="w-10 h-10 rounded-full text-sm font-semibold transition-all"
-                          style={{
-                            backgroundColor: newStoryPoints === sp ? BRAND : "var(--subtle-bg)",
-                            color: newStoryPoints === sp ? "white" : "var(--muted-foreground)",
-                          }}
+                          onClick={() => setNewPriority(p)}
+                          className="flex-1 py-2 rounded-full text-xs font-medium transition-all border"
+                          style={
+                            selected
+                              ? { backgroundColor: cfg.bg, color: cfg.color, borderColor: cfg.bg }
+                              : { backgroundColor: "transparent", color: "var(--muted-foreground)", borderColor: "var(--border)" }
+                          }
                         >
-                          {sp}
+                          {cfg.label}
                         </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Priority</Label>
-                    <div className="flex gap-2">
-                      {(["low", "medium", "high", "urgent"] as Priority[]).map((p) => {
-                        const cfg = PRIORITY_CONFIG[p]
-                        const selected = newPriority === p
-                        return (
-                          <button
-                            key={p}
-                            type="button"
-                            onClick={() => setNewPriority(p)}
-                            className="flex-1 py-2 rounded-full text-xs font-medium transition-all border"
-                            style={
-                              selected
-                                ? { backgroundColor: cfg.color, color: "white", borderColor: cfg.color }
-                                : { backgroundColor: "transparent", color: "var(--muted-foreground)", borderColor: "var(--border)" }
-                            }
-                          >
-                            {cfg.label}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Assignee</Label>
-                      <AssigneePicker members={members} value={newAssigneeId} onChange={setNewAssigneeId} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Due Date</Label>
-                      <Input
-                        type="date"
-                        value={newDueDate}
-                        onChange={(e) => setNewDueDate(e.target.value)}
-                        className="rounded-xl bg-muted border-0 h-11 focus-visible:ring-1"
-                      />
-                    </div>
+                      )
+                    })}
                   </div>
                 </div>
+              </div>
+
+              {/* Assignee + Due Date */}
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-1.5">
+                  <Label className="font-semibold text-sm">Assignee</Label>
+                  <AssigneePicker members={members} value={newAssigneeId} onChange={setNewAssigneeId} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="font-semibold text-sm">Due date</Label>
+                  <Input
+                    type="date"
+                    value={newDueDate}
+                    onChange={(e) => setNewDueDate(e.target.value)}
+                    className="rounded-xl bg-muted border-0 h-11 focus-visible:ring-1"
+                  />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-1.5">
+                <Label className="font-semibold text-sm">Description (optional)</Label>
+                <textarea
+                  placeholder="What needs to be done..."
+                  value={newDescription}
+                  onChange={(e) => setNewDescription(e.target.value)}
+                  className="w-full rounded-2xl bg-muted border-0 p-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+                  rows={3}
+                />
               </div>
               <div className="flex justify-end gap-3 mt-8">
                 <Button variant="ghost" onClick={() => setShowTodoModal(false)}>Cancel</Button>

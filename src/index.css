@@ -21,7 +21,7 @@
 
     /* 文字階層 */
     --muted-foreground: #6A6562;
-    --subtle-foreground: #A09C97;
+    --subtle-foreground: #bcb8b3;
 
     /* Shadcn 系統色（配合新底色調整） */
     --primary: #5F5A55;
@@ -52,7 +52,7 @@
     --stat-done: #108E65;
 
     /* 介面元素 */
-    --subtle-bg: #F3F4F6;
+    --subtle-bg: #f2f2f2;
     --progress-track: #E2E2E2;
 
     /* Sidebar（在 light mode 也是深色） */

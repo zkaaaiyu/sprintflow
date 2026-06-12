@@ -52,19 +52,13 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* 下：Active Sprints + My Todos 合併：flex-1 撐滿左欄剩餘高度 */}
-          <div className="bg-card border border-border rounded-3xl p-6 flex-1 overflow-hidden shadow-sm flex gap-6">
-            {/* Active Sprints：flex-1 可縮放，overflow-hidden 避免 hover 放大觸發捲動條 */}
-            <div className="flex-1 min-w-0 overflow-hidden">
-              <ActiveSprintsSummary summaries={sprintSummaries} loading={sprintsLoading} />
-            </div>
-
-            {/* 垂直分隔線 */}
-            <div className="w-px bg-border self-stretch shrink-0" />
-
-            {/* My Todos：固定寬度，overflow-hidden 避免捲動條，文字自動換行 */}
-            <div className="w-56 shrink-0 overflow-hidden">
+          {/* 下：My Todos（1/3）+ Active Sprints（2/3）各自獨立 card */}
+          <div className="flex gap-6 flex-1">
+            <div className="bg-card border border-border rounded-3xl p-6 overflow-hidden shadow-sm" style={{ flex: "1 1 0" }}>
               <PersonalTodos />
+            </div>
+            <div className="bg-card border border-border rounded-3xl p-6 overflow-hidden shadow-sm" style={{ flex: "2 1 0" }}>
+              <ActiveSprintsSummary summaries={sprintSummaries} loading={sprintsLoading} />
             </div>
           </div>
 

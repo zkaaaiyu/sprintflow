@@ -414,7 +414,7 @@ const confirmDelete = async () => {
         <div className="relative" ref={sortRef}>
           <button
             onClick={() => setSortMenuOpen((o) => !o)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-sm text-muted-foreground hover:bg-foreground hover:text-background hover:border-foreground transition-colors duration-500"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border text-sm text-muted-foreground hover:bg-foreground hover:text-background hover:border-foreground transition-colors duration-500"
           >
             <ArrowUpDown className="w-3.5 h-3.5" />
             <span>Sort</span>
@@ -495,7 +495,7 @@ const confirmDelete = async () => {
       </DndContext>
     </div>
 
-  <DialogContent className="sm:max-w-md rounded-2xl p-8 min-h-[500px] flex flex-col">
+  <DialogContent className="sm:max-w-md rounded-2xl p-8 flex flex-col">
     <DialogHeader className="mb-4">
       <DialogTitle className="text-2xl font-bold">
         {modalTab === "create" ? "Create Project" : "Join Project"}
