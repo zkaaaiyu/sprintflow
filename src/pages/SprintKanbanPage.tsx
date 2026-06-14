@@ -47,7 +47,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { MoreHorizontal, Plus, ChevronDown, TriangleAlert } from "lucide-react"
+import { MoreHorizontal, Plus, ChevronDown, TriangleAlert, CheckCircle2 } from "lucide-react"
 import { toast } from "sonner"
 import TaskDetailModal from "@/components/TaskDetailModal"
 import { useAuth } from "@/contexts/AuthContext"
@@ -181,7 +181,17 @@ function KanbanCard({ task, assignee, onClick }: { task: Task; assignee?: UserPr
 
       {/* 底部：到期日 + 指派人頭像 */}
       <div className="flex items-center justify-between">
-        {task.dueDate ? (() => {
+        {task.status === "done" ? (
+          <span className="flex items-center gap-1 text-[11px] font-medium" style={{ color: "#6F9E8A" }}>
+            <CheckCircle2 className="w-3 h-3 shrink-0" />
+            Complete
+            {task.doneAt && (
+              <span className="text-muted-foreground font-normal">
+                · {task.doneAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+              </span>
+            )}
+          </span>
+        ) : task.dueDate ? (() => {
           const { label, color } = getDaysRemaining(task.dueDate)
           const overdue = label === "Overdue"
           return (

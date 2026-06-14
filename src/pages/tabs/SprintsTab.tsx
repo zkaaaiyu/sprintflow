@@ -86,7 +86,7 @@ export default function SprintsTab({
                           isActive
                             ? { borderColor: "var(--brand-subtle-border)" }
                             : sprint.status === "completed"
-                            ? { borderColor: `${cfg.bg}99` }
+                            ? { borderColor: `${cfg.bg}CC` }
                             : {}
                         }
                       >

@@ -48,12 +48,12 @@ export default function TeamTab({ project, onRemoveMember }: {
       </div>
 
       {/* Rows */}
-      <div className="divide-y divide-border">
+      <div>
         {members.map((member, i) => {
           const isMe = member.uid === user?.uid
           const isMemberOwner = member.uid === project.ownerId
           return (
-            <div key={member.uid} className="grid grid-cols-[1fr_120px_130px_60px] items-center px-5 py-3.5">
+            <div key={member.uid} className="grid grid-cols-[1fr_120px_130px_60px] items-center px-5 py-3.5 hover:bg-accent transition-colors">
               {/* Member */}
               <div className="flex items-center gap-3">
                 {member.photoURL ? (

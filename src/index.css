@@ -76,37 +76,37 @@
   /* ── Dark Mode ── */
   .dark {
     /* 基礎色 */
-    --background: #1C1A18;
-    --foreground: #D4CFC8;
-    --card: #242220;
-    --card-foreground: #D4CFC8;
-    --popover: #242220;
-    --popover-foreground: #D4CFC8;
-    --navbar-bg: #242220;
+    --background: #3A3733;
+    --foreground: #F2EDE6;
+    --card: #47433F;
+    --card-foreground: #F2EDE6;
+    --popover: #47433F;
+    --popover-foreground: #F2EDE6;
+    --navbar-bg: #413E3A;
 
     /* 文字階層 */
-    --muted-foreground: #8A8480;
-    --subtle-foreground: #6B6560;
+    --muted-foreground: #A8A29E;
+    --subtle-foreground: #89837E;
 
     /* Shadcn 系統色 */
-    --primary: #D4CFC8;
+    --primary: #F2EDE6;
     --primary-foreground: #242220;
-    --secondary: #2E2C2A;
-    --secondary-foreground: #D4CFC8;
-    --muted: #2E2C2A;
-    --accent: #2E2C2A;
-    --accent-foreground: #D4CFC8;
+    --secondary: #54504B;
+    --secondary-foreground: #F2EDE6;
+    --muted: #54504B;
+    --accent: #54504B;
+    --accent-foreground: #F2EDE6;
 
     /* 邊框 / 輸入框 */
-    --border: #3A3836;
-    --input: #3A3836;
+    --border: rgba(255, 255, 255, 0.09);
+    --input: rgba(255, 255, 255, 0.11);
     --ring: #C4896F;
 
     /* 品牌色（dark 下略亮） */
     --brand: #C4896F;
     --brand-hover: #D09A7F;
     --brand-subtle-bg: rgba(196, 137, 111, 0.08);
-    --brand-subtle-border: rgba(196, 137, 111, 0.30);
+    --brand-subtle-border: rgba(196, 137, 111, 0.55);
 
     /* 狀態色 */
     --destructive: #C47070;
@@ -119,13 +119,13 @@
     --progress-track: #3A3836;
 
     /* Sidebar */
-    --sidebar: #1A1816;
-    --sidebar-foreground: #D4CFC8;
+    --sidebar: #2E2B28;
+    --sidebar-foreground: #F2EDE6;
     --sidebar-primary: #C4896F;
     --sidebar-primary-foreground: #F7F7F7;
-    --sidebar-accent: #2A2826;
-    --sidebar-accent-foreground: #D4CFC8;
-    --sidebar-border: #2A2826;
+    --sidebar-accent: #38342F;
+    --sidebar-accent-foreground: #F2EDE6;
+    --sidebar-border: #38342F;
     --sidebar-ring: #C4896F;
 
     /* Chart */
