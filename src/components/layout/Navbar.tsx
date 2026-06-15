@@ -292,15 +292,15 @@ export default function Navbar() {
               onClick={() => navigate("/settings")}
               className="cursor-pointer"
             >
-              <Settings className="w-4 h-4 mr-2" />
+              <Settings className="w-4 h-4" />
               Settings
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />
 
             {/* 深色模式 toggle（不是 DropdownMenuItem，點擊不會關閉選單） */}
-            <div className="flex items-center justify-between px-2 py-2 rounded-md mx-1 hover:bg-accent cursor-default">
-              <div className="flex items-center gap-2 text-sm">
+            <div className="flex items-center justify-between px-1.5 py-1 rounded-md hover:bg-accent cursor-default text-sm">
+              <div className="flex items-center gap-1.5">
                 {dark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
                 <span>Dark mode</span>
               </div>
@@ -324,7 +324,7 @@ export default function Navbar() {
               onClick={handleLogout}
               className="text-destructive focus:text-destructive cursor-pointer"
             >
-              <LogOut className="w-4 h-4 mr-2" />
+              <LogOut className="w-4 h-4" />
               Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>

@@ -1,7 +1,8 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth"
 import { auth } from "@/lib/firebase"
 import { useNavigate, Link } from "react-router-dom"
+import { useAuth } from "@/contexts/AuthContext"
 import {toast} from 'sonner'
 
 const googleProvider = new GoogleAuthProvider()
@@ -11,6 +12,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const navigate = useNavigate()
+  const { user } = useAuth()
+
+  // 當 user 被 AuthContext 設定好後才真正跳轉，避免 race condition
+  useEffect(() => {
+    if (user) navigate("/dashboard", { replace: true })
+  }, [user])
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -18,7 +25,6 @@ export default function LoginPage() {
     try {
       await signInWithEmailAndPassword(auth, email, password)
       toast.success('Signed in successfully')
-      navigate("/dashboard")
     } catch {
       setError("Incorrect email or password")
     }
@@ -29,7 +35,6 @@ export default function LoginPage() {
     try {
       await signInWithPopup(auth, googleProvider)
       toast.success('Signed in with Google')
-      navigate("/dashboard")
     } catch {
       setError("Google sign-in failed")
     }

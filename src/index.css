@@ -8,6 +8,12 @@
     --font-sans: 'Geist Variable', sans-serif
   }
 
+  html, body {
+    font-family: 'Geist Variable', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   /* ── Light Mode ── */
   :root {
     /* 基礎色 */
