@@ -285,7 +285,7 @@ export default function SettingsPage() {
                   : "cursor-pointer border-border hover:bg-accent"
               }`}
               onClick={() => !googleUser && setPwOpen(true)}
-              title={googleUser ? "Google 帳號無法直接修改密碼" : undefined}
+              title={googleUser ? "Google accounts cannot change password directly" : undefined}
             >
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: "var(--subtle-bg)" }}>

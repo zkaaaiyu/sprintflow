@@ -116,7 +116,7 @@ function ProjectCard({ project, onDelete, isOwner }: {
           {project.description}
         </p>
       ) : (
-        <p className="text-sm text-muted-foreground/50 italic mb-4 flex-1">無描述</p>
+        <p className="text-sm text-muted-foreground/50 italic mb-4 flex-1">No description</p>
       )}
 
       {/* 底部：Sprint + 頭像 */}
@@ -126,7 +126,7 @@ function ProjectCard({ project, onDelete, isOwner }: {
           {activeSprint ? (
             <span className="font-medium" style={{ color: "var(--brand)" }}>{activeSprint.name}</span>
           ) : (
-            <span className="text-muted-foreground">尚未開始 Sprint</span>
+            <span className="text-muted-foreground">No active sprint</span>
           )}
         </div>
         <MemberAvatars members={members} totalCount={project.memberIds.length} />
@@ -251,10 +251,10 @@ export default function ProjectsPage() {
 
   // create project 函數
   const handleCreate = async () => {
-    if (!name.trim()) { toast.error("請輸入專案名稱"); return }
+    if (!name.trim()) { toast.error("Project name is required"); return }
     setSubmitting(true) //允許提交
     await createProject(name.trim(), description.trim(), color) //調用自定義hooks useworkSpace 裡面的 create project 處理資料端
-    toast.success("專案建立成功")
+    toast.success("Project created")
 
     //清空表單＆關閉
     setName(""); setDescription(""); setColor(COLOR_OPTIONS[0].value)
@@ -263,15 +263,15 @@ export default function ProjectsPage() {
 
   // join project 函數
   const handleJoin = async () => {
-    if (!inviteCode.trim()) { toast.error("請輸入邀請碼"); return }
+    if (!inviteCode.trim()) { toast.error("Please enter an invite code"); return }
     setJoining(true)
     const result = await joinProject(inviteCode.trim())
     if (result === null) {
-      toast.error("找不到此邀請碼，請確認是否正確")
+      toast.error("Invite code not found. Please check and try again.")
     } else if (result === "already") {
-      toast.error("你已經是此專案的成員了")
+      toast.error("You are already a member of this project")
     } else {
-      toast.success("成功加入專案！")
+      toast.success("Successfully joined the project!")
       setOpen(false)
       navigate(`/projects/${result}`)
     }
@@ -287,7 +287,7 @@ const handleDelete = (e: React.MouseEvent, projectId: string, projectName: strin
 const confirmDelete = async () => {
   if (!deleteTarget) return
   await deleteProject(deleteTarget.id) //調自定義hooks裡面的 deleteProject 刪除firebase裡面的project資料
-  toast.success(`已刪除「${deleteTarget.name}」`)
+  toast.success(`"${deleteTarget.name}" deleted`)
   setDeleteTarget(null)
 }
   const handleDragStart = ({ active }: DragStartEvent) => {
@@ -306,7 +306,7 @@ const confirmDelete = async () => {
   }
 
   if (loading) return (
-    <div className="flex items-center justify-center h-full text-muted-foreground">載入中...</div>
+    <div className="flex items-center justify-center h-full text-muted-foreground">Loading...</div>
   )
 
   return (
@@ -438,13 +438,13 @@ const confirmDelete = async () => {
             <DialogTitle className="text-xl font-bold text-destructive">Delete Project</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground mb-4">
-            即將刪除「{deleteTarget?.name}」和所有相關資料。
+            "{deleteTarget?.name}" and all its data will be permanently deleted.
           </p>
           <blockquote className="border-l-2 border-destructive pl-3 mb-6">
             <p className="text-sm font-semibold">This action cannot be undone.</p>
           </blockquote>
           <div className="flex gap-3">
-            <Button variant="ghost" className="flex-1 rounded-full" onClick={() => setDeleteTarget(null)}>取消</Button>
+            <Button variant="ghost" className="flex-1 rounded-full" onClick={() => setDeleteTarget(null)}>Cancel</Button>
             <Button className="flex-1 rounded-full bg-destructive hover:opacity-90 text-white" onClick={confirmDelete}>Delete</Button>
           </div>
         </DialogContent>
@@ -579,7 +579,7 @@ const confirmDelete = async () => {
               className="rounded-xl bg-muted border-0 h-11 focus-visible:ring-1"
               autoFocus
             />
-            <p className="text-xs text-muted-foreground">向專案 Owner 索取邀請碼</p>
+            <p className="text-xs text-muted-foreground">Ask the project owner for an invite code</p>
           </div>
         </div>
         <div className="flex justify-end gap-3 mt-8">

@@ -349,7 +349,7 @@ export default function SprintKanbanPage() {
 
   // 儲存 Sprint 編輯
   const handleUpdate = async () => {
-    if (!editName.trim()) { toast.error("請輸入 Sprint 名稱"); return } //為空提示
+    if (!editName.trim()) { toast.error("Sprint name is required"); return } //為空提示
     setActionLoading(true)
     await updateSprint({
       name: editName.trim(),
@@ -357,7 +357,7 @@ export default function SprintKanbanPage() {
       startDate: editStartDate ? new Date(editStartDate) : undefined,
       endDate: editEndDate ? new Date(editEndDate) : undefined,
     })
-    toast.success("Sprint 已更新")
+    toast.success("Sprint updated")
     setShowEditModal(false)
     setActionLoading(false)
   }
@@ -366,7 +366,7 @@ export default function SprintKanbanPage() {
   const handleComplete = async () => {
     setActionLoading(true)
     const moved = await completeSprint()
-    toast.success(`Sprint 已結束，${moved} 個任務退回 Backlog`)
+    toast.success(`Sprint completed. ${moved} task${moved !== 1 ? "s" : ""} returned to Backlog`)
     setShowCompleteConfirm(false)
     setActionLoading(false)
   }
@@ -375,7 +375,7 @@ export default function SprintKanbanPage() {
   const handleDelete = async () => {
     setActionLoading(true)
     await deleteSprint()
-    toast.success("Sprint 已刪除")
+    toast.success("Sprint deleted")
     navigate(`/projects/${projectId}`)
   }
 
@@ -386,12 +386,12 @@ export default function SprintKanbanPage() {
       status: "todo",
     })
     setShowFromBacklogModal(false)
-    toast.success("任務已加入 Sprint")
+    toast.success("Task added to Sprint")
   }
 
   // 直接新增任務到指定欄位
   const handleCreateTask = async () => {
-    if (!newTitle.trim()) { toast.error("請輸入任務標題"); return }
+    if (!newTitle.trim()) { toast.error("Task title is required"); return }
     setCreating(true)
     await createTask({
       title: newTitle.trim(),
@@ -403,7 +403,7 @@ export default function SprintKanbanPage() {
       sprintId,                              // 自動帶入當前 sprintId
       status: activeAddColumn ?? "todo",     // 帶入點擊的欄位對應 status
     })
-    toast.success("任務已建立")
+    toast.success("Task created")
     // 清空表單
     setNewTitle(""); setNewDescription(""); setNewPriority("medium")
     setNewStoryPoints(null); setNewAssigneeId(null); setNewDueDate("")
@@ -533,10 +533,10 @@ export default function SprintKanbanPage() {
 
   const loading = projectLoading || sprintLoading || tasksLoading 
   if (loading) return (
-    <div className="flex items-center justify-center h-full text-muted-foreground">載入中...</div>
+    <div className="flex items-center justify-center h-full text-muted-foreground">Loading...</div>
   )
   if (!sprint) return (
-    <div className="flex items-center justify-center h-full text-muted-foreground">找不到此 Sprint</div>
+    <div className="flex items-center justify-center h-full text-muted-foreground">Sprint not found</div>
   )
 
   return (
@@ -659,18 +659,18 @@ export default function SprintKanbanPage() {
 
           <DropdownMenuContent align="end" className="w-44">
             {sprint.status === "planning" && ( // 屬於 planning 的 sprint 才渲染開始 Sprint 
-              <DropdownMenuItem onClick={() => startSprint().then(() => toast.success("Sprint 已開始"))}>
-                開始 Sprint
+              <DropdownMenuItem onClick={() => startSprint().then(() => toast.success("Sprint started"))}>
+                Start Sprint
               </DropdownMenuItem>
             )}
             {sprint.status === "active" && ( 
               <DropdownMenuItem onClick={() => setShowCompleteConfirm(true)}>
-                結束 Sprint
+                Complete Sprint
               </DropdownMenuItem>
             )}
             {sprint.status !== "completed" && (
               <DropdownMenuItem onClick={openEditModal}>
-                編輯
+                Edit
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
@@ -678,7 +678,7 @@ export default function SprintKanbanPage() {
               onClick={() => setShowDeleteConfirm(true)}
               className="text-red-500 focus:text-red-500"
             >
-              刪除
+              Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -784,19 +784,19 @@ export default function SprintKanbanPage() {
       <Dialog open={showCompleteConfirm} onOpenChange={setShowCompleteConfirm}>
         <DialogContent className="sm:max-w-sm rounded-2xl p-8">
           <DialogHeader className="mb-4">
-            <DialogTitle>結束 Sprint</DialogTitle>
+            <DialogTitle>Complete Sprint</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground mb-6">
-            未完成的任務將退回 Backlog，確定要結束嗎？
+            Incomplete tasks will be returned to Backlog. Are you sure?
           </p>
           <div className="flex justify-end gap-3">
-            <Button variant="ghost" onClick={() => setShowCompleteConfirm(false)}>取消</Button>
+            <Button variant="ghost" onClick={() => setShowCompleteConfirm(false)}>Cancel</Button>
             <Button
-              onClick={handleComplete} 
-              disabled={actionLoading} //lodaing 的時候禁用按鈕 
+              onClick={handleComplete}
+              disabled={actionLoading}
               className="bg-brand hover:bg-brand-hover text-white rounded-full px-6"
             >
-              {actionLoading ? "處理中..." : "確定結束"}
+              {actionLoading ? "Processing..." : "Complete Sprint"}
             </Button>
           </div>
         </DialogContent>
@@ -811,19 +811,19 @@ export default function SprintKanbanPage() {
             <DialogTitle className="text-xl font-bold text-destructive">Delete Sprint</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground mb-4">
-            刪除後此 Sprint 內的所有任務將退回 Backlog。
+            All tasks in this Sprint will be returned to Backlog.
           </p>
           <blockquote className="border-l-2 border-destructive pl-3 mb-6">
             <p className="text-sm font-semibold">This action cannot be undone.</p>
           </blockquote>
           <div className="flex gap-3">
-            <Button variant="ghost" className="flex-1 rounded-full" onClick={() => setShowDeleteConfirm(false)}>取消</Button>
+            <Button variant="ghost" className="flex-1 rounded-full" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
             <Button
               className="flex-1 rounded-full bg-destructive hover:opacity-90 text-white"
               onClick={handleDelete}
               disabled={actionLoading}
             >
-              {actionLoading ? "刪除中..." : "確定刪除"}
+              {actionLoading ? "Deleting..." : "Delete"}
             </Button>
           </div>
         </DialogContent>
@@ -833,7 +833,7 @@ export default function SprintKanbanPage() {
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
         <DialogContent className="sm:max-w-md rounded-2xl p-8">
           <DialogHeader className="mb-6">
-            <DialogTitle className="text-2xl font-bold">編輯 Sprint</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">Edit Sprint</DialogTitle>
           </DialogHeader>
           <div className="space-y-5">
             <div className="space-y-2">
@@ -874,13 +874,13 @@ export default function SprintKanbanPage() {
             </div>
           </div>
           <div className="flex justify-end gap-3 mt-8">
-            <Button variant="ghost" onClick={() => setShowEditModal(false)}>取消</Button>
+            <Button variant="ghost" onClick={() => setShowEditModal(false)}>Cancel</Button>
             <Button
               onClick={handleUpdate}
               disabled={actionLoading}
               className="bg-brand hover:bg-brand-hover text-white rounded-full px-6"
             >
-              {actionLoading ? "儲存中..." : "儲存"}
+              {actionLoading ? "Saving..." : "Save"}
             </Button>
           </div>
         </DialogContent>
@@ -1018,7 +1018,7 @@ export default function SprintKanbanPage() {
                       sprintId,
                       status: "todo",
                     })
-                    toast.success("任務已建立")
+                    toast.success("Task created")
                     setNewTitle(""); setNewDescription(""); setNewPriority("medium")
                     setNewStoryPoints(null); setNewAssigneeId(null); setNewDueDate("")
                     setShowTodoModal(false)
@@ -1034,7 +1034,7 @@ export default function SprintKanbanPage() {
           ) : (
             <div key="backlog" className="animate-in fade-in duration-200">
               {backlogTasks.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-12">Backlog 中沒有待排任務</p>
+                <p className="text-sm text-muted-foreground text-center py-12">No tasks in backlog to assign</p>
               ) : (
                 <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto">
                   {backlogTasks.map((task) => {
@@ -1073,10 +1073,10 @@ export default function SprintKanbanPage() {
       <Dialog open={showFromBacklogModal} onOpenChange={setShowFromBacklogModal}>
         <DialogContent className="sm:max-w-md rounded-2xl p-6">
           <DialogHeader className="mb-4">
-            <DialogTitle>從 Backlog 選取任務</DialogTitle>
+            <DialogTitle>Select from Backlog</DialogTitle>
           </DialogHeader>
           {backlogTasks.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Backlog 中沒有待排任務</p>
+            <p className="text-sm text-muted-foreground text-center py-8">No tasks in Backlog</p>
           ) : (
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {backlogTasks.map((task) => {

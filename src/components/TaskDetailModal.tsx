@@ -146,7 +146,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
         {/* 載入中 */}
         {(loading || !task) && (
           <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
-            載入中...
+            Loading...
           </div>
         )}
 
@@ -165,7 +165,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                     onChange={(e) => setEditTitle(e.target.value)}
                     onBlur={async () => {
                       if (editTitle.trim() && editTitle.trim() !== task.title) { //更改後的標題不為空 且 不等於原標題
-                        await updateField("title", editTitle.trim(), "標題", task.title, editTitle.trim())
+                        await updateField("title", editTitle.trim(), "Title", task.title, editTitle.trim())
                       }
                       stopEditing()
                     }}
@@ -223,7 +223,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                     onChange={(e) => setEditDescription(e.target.value)}
                     onBlur={async () => {
                       if (editDescription !== task.description) {
-                        await updateField("description", editDescription, "描述", task.description || "", editDescription)
+                        await updateField("description", editDescription, "Description", task.description || "", editDescription)
                       }
                       stopEditing()
                     }}
@@ -252,12 +252,12 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                   {editingField === "assignee" ? (
                     <div className="bg-popover border border-border rounded-xl shadow-lg overflow-hidden z-10 relative">
                       <button className="w-full px-3 py-2 text-xs hover:bg-accent text-muted-foreground text-left"
-                        onClick={async () => { await updateField("assigneeId", null, "負責人", assignee?.displayName ?? "Unassigned", "Unassigned"); stopEditing() }}>
+                        onClick={async () => { await updateField("assigneeId", null, "Assignee", assignee?.displayName ?? "Unassigned", "Unassigned"); stopEditing() }}>
                         Unassigned
                       </button>
                       {members.map((m) => (
                         <button key={m.uid} className="w-full px-3 py-2 text-xs hover:bg-accent flex items-center gap-2"
-                          onClick={async () => { await updateField("assigneeId", m.uid, "負責人", assignee?.displayName ?? "Unassigned", m.displayName || m.email); stopEditing() }}>
+                          onClick={async () => { await updateField("assigneeId", m.uid, "Assignee", assignee?.displayName ?? "Unassigned", m.displayName || m.email); stopEditing() }}>
                           <MemberAvatar user={m} />
                           {m.displayName || m.email}
                         </button>
@@ -280,7 +280,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                         const cfg = TASK_STATUS_CONFIG[s]
                         return (
                           <button key={s}
-                            onClick={async () => { await updateField("status", s, "狀態", TASK_STATUS_CONFIG[task.status].label, cfg.label); stopEditing() }}
+                            onClick={async () => { await updateField("status", s, "Status", TASK_STATUS_CONFIG[task.status].label, cfg.label); stopEditing() }}
                             className="px-2 py-0.5 rounded-full text-xs font-medium"
                             style={{ color: cfg.color, backgroundColor: cfg.bg, outline: task.status === s ? `2px solid ${cfg.color}` : "none", outlineOffset: "2px" }}>
                             {cfg.label}
@@ -304,7 +304,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                     <div className="flex gap-1 flex-wrap">
                       {([1, 2, 3, 5, 8, 13] as StoryPoints[]).map((sp) => (
                         <button key={sp}
-                          onClick={async () => { const newSP = task.storyPoints === sp ? null : sp; await updateField("storyPoints", newSP, "故事點數", String(task.storyPoints ?? "—"), String(newSP ?? "—")); stopEditing() }}
+                          onClick={async () => { const newSP = task.storyPoints === sp ? null : sp; await updateField("storyPoints", newSP, "Story Points", String(task.storyPoints ?? "—"), String(newSP ?? "—")); stopEditing() }}
                           className="w-7 h-7 rounded-lg text-xs font-semibold transition-all"
                           style={{ backgroundColor: task.storyPoints === sp ? BRAND : "var(--subtle-bg)", color: task.storyPoints === sp ? "white" : "var(--muted-foreground)" }}>
                           {sp}
@@ -329,8 +329,8 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                       onBlur={async () => {
                         if (editDueDate) {
                           const newDate = new Date(editDueDate)
-                          const fromLabel = task.dueDate ? task.dueDate.toLocaleDateString("zh-TW") : "—"
-                          await updateField("dueDate", newDate, "截止日期", fromLabel, newDate.toLocaleDateString("zh-TW"))
+                          const fromLabel = task.dueDate ? task.dueDate.toLocaleDateString("en-US") : "—"
+                          await updateField("dueDate", newDate, "Due Date", fromLabel, newDate.toLocaleDateString("en-US"))
                         }
                         stopEditing()
                       }}
@@ -338,7 +338,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                   ) : (
                     <div className="flex items-center gap-1.5 cursor-pointer"
                       onClick={() => { setEditDueDate(task.dueDate ? task.dueDate.toISOString().split("T")[0] : ""); setEditingField("dueDate") }}>
-                      <span>{task.dueDate ? task.dueDate.toLocaleDateString("zh-TW") : "—"}</span>
+                      <span>{task.dueDate ? task.dueDate.toLocaleDateString("en-US") : "—"}</span>
                       <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-50 text-muted-foreground transition-opacity" />
                     </div>
                   )}
@@ -353,7 +353,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                         const cfg = PRIORITY_CONFIG[p]
                         return (
                           <button key={p}
-                            onClick={async () => { await updateField("priority", p, "優先級", PRIORITY_CONFIG[task.priority].label, cfg.label); stopEditing() }}
+                            onClick={async () => { await updateField("priority", p, "Priority", PRIORITY_CONFIG[task.priority].label, cfg.label); stopEditing() }}
                             className="px-2 py-0.5 rounded-full text-xs font-medium"
                             style={{ color: cfg.color, backgroundColor: cfg.bg, outline: task.priority === p ? `2px solid ${cfg.color}` : "none", outlineOffset: "2px" }}>
                             {cfg.label}
@@ -414,7 +414,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                 ))}
 
                 {comments.length === 0 && (
-                  <p className="text-xs text-muted-foreground">還沒有留言</p>
+                  <p className="text-xs text-muted-foreground">No comments yet</p>
                 )}
 
                 {/* 新增留言輸入框 */}
@@ -440,7 +440,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                           setSubmittingComment(false)
                         }
                       }}
-                      placeholder="留言..."
+                      placeholder="Comment..."
                       className="w-full bg-muted rounded-full px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary pr-9"
                     />
                     <button
@@ -468,7 +468,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                 <p className="text-sm font-semibold mb-4">Activity</p>
 
                 {activities.length === 0 && (
-                  <p className="text-xs text-muted-foreground">尚無活動紀錄</p>
+                  <p className="text-xs text-muted-foreground">No activity yet</p>
                 )}
 
                 <div>
@@ -487,7 +487,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                       {/* 內容 */}
                       <div className="flex-1 min-w-0 pb-5">
                         <p className="text-xs font-semibold leading-snug">{act.changedByName}
-                          <span className="font-normal text-muted-foreground"> 修改了 {act.label}</span>
+                          <span className="font-normal text-muted-foreground"> updated {act.label}</span>
                         </p>
                         <p className="text-[10px] text-muted-foreground mt-0.5 mb-2">
                           {formatDateTime(act.createdAt)}

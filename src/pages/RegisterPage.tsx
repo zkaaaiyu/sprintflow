@@ -13,41 +13,41 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError("") 
+    setError("")
     if (password.length < 6) {
-      setError("密碼至少需要 6 個字元")
+      setError("Password must be at least 6 characters")
       return
     }
     try {
-      const { user } = await createUserWithEmailAndPassword(auth, email, password) 
-      await updateProfile(user, { displayName: name }) 
-      toast.success('註冊成功')
+      const { user } = await createUserWithEmailAndPassword(auth, email, password)
+      await updateProfile(user, { displayName: name })
+      toast.success('Account created successfully')
       navigate("/dashboard")
     } catch {
-      setError("註冊失敗，此信箱可能已被使用")
+      setError("Registration failed. This email may already be in use.")
     }
   }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="w-full max-w-sm p-8 bg-card rounded-xl border border-border shadow-sm">
-        <h1 className="text-2xl font-bold text-foreground mb-1">建立帳號</h1>
-        <p className="text-sm text-muted-foreground mb-6">開始使用 SprintFlow</p>
+        <h1 className="text-2xl font-bold text-foreground mb-1">Create an account</h1>
+        <p className="text-sm text-muted-foreground mb-6">Get started with SprintFlow</p>
 
         <form onSubmit={handleRegister} className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-foreground">姓名</label>
+            <label className="text-sm font-medium text-foreground">Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full mt-1 px-3 py-2 rounded-md border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring"
-              placeholder="你的名字"
+              placeholder="Your name"
               required
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-foreground">電子郵件</label>
+            <label className="text-sm font-medium text-foreground">Email</label>
             <input
               type="email"
               value={email}
@@ -58,13 +58,13 @@ export default function RegisterPage() {
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-foreground">密碼</label>
+            <label className="text-sm font-medium text-foreground">Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full mt-1 px-3 py-2 rounded-md border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring"
-              placeholder="至少 6 個字元"
+              placeholder="At least 6 characters"
               required
             />
           </div>
@@ -75,14 +75,14 @@ export default function RegisterPage() {
             type="submit"
             className="w-full py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
           >
-            註冊
+            Sign up
           </button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground mt-6">
-          已有帳號？{" "}
+          Already have an account?{" "}
           <Link to="/login" className="text-primary font-medium hover:underline">
-            登入
+            Sign in
           </Link>
         </p>
       </div>

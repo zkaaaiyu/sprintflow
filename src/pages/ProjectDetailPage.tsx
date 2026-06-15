@@ -71,12 +71,12 @@ export default function ProjectDetailPage() {
   const [saving, setSaving] = useState(false)
 
   if (loading) return (
-    <div className="flex items-center justify-center h-full text-muted-foreground">載入中...</div>
+    <div className="flex items-center justify-center h-full text-muted-foreground">Loading...</div>
   )
 
   const project = projects.find((p) => p.id === projectId)
   if (!project) return (
-    <div className="flex items-center justify-center h-full text-muted-foreground">找不到此專案</div>
+    <div className="flex items-center justify-center h-full text-muted-foreground">Project not found</div>
   )
 
   const isOwner = project.ownerId === user?.uid
@@ -104,10 +104,10 @@ export default function ProjectDetailPage() {
 
   //處理儲存編輯＋調用updateProject更新資料庫
   const handleSaveEdit = async () => {
-    if (!editName.trim()) { toast.error("請輸入專案名稱"); return }
+    if (!editName.trim()) { toast.error("Project name is required"); return }
     setSaving(true)
     await updateProject(project.id, { name: editName.trim(), description: editDesc.trim(), color: editColor })
-    toast.success("專案已更新")
+    toast.success("Project updated")
     setEditOpen(false)
     setSaving(false)
   }
@@ -115,25 +115,25 @@ export default function ProjectDetailPage() {
   //處理刪除project＋調用deleteProject更新資料庫
   const handleDelete = async () => {
     await deleteProject(project.id)
-    toast.success(`已刪除「${project.name}」`)
+    toast.success(`"${project.name}" deleted`)
     navigate("/projects")
   }
 
   //處理自己退出 project＋調用leaveProject更新資料庫
   const handleLeave = async () => {
     await leaveProject(project.id)
-    toast.success(`已離開「${project.name}」`)
+    toast.success(`Left "${project.name}"`)
     navigate("/projects")
   }
   //調用regenerateInviteCode處理重新生成邀請碼
   const handleRegenerateCode = async () => {
     await regenerateInviteCode(project.id)
-    toast.success("邀請碼已重新產生")
+    toast.success("Invite code regenerated")
   }
   //調用removeMember處理踢除 member
   const handleRemoveMember = async (uid: string) => {
     await removeMember(project.id, uid)
-    toast.success("已移除成員")
+    toast.success("Member removed")
   }
 
   return (
@@ -202,7 +202,7 @@ export default function ProjectDetailPage() {
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(project.inviteCode) //用writeText把邀請碼複製到用戶的剪貼板navigator.clipboard
-                    toast.success("邀請碼已複製")
+                    toast.success("Invite code copied")
                   }}
                   className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground"
                 >
@@ -248,7 +248,7 @@ export default function ProjectDetailPage() {
                 <DropdownMenuContent align="end" className="w-44">
                   <DropdownMenuItem onClick={openEdit} className="cursor-pointer">
                     <Pencil className="w-4 h-4 mr-2" />
-                    編輯專案
+                    Edit Project
                   </DropdownMenuItem>
 
                   {!isOwner && (
@@ -257,7 +257,7 @@ export default function ProjectDetailPage() {
                       className="text-destructive focus:text-destructive cursor-pointer"
                     >
                       <LogOut className="w-4 h-4 mr-2" />
-                      離開專案
+                      Leave Project
                     </DropdownMenuItem>
                   )}
                   {isOwner && (
@@ -266,7 +266,7 @@ export default function ProjectDetailPage() {
                       className="text-destructive focus:text-destructive cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
-                      刪除專案
+                      Delete Project
                     </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
@@ -348,11 +348,11 @@ export default function ProjectDetailPage() {
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="sm:max-w-md rounded-2xl p-8">
           <DialogHeader className="mb-6">
-            <DialogTitle className="text-2xl font-bold">編輯專案</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">Edit Project</DialogTitle>
           </DialogHeader>
           <div className="space-y-5">
             <div className="space-y-2">
-              <Label className="font-semibold text-sm">專案名稱</Label>
+              <Label className="font-semibold text-sm">Project Name</Label>
               <Input
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
@@ -360,7 +360,7 @@ export default function ProjectDetailPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label className="font-semibold text-sm">描述</Label>
+              <Label className="font-semibold text-sm">Description</Label>
               <Input
                 value={editDesc}
                 onChange={(e) => setEditDesc(e.target.value)}
@@ -368,7 +368,7 @@ export default function ProjectDetailPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label className="font-semibold text-sm">顏色</Label>
+              <Label className="font-semibold text-sm">Color</Label>
               <div className="flex gap-2 flex-wrap">
                 {COLOR_OPTIONS.map((c) => (
                   <button
@@ -387,13 +387,13 @@ export default function ProjectDetailPage() {
             </div>
           </div>
           <div className="flex justify-end gap-3 mt-8">
-            <Button variant="ghost" onClick={() => setEditOpen(false)}>取消</Button>
+            <Button variant="ghost" onClick={() => setEditOpen(false)}>Cancel</Button>
             <Button
               onClick={handleSaveEdit}
               disabled={saving}
               className="bg-brand hover:bg-brand-hover text-white rounded-full px-6"
             >
-              {saving ? "儲存中..." : "儲存"}
+              {saving ? "Saving..." : "Save"}
             </Button>
           </div>
         </DialogContent>
@@ -408,14 +408,14 @@ export default function ProjectDetailPage() {
             <DialogTitle className="text-xl font-bold text-destructive">Delete Project</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground mb-4">
-            即將刪除「{project.name}」和所有相關資料。
+            "{project.name}" and all its data will be permanently deleted.
           </p>
           <blockquote className="border-l-2 border-destructive pl-3 mb-6">
             <p className="text-sm font-semibold">This action cannot be undone.</p>
           </blockquote>
           <div className="flex gap-3">
-            <Button variant="ghost" className="flex-1 rounded-full" onClick={() => setDeleteOpen(false)}>取消</Button>
-            <Button className="flex-1 rounded-full bg-destructive hover:opacity-90 text-white" onClick={handleDelete}>刪除</Button>
+            <Button variant="ghost" className="flex-1 rounded-full" onClick={() => setDeleteOpen(false)}>Cancel</Button>
+            <Button className="flex-1 rounded-full bg-destructive hover:opacity-90 text-white" onClick={handleDelete}>Delete</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -428,14 +428,14 @@ export default function ProjectDetailPage() {
             <DialogTitle className="text-xl font-bold text-destructive">Leave Project</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground mb-4">
-            離開後需要重新取得邀請連結才能加入。
+            You will need a new invite link to rejoin this project.
           </p>
           <blockquote className="border-l-2 border-destructive pl-3 mb-6">
             <p className="text-sm font-semibold">This action cannot be undone.</p>
           </blockquote>
           <div className="flex gap-3">
-            <Button variant="ghost" className="flex-1 rounded-full" onClick={() => setLeaveOpen(false)}>取消</Button>
-            <Button className="flex-1 rounded-full bg-destructive hover:opacity-90 text-white" onClick={handleLeave}>離開</Button>
+            <Button variant="ghost" className="flex-1 rounded-full" onClick={() => setLeaveOpen(false)}>Cancel</Button>
+            <Button className="flex-1 rounded-full bg-destructive hover:opacity-90 text-white" onClick={handleLeave}>Leave</Button>
           </div>
         </DialogContent>
       </Dialog>

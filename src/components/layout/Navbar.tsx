@@ -133,7 +133,7 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     await logout()
-    toast.success("已登出")
+    toast.success("Signed out")
   }
 
   return (
@@ -283,7 +283,7 @@ export default function Navbar() {
           <DropdownMenuContent align="end" className="w-52 outline-none focus:outline-none">
             {/* 用戶資訊 */}
             <div className="px-2 py-2">
-              <p className="text-sm font-medium truncate">{user?.displayName || "使用者"}</p>
+              <p className="text-sm font-medium truncate">{user?.displayName || "User"}</p>
               <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
             </div>
             <DropdownMenuSeparator />
@@ -293,7 +293,7 @@ export default function Navbar() {
               className="cursor-pointer"
             >
               <Settings className="w-4 h-4 mr-2" />
-              設定
+              Settings
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />
@@ -302,7 +302,7 @@ export default function Navbar() {
             <div className="flex items-center justify-between px-2 py-2 rounded-md mx-1 hover:bg-accent cursor-default">
               <div className="flex items-center gap-2 text-sm">
                 {dark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
-                <span>深色模式</span>
+                <span>Dark mode</span>
               </div>
               {/* 自製 toggle 開關：flex + p-0.5 讓圓圈完整在軌道內 */}
               <button
@@ -325,7 +325,7 @@ export default function Navbar() {
               className="text-destructive focus:text-destructive cursor-pointer"
             >
               <LogOut className="w-4 h-4 mr-2" />
-              登出
+              Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

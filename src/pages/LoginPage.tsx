@@ -17,10 +17,10 @@ export default function LoginPage() {
     setError("")
     try {
       await signInWithEmailAndPassword(auth, email, password)
-      toast.success('登入成功')
+      toast.success('Signed in successfully')
       navigate("/dashboard")
     } catch {
-      setError("帳號或密碼錯誤")
+      setError("Incorrect email or password")
     }
   }
 
@@ -28,22 +28,22 @@ export default function LoginPage() {
     setError("")
     try {
       await signInWithPopup(auth, googleProvider)
-      toast.success('login 登入成功')
+      toast.success('Signed in with Google')
       navigate("/dashboard")
     } catch {
-      setError("Google 登入失敗")
+      setError("Google sign-in failed")
     }
   }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="w-full max-w-sm p-8 bg-card rounded-xl border border-border shadow-sm">
-        <h1 className="text-2xl font-bold text-foreground mb-1">歡迎回來</h1>
-        <p className="text-sm text-muted-foreground mb-6">登入你的 SprintFlow 帳號</p>
+        <h1 className="text-2xl font-bold text-foreground mb-1">Welcome back</h1>
+        <p className="text-sm text-muted-foreground mb-6">Sign in to your SprintFlow account</p>
 
         <form onSubmit={handleEmailLogin} className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-foreground">電子郵件</label>
+            <label className="text-sm font-medium text-foreground">Email</label>
             <input
               type="email"
               value={email}
@@ -54,7 +54,7 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-foreground">密碼</label>
+            <label className="text-sm font-medium text-foreground">Password</label>
             <input
               type="password"
               value={password}
@@ -71,13 +71,13 @@ export default function LoginPage() {
             type="submit"
             className="w-full py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
           >
-            登入
+            Sign in
           </button>
         </form>
 
         <div className="my-4 flex items-center gap-3">
           <div className="flex-1 h-px bg-border" />
-          <span className="text-xs text-muted-foreground">或</span>
+          <span className="text-xs text-muted-foreground">or</span>
           <div className="flex-1 h-px bg-border" />
         </div>
 
@@ -85,13 +85,13 @@ export default function LoginPage() {
           onClick={handleGoogleLogin}
           className="w-full py-2 rounded-md border border-border text-sm font-medium hover:bg-accent transition-colors"
         >
-          使用 Google 登入
+          Sign in with Google
         </button>
 
         <p className="text-center text-sm text-muted-foreground mt-6">
-          還沒有帳號？{" "}
+          Don't have an account?{" "}
           <Link to="/register" className="text-primary font-medium hover:underline">
-            註冊
+            Sign up
           </Link>
         </p>
       </div>

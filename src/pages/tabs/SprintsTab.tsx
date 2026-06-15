@@ -17,7 +17,7 @@ import { toast } from "sonner"
 //日期格式化
 function formatDate(date: Date | null) {
   if (!date) return "—"
-  return date.toLocaleDateString("zh-TW", { month: "short", day: "numeric", year: "numeric" })
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
 }
 
 export default function SprintsTab({
@@ -39,17 +39,17 @@ export default function SprintsTab({
   const [submitting, setSubmitting] = useState(false)
 
   const handleCreate = async () => {
-    if (!name.trim()) { toast.error("請輸入 Sprint 名稱"); return }
-    if (!startDate || !endDate) { toast.error("請選擇日期範圍"); return }
+    if (!name.trim()) { toast.error("Sprint name is required"); return }
+    if (!startDate || !endDate) { toast.error("Please select a date range"); return }
     setSubmitting(true)
     await createSprint(name.trim(), goal.trim(), new Date(startDate), new Date(endDate))
-    toast.success("Sprint 建立成功")
+    toast.success("Sprint created")
     setName(""); setGoal(""); setStartDate(""); setEndDate("")
     onCreateOpenChange(false)
     setSubmitting(false)
   }
 
-  if (loading) return <div className="text-muted-foreground text-sm py-8 text-center">載入中...</div>
+  if (loading) return <div className="text-muted-foreground text-sm py-8 text-center">Loading...</div>
 
   return (
     <>

@@ -213,7 +213,7 @@ export default function BacklogTab({
     setSubmitting(false)
   }
 
-  if (loading) return <div className="text-muted-foreground text-sm py-8 text-center">載入中...</div>
+  if (loading) return <div className="text-muted-foreground text-sm py-8 text-center">Loading...</div>
 
   return (
     <>

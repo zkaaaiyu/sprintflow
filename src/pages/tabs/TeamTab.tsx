@@ -21,7 +21,7 @@ export default function TeamTab({ project, onRemoveMember }: {
 
   const confirmTarget = members.find((m) => m.uid === confirmUid)
 
-  if (loading) return <div className="text-muted-foreground text-sm py-8 text-center">載入中...</div>
+  if (loading) return <div className="text-muted-foreground text-sm py-8 text-center">Loading...</div>
 
   return (
     <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden min-h-[calc(100vh-180px)]">
@@ -73,7 +73,7 @@ export default function TeamTab({ project, onRemoveMember }: {
                 )}
                 <div>
                   <p className="text-sm font-medium">
-                    {member.displayName || "未命名用戶"}
+                    {member.displayName || "Unnamed User"}
                     {isMe && (
                       <span className="ml-1.5 text-xs text-muted-foreground font-normal">(You)</span>
                     )}
@@ -126,13 +126,13 @@ export default function TeamTab({ project, onRemoveMember }: {
             <DialogTitle className="text-xl font-bold text-destructive">Remove Member</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground mb-4">
-            即將將 <span className="font-semibold text-foreground">{confirmTarget?.displayName || confirmTarget?.email}</span> 從專案中移除。
+            <span className="font-semibold text-foreground">{confirmTarget?.displayName || confirmTarget?.email}</span> will be removed from this project.
           </p>
           <blockquote className="border-l-2 border-destructive pl-3 mb-6">
             <p className="text-sm font-semibold">This action cannot be undone.</p>
           </blockquote>
           <div className="flex gap-3">
-            <Button variant="ghost" className="flex-1 rounded-full" onClick={() => setConfirmUid(null)}>取消</Button>
+            <Button variant="ghost" className="flex-1 rounded-full" onClick={() => setConfirmUid(null)}>Cancel</Button>
             <Button
               className="flex-1 rounded-full bg-destructive hover:opacity-90 text-white"
               onClick={() => {
@@ -140,7 +140,7 @@ export default function TeamTab({ project, onRemoveMember }: {
                 setConfirmUid(null)
               }}
             >
-              確認移除
+              Remove
             </Button>
           </div>
         </DialogContent>
