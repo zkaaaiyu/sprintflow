@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Download, UserMinus } from "lucide-react"
+import { Download, UserMinus, AlertCircle } from "lucide-react"
 import { useMembers } from "@/hooks/useMembers"
 import { useAuth } from "@/contexts/AuthContext"
 import type { Project } from "@/hooks/useWorkspace"
@@ -120,18 +120,21 @@ export default function TeamTab({ project, onRemoveMember }: {
 
       {/* 確認移除成員 */}
       <Dialog open={!!confirmUid} onOpenChange={(o) => { if (!o) setConfirmUid(null) }}>
-        <DialogContent className="sm:max-w-sm rounded-2xl p-8">
+        <DialogContent className="sm:max-w-sm rounded-3xl p-8">
           <DialogHeader className="mb-4">
-            <DialogTitle>移除成員</DialogTitle>
+            <AlertCircle className="w-7 h-7 text-destructive mb-3" />
+            <DialogTitle className="text-xl font-bold text-destructive">Remove Member</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground mb-6">
-            確定要將 <span className="font-semibold text-foreground">{confirmTarget?.displayName || confirmTarget?.email}</span> 從專案中移除嗎？
+          <p className="text-sm text-muted-foreground mb-4">
+            即將將 <span className="font-semibold text-foreground">{confirmTarget?.displayName || confirmTarget?.email}</span> 從專案中移除。
           </p>
-          <div className="flex justify-end gap-3">
-            <Button variant="ghost" onClick={() => setConfirmUid(null)}>取消</Button>
+          <blockquote className="border-l-2 border-destructive pl-3 mb-6">
+            <p className="text-sm font-semibold">This action cannot be undone.</p>
+          </blockquote>
+          <div className="flex gap-3">
+            <Button variant="ghost" className="flex-1 rounded-full" onClick={() => setConfirmUid(null)}>取消</Button>
             <Button
-              variant="destructive"
-              className="rounded-full px-6"
+              className="flex-1 rounded-full bg-destructive hover:opacity-90 text-white"
               onClick={() => {
                 if (confirmUid) onRemoveMember(confirmUid)
                 setConfirmUid(null)

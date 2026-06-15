@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import SprintsTab from "./tabs/SprintsTab"
 import BacklogTab from "@/pages/tabs/BacklogTab"
 import TeamTab from "@/pages/tabs/TeamTab"
-import { MoreHorizontal, Pencil, LogOut, Trash2, Plus, ListChecks, Zap, ArrowUpDown, Check, Copy, RefreshCw } from "lucide-react"
+import { MoreHorizontal, Pencil, LogOut, Trash2, Plus, ListChecks, Zap, ArrowUpDown, Check, Copy, RefreshCw, AlertCircle } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,16 +16,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 import {
   Dialog,
   DialogContent,
@@ -410,46 +400,45 @@ export default function ProjectDetailPage() {
       </Dialog>
 
       {/* 刪除確認 */}
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>確認刪除專案？</AlertDialogTitle>
-            <AlertDialogDescription>
-              即將刪除「{project.name}」，此操作無法復原。
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive hover:bg-destructive/90 text-white"
-            >
-              刪除
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* 刪除專案確認 */}
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent className="sm:max-w-sm rounded-3xl p-8">
+          <DialogHeader className="mb-4">
+            <AlertCircle className="w-7 h-7 text-destructive mb-3" />
+            <DialogTitle className="text-xl font-bold text-destructive">Delete Project</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground mb-4">
+            即將刪除「{project.name}」和所有相關資料。
+          </p>
+          <blockquote className="border-l-2 border-destructive pl-3 mb-6">
+            <p className="text-sm font-semibold">This action cannot be undone.</p>
+          </blockquote>
+          <div className="flex gap-3">
+            <Button variant="ghost" className="flex-1 rounded-full" onClick={() => setDeleteOpen(false)}>取消</Button>
+            <Button className="flex-1 rounded-full bg-destructive hover:opacity-90 text-white" onClick={handleDelete}>刪除</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-      {/* 離開確認 */}
-      <AlertDialog open={leaveOpen} onOpenChange={setLeaveOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>確認離開專案？</AlertDialogTitle>
-            <AlertDialogDescription>
-              離開後需要重新取得邀請連結才能加入。
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleLeave}
-              className="bg-destructive hover:bg-destructive/90 text-white"
-            >
-              離開
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* 離開專案確認 */}
+      <Dialog open={leaveOpen} onOpenChange={setLeaveOpen}>
+        <DialogContent className="sm:max-w-sm rounded-3xl p-8">
+          <DialogHeader className="mb-4">
+            <AlertCircle className="w-7 h-7 text-destructive mb-3" />
+            <DialogTitle className="text-xl font-bold text-destructive">Leave Project</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground mb-4">
+            離開後需要重新取得邀請連結才能加入。
+          </p>
+          <blockquote className="border-l-2 border-destructive pl-3 mb-6">
+            <p className="text-sm font-semibold">This action cannot be undone.</p>
+          </blockquote>
+          <div className="flex gap-3">
+            <Button variant="ghost" className="flex-1 rounded-full" onClick={() => setLeaveOpen(false)}>取消</Button>
+            <Button className="flex-1 rounded-full bg-destructive hover:opacity-90 text-white" onClick={handleLeave}>離開</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

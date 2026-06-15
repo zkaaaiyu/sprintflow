@@ -18,18 +18,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Plus, Trash2, Timer, Sun, Sunset, Moon, ArrowUpDown, Check, CalendarDays, CalendarClock, CheckCircle2, Zap } from "lucide-react"
+import { Plus, Trash2, Timer, Sun, Sunset, Moon, ArrowUpDown, Check, CalendarDays, CalendarClock, CheckCircle2, Zap, AlertCircle } from "lucide-react"
 import { useWorkspaceStats } from "@/hooks/useWorkspaceStats"
-import { // 刪除警告套件
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 
 import { toast } from "sonner"
 import type { Project } from "@/hooks/useWorkspace"
@@ -440,25 +430,25 @@ const confirmDelete = async () => {
         </div>
       </div>
       {/* 確認刪除模塊 */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>確認刪除專案？</AlertDialogTitle>
-            <AlertDialogDescription>
-              即將刪除「{deleteTarget?.name}」，此操作無法復原。
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="border-t-0 bg-transparent pt-2">
-            <AlertDialogCancel>cancle</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              className="bg-destructive hover:bg-destructive/90 text-white"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter >
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* 刪除專案確認 */}
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent className="sm:max-w-sm rounded-3xl p-8">
+          <DialogHeader className="mb-4">
+            <AlertCircle className="w-7 h-7 text-destructive mb-3" />
+            <DialogTitle className="text-xl font-bold text-destructive">Delete Project</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground mb-4">
+            即將刪除「{deleteTarget?.name}」和所有相關資料。
+          </p>
+          <blockquote className="border-l-2 border-destructive pl-3 mb-6">
+            <p className="text-sm font-semibold">This action cannot be undone.</p>
+          </blockquote>
+          <div className="flex gap-3">
+            <Button variant="ghost" className="flex-1 rounded-full" onClick={() => setDeleteTarget(null)}>取消</Button>
+            <Button className="flex-1 rounded-full bg-destructive hover:opacity-90 text-white" onClick={confirmDelete}>Delete</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <DndContext
         sensors={sensors}

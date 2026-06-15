@@ -1,5 +1,6 @@
 import { useState } from "react"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 import { useTask } from "@/hooks/useTask"
 import { useAuth } from "@/contexts/AuthContext"
 import { useActivities } from "@/hooks/useActivities"
@@ -9,7 +10,7 @@ import type { Priority, TaskStatus, StoryPoints } from "@/hooks/useTasks"
 import { PRIORITY_CONFIG } from "@/lib/priority"
 import { TASK_STATUS_CONFIG } from "@/lib/taskStatus"
 import { BRAND } from "@/lib/colors"
-import { Pencil, SendHorizontal, MoreHorizontal, Trash2 } from "lucide-react"
+import { Pencil, SendHorizontal, MoreHorizontal, Trash2, AlertCircle } from "lucide-react"
 import { doc, updateDoc, addDoc, collection, serverTimestamp } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import {
@@ -133,6 +134,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
   const status   = task ? TASK_STATUS_CONFIG[task.status]     : null
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-4xl h-[82vh] p-0 overflow-hidden rounded-2xl flex flex-col gap-0">
 
@@ -182,23 +184,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                     </div>
 
                     {/* 右側按鈕區 */}
-                    {showDeleteConfirm ? (
-                      <div className="flex items-center gap-2 shrink-0 mt-1">
-                        <span className="text-xs text-destructive font-medium">Delete task?</span>
-                        <button
-                          onClick={async () => { await deleteTask(); onClose() }}
-                          className="text-xs font-semibold text-destructive hover:underline"
-                        >
-                          Confirm
-                        </button>
-                        <button
-                          onClick={() => setShowDeleteConfirm(false)}
-                          className="text-xs text-muted-foreground hover:underline"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ) : task.sprintId !== null ? (
+                    {task.sprintId !== null ? (
                       // Kanban task：多功能 dropdown
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -523,5 +509,34 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
         )}
       </DialogContent>
     </Dialog>
+
+    {/* Delete Task 確認彈窗 */}
+
+    <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+      <DialogContent className="sm:max-w-sm rounded-3xl p-8">
+        <DialogHeader className="mb-4">
+          <AlertCircle className="w-7 h-7 text-destructive mb-3" />
+          <DialogTitle className="text-xl font-bold text-destructive">Delete Task</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground mb-4">
+          This will permanently delete this task and all its comments and activity.
+        </p>
+        <blockquote className="border-l-2 border-destructive pl-3 mb-6">
+          <p className="text-sm font-semibold">This action cannot be undone.</p>
+        </blockquote>
+        <div className="flex gap-3">
+          <Button variant="ghost" className="flex-1 rounded-full" onClick={() => setShowDeleteConfirm(false)}>
+            Cancel
+          </Button>
+          <Button
+            className="flex-1 rounded-full bg-destructive hover:opacity-90 text-white"
+            onClick={async () => { await deleteTask(); setShowDeleteConfirm(false); onClose() }}
+          >
+            Delete task
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   )
 }

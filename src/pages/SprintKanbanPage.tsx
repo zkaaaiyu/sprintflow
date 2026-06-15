@@ -47,7 +47,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { MoreHorizontal, Plus, ChevronDown, TriangleAlert, CheckCircle2 } from "lucide-react"
+import { MoreHorizontal, Plus, ChevronDown, TriangleAlert, CheckCircle2, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
 import TaskDetailModal from "@/components/TaskDetailModal"
 import { useAuth } from "@/contexts/AuthContext"
@@ -803,21 +803,25 @@ export default function SprintKanbanPage() {
       </Dialog>
 
       {/* 刪除 Sprint 確認彈窗 */}
+      {/* 刪除 Sprint 確認 */}
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent className="sm:max-w-sm rounded-2xl p-8">
+        <DialogContent className="sm:max-w-sm rounded-3xl p-8">
           <DialogHeader className="mb-4">
-            <DialogTitle>刪除 Sprint</DialogTitle>
+            <AlertCircle className="w-7 h-7 text-destructive mb-3" />
+            <DialogTitle className="text-xl font-bold text-destructive">Delete Sprint</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground mb-6">
-            刪除後此 Sprint 內的所有任務將退回 Backlog，確定要刪除嗎？
+          <p className="text-sm text-muted-foreground mb-4">
+            刪除後此 Sprint 內的所有任務將退回 Backlog。
           </p>
-          <div className="flex justify-end gap-3">
-            <Button variant="ghost" onClick={() => setShowDeleteConfirm(false)}>取消</Button>
+          <blockquote className="border-l-2 border-destructive pl-3 mb-6">
+            <p className="text-sm font-semibold">This action cannot be undone.</p>
+          </blockquote>
+          <div className="flex gap-3">
+            <Button variant="ghost" className="flex-1 rounded-full" onClick={() => setShowDeleteConfirm(false)}>取消</Button>
             <Button
+              className="flex-1 rounded-full bg-destructive hover:opacity-90 text-white"
               onClick={handleDelete}
               disabled={actionLoading}
-              variant="destructive"
-              className="rounded-full px-6"
             >
               {actionLoading ? "刪除中..." : "確定刪除"}
             </Button>

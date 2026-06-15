@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import {
   Camera, Sun, Moon, Lock, LogOut, Trash2,
-  Globe, Bell, ChevronRight, Eye, EyeOff, Ban,
+  Globe, Bell, ChevronRight, Eye, EyeOff, Ban, AlertCircle,
 } from "lucide-react"
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -506,13 +506,17 @@ export default function SettingsPage() {
 
       {/* ── Delete Account Dialog ── */}
       <Dialog open={deleteOpen} onOpenChange={(o) => { if (!o) { setDeleteOpen(false); setDeletePw("") } }}>
-        <DialogContent className="sm:max-w-md rounded-2xl p-8">
-          <DialogHeader className="mb-2">
+        <DialogContent className="sm:max-w-sm rounded-3xl p-8">
+          <DialogHeader className="mb-4">
+            <AlertCircle className="w-7 h-7 text-destructive mb-3" />
             <DialogTitle className="text-xl font-bold text-destructive">Delete Account</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground mb-6">
-            This will permanently delete your account and all associated data. <strong className="text-foreground">This action cannot be undone.</strong>
+          <p className="text-sm text-muted-foreground mb-4">
+            This will permanently delete your account and all associated data.
           </p>
+          <blockquote className="border-l-2 border-destructive pl-3 mb-6">
+            <p className="text-sm font-semibold">This action cannot be undone.</p>
+          </blockquote>
 
           {!googleUser && (
             <div className="space-y-2 mb-6">
@@ -527,12 +531,11 @@ export default function SettingsPage() {
             </div>
           )}
 
-          <div className="flex justify-end gap-3">
-            <Button variant="ghost" onClick={() => setDeleteOpen(false)}>Cancel</Button>
+          <div className="flex gap-3">
+            <Button variant="ghost" className="flex-1 rounded-full" onClick={() => setDeleteOpen(false)}>Cancel</Button>
             <Button
-              variant="destructive"
+              className="flex-1 rounded-full bg-destructive hover:opacity-90 text-white"
               disabled={deleting || (!googleUser && !deletePw)}
-              className="rounded-full px-8"
               onClick={handleDeleteAccount}
             >
               {deleting ? "Deleting..." : "Delete my account"}

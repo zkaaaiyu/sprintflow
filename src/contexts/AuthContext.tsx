@@ -28,16 +28,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
     if (firebaseUser) {
-      await setDoc(
-        doc(db, "users", firebaseUser.uid),
-        {
-          uid: firebaseUser.uid,
-          displayName: firebaseUser.displayName ?? "",
-          email: firebaseUser.email ?? "",
-          photoURL: firebaseUser.photoURL ?? null,
-        },
-        { merge: true }
-      )
+      try {
+        await setDoc(
+          doc(db, "users", firebaseUser.uid),
+          {
+            uid: firebaseUser.uid,
+            displayName: firebaseUser.displayName ?? "",
+            email: firebaseUser.email ?? "",
+            photoURL: firebaseUser.photoURL ?? null,
+          },
+          { merge: true }
+        )
+      } catch (e) {
+        console.warn("Firestore write failed:", e)
+      }
       // 從 localStorage 讀取該用戶的自定義排序
       const saved = localStorage.getItem(`projectOrder_${firebaseUser.uid}`)
       setProjectOrderState(saved ? JSON.parse(saved) : [])
