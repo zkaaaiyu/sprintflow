@@ -1,11 +1,8 @@
-// useWorkspaceStats — 查詢 workspace 首頁所需的三個統計數字
-// 資料範圍：當前使用者所在的所有 project > active sprint > tasks
-import { useState, useEffect } from "react"
-import { collection, query, where, getDocs, Timestamp } from "firebase/firestore"
-import { db } from "@/lib/firebase"
+// useWorkspaceStats — 從 useActiveSprintTasks 撈到的原始資料中，彙整 workspace 首頁所需的三個統計數字
+// 純計算（不再自己查 Firestore），資料來源由外部傳入的 groups 提供
+import { useMemo } from "react"
 import { useAuth } from "@/contexts/AuthContext"
-
-type Project = { id: string }
+import type { ActiveSprintGroup } from "@/hooks/useActiveSprintTasks"
 
 export type WorkspaceStats = {
   dueTodayCount: number       // 今天到期且未完成（指派給自己）
@@ -15,69 +12,39 @@ export type WorkspaceStats = {
   loading: boolean
 }
 
-export function useWorkspaceStats(projects: Project[], projectsLoading: boolean): WorkspaceStats {
+export function useWorkspaceStats(groups: ActiveSprintGroup[], loading: boolean): WorkspaceStats {
   const { user } = useAuth()
-  const [stats, setStats] = useState<WorkspaceStats>({
-    dueTodayCount: 0,
-    completedThisWeekCount: 0,
-    activeSprintsCount: 0,
-    overdueCount: 0,
-    loading: true,
-  })
 
-  // 用 join 字串穩定 useEffect 依賴
-  const projectIdsKey = projects.map((p) => p.id).join(",")
+  return useMemo(() => {
+    const now = new Date()
+    // 今日 00:00 和明日 00:00
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const todayEnd   = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000)
 
-  useEffect(() => {
-    if (projectsLoading || !user) return
-    if (projects.length === 0) { setStats((s) => ({ ...s, loading: false })); return }
+    let dueTodayCount = 0
+    let completedThisWeekCount = 0
+    let overdueCount = 0
 
-    const fetchStats = async () => {
-      const now = new Date()
-      // 今日 00:00 和明日 00:00
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      const todayEnd   = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000)
+    for (const group of groups) {
+      for (const task of group.tasks) {
+        // 只計算指派給自己的任務
+        if (task.assigneeId !== user?.uid) continue
 
-      let dueTodayCount = 0
-      let completedThisWeekCount = 0
-      let activeSprintsCount = 0
-      let overdueCount = 0
-
-      for (const project of projects) {
-        // 取得 active sprint
-        const sprintSnap = await getDocs(
-          query(collection(db, "projects", project.id, "sprints"), where("status", "==", "active"))
-        )
-        activeSprintsCount += sprintSnap.size
-
-        for (const sprintDoc of sprintSnap.docs) {
-          const tasksSnap = await getDocs(
-            query(collection(db, "projects", project.id, "tasks"), where("sprintId", "==", sprintDoc.id))
-          )
-
-          tasksSnap.docs.forEach((t) => {
-            const data = t.data()
-            // 只計算指派給自己的任務
-            if (data.assigneeId !== user.uid) return
-
-            const dueDate = data.dueDate ? (data.dueDate as Timestamp).toDate() : null
-            const isDone  = data.status === "done"
-
-            if (isDone) {
-              completedThisWeekCount++
-            } else if (dueDate) {
-              if (dueDate < todayStart)   overdueCount++
-              else if (dueDate < todayEnd) dueTodayCount++
-            }
-          })
+        if (task.status === "done") {
+          completedThisWeekCount++
+        } else if (task.dueDate) {
+          if (task.dueDate < todayStart)   overdueCount++
+          else if (task.dueDate < todayEnd) dueTodayCount++
         }
       }
-
-      setStats({ dueTodayCount, completedThisWeekCount, activeSprintsCount, overdueCount, loading: false })
     }
 
-    fetchStats()
-  }, [projectIdsKey, projectsLoading, user])
-
-  return stats
+    return {
+      dueTodayCount,
+      completedThisWeekCount,
+      activeSprintsCount: groups.length,
+      overdueCount,
+      loading,
+    }
+  }, [groups, user?.uid, loading])
 }

@@ -5,7 +5,8 @@ import { useTask } from "@/hooks/useTask"
 import { useAuth } from "@/contexts/AuthContext"
 import { useActivities } from "@/hooks/useActivities"
 import { useComments } from "@/hooks/useComments"
-import { useMembers, type UserProfile } from "@/hooks/useMembers"
+import { useMembers } from "@/hooks/useMembers"
+import { MemberAvatar } from "@/components/shared/MemberAvatar"
 import type { Priority, TaskStatus, StoryPoints } from "@/hooks/useTasks"
 import { PRIORITY_CONFIG } from "@/lib/priority"
 import { TASK_STATUS_CONFIG } from "@/lib/taskStatus"
@@ -59,20 +60,6 @@ function ValueBadge({ field, value }: { field: string; value: string }) {
   return <span className="text-xs bg-muted px-1.5 py-0.5 rounded font-medium">{value}</span>
 }
 
-//負責處理任務指派的 member 頭像顯示
-function MemberAvatar({ user }: { user: UserProfile }) {
-  const initials = user.displayName
-    ? user.displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
-    : user.email[0].toUpperCase()
-  if (user.photoURL) {
-    return <img src={user.photoURL} alt={user.displayName} referrerPolicy="no-referrer" className="w-6 h-6 rounded-full object-cover" />
-  }
-  return (
-    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-[10px] font-semibold">
-      {initials}
-    </div>
-  )
-}
 //定義props資料結構
 type Props = {
   projectId: string

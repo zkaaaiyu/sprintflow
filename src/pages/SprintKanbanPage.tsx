@@ -30,6 +30,8 @@ import { SPRINT_STATUS_CONFIG } from "@/lib/sprintStatus"
 import { BRAND } from "@/lib/colors"
 import { useWorkspace } from "@/hooks/useWorkspace"
 import { useMembers, type UserProfile } from "@/hooks/useMembers"
+import { MemberAvatar } from "@/components/shared/MemberAvatar"
+import { getDaysRemaining } from "@/lib/dueDate"
 import type { SprintStatus } from "@/hooks/useSprints"
 import {
   DropdownMenu,
@@ -65,39 +67,6 @@ function formatDateRange(start: Date | null, end: Date | null) {
   if (!start || !end) return "—"
   const fmt = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
   return `${fmt(start)} – ${fmt(end)}`
-}
-
-// 計算剩餘天數
-function getDaysRemaining(dueDate: Date): { label: string; color: string } {
-  const now = new Date(); now.setHours(0, 0, 0, 0)
-  const due = new Date(dueDate); due.setHours(0, 0, 0, 0)
-  const diff = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-  if (diff < 0)   return { label: "Overdue",       color: "var(--overdue)" }
-  if (diff === 0) return { label: "Due today",     color: "var(--overdue)" }
-  if (diff <= 3)  return { label: `${diff}d left`, color: BRAND }
-  return               { label: `${diff}d left`, color: "var(--muted-foreground)" }
-}
-
-// 渲染成員頭像
-function MemberAvatar({ user }: { user: UserProfile }) {
-  const initials = user.displayName
-    ? user.displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
-    : user.email[0].toUpperCase()
-  if (user.photoURL) {
-    return (
-      <img
-        src={user.photoURL}
-        alt={user.displayName}
-        referrerPolicy="no-referrer"
-        className="w-6 h-6 rounded-full object-cover shrink-0"
-      />
-    )
-  }
-  return (
-    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-[10px] font-semibold shrink-0">
-      {initials}
-    </div>
-  )
 }
 
 // 指派人下拉選單元件

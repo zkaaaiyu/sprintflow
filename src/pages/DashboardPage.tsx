@@ -1,4 +1,5 @@
 import { useWorkspace } from "@/hooks/useWorkspace"
+import { useActiveSprintTasks } from "@/hooks/useActiveSprintTasks"
 import { useDashboardStats } from "@/hooks/useDashboardStats"
 import { useUpcomingTasks } from "@/hooks/useUpcomingTasks"
 import { useActiveSprintsSummary } from "@/hooks/useActiveSprintsSummary"
@@ -12,9 +13,12 @@ import BurndownChart from "@/components/dashboard/BurndownChart"
 export default function DashboardPage() {
   const { projects, loading: projectsLoading } = useWorkspace()
 
-  const stats = useDashboardStats(projects, projectsLoading)
+  // 只查一次 Firestore，撈出所有 active sprint + 任務的原始資料，
+  // 下面兩個 hook 都從這份資料做加總計算，不再各自重複查詢
+  const { groups: activeSprintGroups, loading: groupsLoading } = useActiveSprintTasks(projects, projectsLoading)
+  const stats = useDashboardStats(activeSprintGroups, groupsLoading)
   const { tasks: upcomingTasks } = useUpcomingTasks(projects, projectsLoading)
-  const { summaries: sprintSummaries, loading: sprintsLoading } = useActiveSprintsSummary(projects, projectsLoading)
+  const { summaries: sprintSummaries, loading: sprintsLoading } = useActiveSprintsSummary(activeSprintGroups, groupsLoading)
 
   return (
     <div className="p-8 h-full overflow-y-auto">

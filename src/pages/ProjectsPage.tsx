@@ -7,6 +7,7 @@ import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core"
 import { SortableContext, useSortable, rectSortingStrategy, arrayMove } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { useWorkspace } from "@/hooks/useWorkspace"
+import { useActiveSprintTasks } from "@/hooks/useActiveSprintTasks"
 import { useAuth } from "@/contexts/AuthContext"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -20,6 +21,7 @@ import {
 } from "@/components/ui/dialog"
 import { Plus, Trash2, Timer, Sun, Sunset, Moon, ArrowUpDown, Check, CalendarDays, CalendarClock, CheckCircle2, Zap, AlertCircle } from "lucide-react"
 import { useWorkspaceStats } from "@/hooks/useWorkspaceStats"
+import { MemberAvatar } from "@/components/shared/MemberAvatar"
 
 import { toast } from "sonner"
 import type { Project } from "@/hooks/useWorkspace"
@@ -46,31 +48,10 @@ function toAlpha(hex: string, alpha: number) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
-function MemberAvatar({ user }: { user: UserProfile }) {
-  const initials = user.displayName
-    ? user.displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
-    : user.email[0].toUpperCase()
-  if (user.photoURL) {
-    return (
-      <img
-        src={user.photoURL}
-        alt={user.displayName}
-        referrerPolicy="no-referrer"
-        className="w-7 h-7 rounded-full object-cover shrink-0"
-      />
-    )
-  }
-  return (
-    <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-[10px] text-primary-foreground font-semibold shrink-0">
-      {initials}
-    </div>
-  )
-}
-
 function MemberAvatars({ members, totalCount }: { members: UserProfile[]; totalCount: number }) {
   return (
     <div className="flex -space-x-2">
-      {members.map((m) => <MemberAvatar key={m.uid} user={m} />)}
+      {members.map((m) => <MemberAvatar key={m.uid} user={m} size="md" />)}
       {totalCount > 3 && (
         <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-[10px] text-muted-foreground font-semibold">
           +{totalCount - 3}
@@ -181,7 +162,8 @@ export default function ProjectsPage() {
   const { user } = useAuth()
   const { projects, loading, createProject, deleteProject, joinProject } = useWorkspace()
   const { projectOrder, setProjectOrder } = useAuth()
-  const wsStats = useWorkspaceStats(projects, loading)
+  const { groups: activeSprintGroups, loading: groupsLoading } = useActiveSprintTasks(projects, loading)
+  const wsStats = useWorkspaceStats(activeSprintGroups, groupsLoading)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
   const [draggingProject, setDraggingProject] = useState<Project | null>(null)

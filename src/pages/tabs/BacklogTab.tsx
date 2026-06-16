@@ -4,6 +4,8 @@ import { useTasks, type Task, type Priority, type StoryPoints } from "@/hooks/us
 import { PRIORITY_CONFIG } from "@/lib/priority"
 import { BRAND } from "@/lib/colors"
 import { useMembers, type UserProfile } from "@/hooks/useMembers"
+import { MemberAvatar } from "@/components/shared/MemberAvatar"
+import { getDaysRemaining } from "@/lib/dueDate"
 import {
   Dialog,
   DialogContent,
@@ -20,42 +22,6 @@ import TaskDetailModal from "@/components/TaskDetailModal"
 type SortBy = "priority" | "createdAt" | "dueDate" | "storyPoints"
 
 const PRIORITY_ORDER: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 }
-
-// 計算剩餘天數 函數
-function getDaysRemaining(dueDate: Date): { label: string; color: string } {
-  const now = new Date()
-  now.setHours(0, 0, 0, 0)
-  const due = new Date(dueDate)
-  due.setHours(0, 0, 0, 0)
-  const diff = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-  if (diff < 0)   return { label: "Overdue",       color: "var(--overdue)" }
-  if (diff === 0) return { label: "Due today",     color: "var(--overdue)" }
-  if (diff <= 3)  return { label: `${diff}d left`, color: BRAND }
-  return                 { label: `${diff}d left`, color: "var(--muted-foreground)" }
-}
-// 頭貼渲染 沒照片用名字縮寫
-function MemberAvatar({ user, size = "sm" }: { user: UserProfile; size?: "sm" | "md" }) {
-  const sz = size === "sm" ? "w-6 h-6 text-[10px]" : "w-8 h-8 text-xs"
-  const initials = user.displayName
-    ? user.displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
-    : user.email[0].toUpperCase()
-
-  if (user.photoURL) {
-    return (
-      <img
-        src={user.photoURL}
-        alt={user.displayName}
-        referrerPolicy="no-referrer"
-        className={`${sz} rounded-full object-cover shrink-0`}
-      />
-    )
-  }
-  return (
-    <div className={`${sz} rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold shrink-0`}>
-      {initials}
-    </div>
-  )
-}
 
 //任務指派選單
 function AssigneePicker({
