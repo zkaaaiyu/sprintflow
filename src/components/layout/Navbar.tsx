@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { BRAND } from "@/lib/colors"
 import { useWorkspace } from "@/hooks/useWorkspace"
 import { useGlobalActivities, type GlobalActivity } from "@/hooks/useGlobalActivities"
+import { useSearchStore } from "@/store/useSearchStore"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -175,8 +176,11 @@ export default function Navbar() {
       {/* 右側：搜尋 + 鈴鐺 + 頭像（mr-2 讓頭像不貼邊） */}
       <div className="flex items-center gap-1 shrink-0 mr-2">
 
-        {/* 搜尋（暫為 icon，後續接 Command Palette） */}
-        <button className="p-2 rounded-md hover:bg-accent transition-colors">
+        {/* 搜尋：開啟全域 Command Palette（跟 ⌘K 共用同一個 store） */}
+        <button
+          onClick={() => useSearchStore.getState().open()}
+          className="p-2 rounded-md hover:bg-accent transition-colors"
+        >
           <Search className="w-4 h-4 text-muted-foreground" />
         </button>
 

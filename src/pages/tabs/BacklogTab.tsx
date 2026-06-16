@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "react-router-dom"
 import { useTasks, type Task, type Priority, type StoryPoints } from "@/hooks/useTasks"
 import { PRIORITY_CONFIG } from "@/lib/priority"
 import { BRAND } from "@/lib/colors"
@@ -164,6 +165,16 @@ export default function BacklogTab({
   const { tasks, loading, createTask } = useTasks(projectId)
   const { members } = useMembers(memberIds)
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  // 從 Command Palette 搜尋結果跳轉過來：網址帶 ?openTask=taskId 時自動開啟該任務，並把參數清掉
+  useEffect(() => {
+    const openTask = searchParams.get("openTask")
+    if (!openTask) return
+    setSelectedTaskId(openTask)
+    searchParams.delete("openTask")
+    setSearchParams(searchParams, { replace: true })
+  }, [searchParams])
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [priority, setPriority] = useState<Priority>("medium")

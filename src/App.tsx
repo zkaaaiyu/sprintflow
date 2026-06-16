@@ -4,8 +4,6 @@ import LoginPage from "@/pages/LoginPage"
 import RegisterPage from "@/pages/RegisterPage"
 import DashboardPage from "@/pages/DashboardPage"
 import ProjectsPage from "@/pages/ProjectsPage"
-import SprintPage from "@/pages/SprintPage"
-import MembersPage from "@/pages/MembersPage"
 import ProjectDetailPage from "./pages/ProjectDetailPage"
 import SprintKanbanPage from "./pages/SprintKanbanPage"
 import SettingsPage from "./pages/SettingsPage"
@@ -22,8 +20,6 @@ export default function App() {
           <Route path="/projects" element={<ProjectsPage />} />
           <Route path="/projects/:projectId" element={<ProjectDetailPage />} />  {/*  :projectId params 查詢參數的佔位符 */}
           <Route path="/projects/:projectId/sprints/:sprintId" element={<SprintKanbanPage />} />
-          <Route path="/sprint" element={<SprintPage />} />
-          <Route path="/members" element={<MembersPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Routes>

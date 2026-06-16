@@ -174,7 +174,7 @@ export default function Sidebar() {
         {/* Logo + 收縮按鈕 */}
         <div className="h-16 flex items-center px-3 border-b border-white/10 shrink-0">
           {!collapsed && (
-            <span className="text-lg font-bold text-brand flex-1 truncate">SprintFlow</span>
+            <span className="text-2xl font-bold text-brand flex-1 truncate">SprintFlow</span>
           )}
           <button
             onClick={toggle}

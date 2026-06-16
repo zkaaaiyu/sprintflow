@@ -84,7 +84,7 @@ export default function SettingsPage() {
   const googleUser = isGoogleUser(user)
 
   // ── Language ──
-  const [lang, setLang] = useState<"zh" | "en">("zh")
+  const [lang, setLang] = useState<"en">("en")
 
   // ── Notifications ──
   const [notifActive, setNotifActive] = useState<Record<string, boolean>>({})
@@ -342,8 +342,8 @@ export default function SettingsPage() {
             <Label className="text-sm font-semibold text-muted-foreground">Display language</Label>
             <div className="grid grid-cols-3 gap-3">
               {([
-                { key: "zh", label: "中文",     sub: "Traditional Chinese", available: true  },
                 { key: "en", label: "English",   sub: "English",             available: true  },
+                { key: "zh", label: "中文",     sub: "Traditional Chinese", available: false },
                 { key: "ja", label: "日本語",    sub: "Japanese",            available: false },
                 { key: "ko", label: "한국어",    sub: "Korean",              available: false },
                 { key: "fr", label: "Français",  sub: "French",              available: false },
@@ -351,8 +351,7 @@ export default function SettingsPage() {
               ] as const).map(({ key, label, sub, available }) => (
                 <button
                   key={key}
-                  onClick={() => available && setLang(key as "zh" | "en")}
-                  disabled={!available}
+                  onClick={() => available ? setLang(key as "en") : toast.info("This language is not available yet. Coming in a future update.")}
                   className={`group relative flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left transition-all ${
                     available
                       ? lang === key

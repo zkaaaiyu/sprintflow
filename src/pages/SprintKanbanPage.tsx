@@ -1,6 +1,6 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import type { ReactNode } from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import { useParams, useNavigate, useSearchParams } from "react-router-dom"
 import { doc, updateDoc, writeBatch, addDoc, collection, serverTimestamp } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import {  // 引入拖曳套件 @dnd-kit 
@@ -257,7 +257,8 @@ function DroppableColumn({ id, children }: { id: string; children: ReactNode }) 
 
 export default function SprintKanbanPage() {
   const { projectId = "", sprintId = "" } = useParams() //用useParams拿到網址的查詢參數 才知道是哪一個專案下的哪一個sprint
-  const navigate = useNavigate() 
+  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const { user } = useAuth()
   const { projects, loading: projectLoading } = useWorkspace() //把 loading 改名 projectLoading 避免撞名
@@ -294,6 +295,15 @@ export default function SprintKanbanPage() {
 
   // 點擊任務卡片時，紀錄被選中的 taskId，用來開啟 Task Detail Modal
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+
+  // 從 Command Palette 搜尋結果跳轉過來：網址帶 ?openTask=taskId 時自動開啟該任務，並把參數清掉
+  useEffect(() => {
+    const openTask = searchParams.get("openTask")
+    if (!openTask) return
+    setSelectedTaskId(openTask)
+    searchParams.delete("openTask")
+    setSearchParams(searchParams, { replace: true })
+  }, [searchParams])
 
   // 新增任務相關：記錄點擊哪一欄的 +，以及兩個新增 Modal 的開關
   const [activeAddColumn, setActiveAddColumn] = useState<TaskStatus | null>(null)
