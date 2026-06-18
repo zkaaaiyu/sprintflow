@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { Search, Bell, LogOut, Moon, Sun, ChevronLeft, ChevronRight, Settings } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
@@ -19,6 +19,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { toast } from "sonner"
+import { useTheme } from "@/contexts/ThemeContext"
 
 // 相對時間格式化
 function timeAgo(date: Date | null): string {
@@ -83,18 +84,7 @@ export default function Navbar() {
     setLastReadAt(now)
   }
 
-  // 深色模式：讀 localStorage 初始值，切換時寫回並更新 html class
-  const [dark, setDark] = useState(() => localStorage.getItem("theme") === "dark")
-
-  useEffect(() => {
-    if (dark) {
-      document.documentElement.classList.add("dark")
-      localStorage.setItem("theme", "dark")
-    } else {
-      document.documentElement.classList.remove("dark")
-      localStorage.setItem("theme", "light")
-    }
-  }, [dark])
+  const { dark, setDark } = useTheme()
 
   // 從 pathname 組出麵包屑陣列
   const buildCrumbs = () => {

@@ -10,6 +10,7 @@ import {
   updateDoc,
   doc,
   serverTimestamp,
+  onSnapshot,
 } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { useAuth } from "@/contexts/AuthContext"
@@ -41,38 +42,35 @@ export function useWorkspace() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
 
-  //如果有token就跑撈資料的函數
+  // 用 onSnapshot 即時監聽：只要 Firestore 資料有變動，畫面自動更新
   useEffect(() => {
     if (!user) return
-    fetchProjects()
-  }, [user]) //如果登入狀態改變就要重撈
-
-  // 撈資料
-  const fetchProjects = async () => {
-    if (!user) return
+    setLoading(true)
     const q = query(
       collection(db, "projects"),
-      where("memberIds", "array-contains", user.uid) //array-contains 是資料庫的一個欄位 -> 誰在這個專案裡
+      where("memberIds", "array-contains", user.uid)
     )
-    const snap = await getDocs(q)
-    const list = snap.docs.map((d) => {
-      const data = d.data()
-      const rawJoinedAt = data.joinedAt ?? {}
-      const joinedAt: Record<string, Date | null> = {}
-      for (const uid in rawJoinedAt) {
-        joinedAt[uid] = rawJoinedAt[uid]?.toDate() ?? null //用todate把firebase的時間轉換成js看得懂的時間格式 
-      }
-      return {
-        id: d.id,
-        ...data,
-        joinedAt,
-        createdAt: data.createdAt?.toDate() ?? null,
-        updatedAt: data.updatedAt?.toDate() ?? null,
-      }
-    }) as Project[]
-    setProjects(list) //把拿到的資料塞到要渲染的陣列裡面
-    setLoading(false)
-  }
+    const unsubscribe = onSnapshot(q, (snap) => {
+      const list = snap.docs.map((d) => {
+        const data = d.data()
+        const rawJoinedAt = data.joinedAt ?? {}
+        const joinedAt: Record<string, Date | null> = {}
+        for (const uid in rawJoinedAt) {
+          joinedAt[uid] = rawJoinedAt[uid]?.toDate() ?? null
+        }
+        return {
+          id: d.id,
+          ...data,
+          joinedAt,
+          createdAt: data.createdAt?.toDate() ?? null,
+          updatedAt: data.updatedAt?.toDate() ?? null,
+        }
+      }) as Project[]
+      setProjects(list)
+      setLoading(false)
+    })
+    return unsubscribe // 元件卸載時停止監聽，避免記憶體洩漏
+  }, [user?.uid])
 
 // 新增project
   const createProject = async (name: string, description: string, color: string) => {
@@ -111,8 +109,17 @@ export function useWorkspace() {
     setProjects((prev) => [...prev, newProject])
   }
 
-  //刪除Project
+  // 刪除 Project：先清除 sprints 和 tasks 子集合，再刪 project 本體
   const deleteProject = async (projectId: string) => {
+    // 刪除所有 sprints
+    const sprintsSnap = await getDocs(query(collection(db, "sprints"), where("projectId", "==", projectId)))
+    for (const d of sprintsSnap.docs) await deleteDoc(d.ref)
+
+    // 刪除所有 tasks（tasks 底下的 comments/activities 子集合無法從前端遞迴清除，是已知限制）
+    const tasksSnap = await getDocs(query(collection(db, "tasks"), where("projectId", "==", projectId)))
+    for (const d of tasksSnap.docs) await deleteDoc(d.ref)
+
+    // 最後刪 project 本體
     await deleteDoc(doc(db, "projects", projectId))
     setProjects((prev) => prev.filter((p) => p.id !== projectId))
   }

@@ -48,7 +48,7 @@ export function usePersonalTodos() {
     })
 
     return () => unsubscribe() //使用者離開頁面時退訂
-  }, [user]) //使用者變更時重新渲染
+  }, [user?.uid]) //用 uid 當依賴項，避免 Firebase User 物件每次返回新引用觸發不必要的重查
 
   // 新增待辦事項
   const createTodo = async (title: string) => {

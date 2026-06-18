@@ -7,6 +7,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 
 const AVATAR_COLORS = ["#F97316", "#3B82F6", "#10B981", "#8B5CF6", "#EF4444"]
 
@@ -33,7 +34,10 @@ export default function TeamTab({ project, onRemoveMember }: {
             {members.length} Members
           </span>
         </div>
-        <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border border-border text-muted-foreground hover:bg-accent transition-colors">
+        <button
+          onClick={() => toast.info("Coming soon")}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border border-border text-muted-foreground hover:bg-accent transition-colors"
+        >
           <Download className="w-3.5 h-3.5" />
           Export List
         </button>

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef } from "react"
 import {
   updateProfile,
   updatePassword,
@@ -10,6 +10,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
 import { doc, updateDoc } from "firebase/firestore"
 import { auth, db, storage } from "@/lib/firebase"
 import { useAuth } from "@/contexts/AuthContext"
+import { useTheme } from "@/contexts/ThemeContext"
 import { useNavigate } from "react-router-dom"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -22,6 +23,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog"
+import AvatarCropModal from "@/components/AvatarCropModal"
 
 // 判斷是否為 Google 登入（沒有 password provider）
 function isGoogleUser(user: ReturnType<typeof useAuth>["user"]) {
@@ -52,8 +54,12 @@ export default function SettingsPage() {
   // ── Profile ──
   const [displayName, setDisplayName] = useState(user?.displayName ?? "")
   const [avatarSrc, setAvatarSrc] = useState(user?.photoURL ?? "")
-  const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [savingProfile, setSavingProfile] = useState(false)
+  const [savingAvatar, setSavingAvatar] = useState(false)
+
+  // ── Avatar Crop ──
+  const [cropSrc, setCropSrc] = useState<string | null>(null)  // 選好但還沒裁切的原圖預覽網址
+  const [cropOpen, setCropOpen] = useState(false)
 
   // ── Security ──
   const [pwOpen, setPwOpen] = useState(false)
@@ -64,17 +70,7 @@ export default function SettingsPage() {
   const [savingPw, setSavingPw] = useState(false)
 
   // ── Theme ──
-  const [dark, setDark] = useState(() => localStorage.getItem("theme") === "dark")
-
-  useEffect(() => {
-    if (dark) {
-      document.documentElement.classList.add("dark")
-      localStorage.setItem("theme", "dark")
-    } else {
-      document.documentElement.classList.remove("dark")
-      localStorage.setItem("theme", "light")
-    }
-  }, [dark])
+  const { dark, setDark } = useTheme()
 
   // ── Delete Account ──
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -97,37 +93,47 @@ export default function SettingsPage() {
     toast.info("This feature is coming soon")
   }
 
-  // 選擇頭貼圖片後預覽
+  // 選擇頭貼圖片後，先開裁切視窗，而不是直接套用
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    setAvatarFile(file)
-    setAvatarSrc(URL.createObjectURL(file))  // 本地預覽
+    setCropSrc(URL.createObjectURL(file))
+    setCropOpen(true)
+    e.target.value = ""  // 清空，讓使用者下次可以重新選同一張圖
   }
 
-  // 儲存 Profile
+  // 裁切完成：直接上傳到 Firebase，不用等使用者再按一次 Save
+  const handleCropSave = async (file: File) => {
+    setAvatarSrc(URL.createObjectURL(file))  // 先更新本地預覽
+    setCropOpen(false)
+    if (!user) return
+    setSavingAvatar(true)
+    try {
+      const storageRef = ref(storage, `avatars/${user.uid}`)
+      await uploadBytes(storageRef, file)
+      const photoURL = await getDownloadURL(storageRef)
+
+      // 更新 Firebase Auth profile（只更新 photoURL，不動 displayName）
+      await updateProfile(user, { photoURL })
+
+      // 同步到 Firestore users 集合
+      await updateDoc(doc(db, "users", user.uid), { photoURL })
+
+      toast.success("Avatar updated")
+    } catch {
+      toast.error("Failed to update avatar")
+    } finally {
+      setSavingAvatar(false)
+    }
+  }
+
+  // 儲存 Profile（這裡只剩 Display name 需要存）
   const handleSaveProfile = async () => {
     if (!user) return
     setSavingProfile(true)
     try {
-      let photoURL = user.photoURL ?? ""
-
-      // 有新圖片才上傳到 Firebase Storage
-      if (avatarFile) {
-        const storageRef = ref(storage, `avatars/${user.uid}`)
-        await uploadBytes(storageRef, avatarFile)
-        photoURL = await getDownloadURL(storageRef)
-      }
-
-      // 更新 Firebase Auth profile
-      await updateProfile(user, { displayName: displayName.trim(), photoURL })
-
-      // 同步到 Firestore users 集合
-      await updateDoc(doc(db, "users", user.uid), {
-        displayName: displayName.trim(),
-        photoURL,
-      })
-
+      await updateProfile(user, { displayName: displayName.trim() })
+      await updateDoc(doc(db, "users", user.uid), { displayName: displayName.trim() })
       toast.success("Profile updated")
     } catch {
       toast.error("Failed to update profile")
@@ -216,11 +222,11 @@ export default function SettingsPage() {
                 src={avatarSrc}
                 alt="avatar"
                 referrerPolicy="no-referrer"
-                className="w-24 h-24 rounded-full object-cover border-2 border-border"
+                className={`w-24 h-24 rounded-full object-cover border-2 border-border transition-opacity ${savingAvatar ? "opacity-50" : ""}`}
               />
             ) : (
               <div
-                className="w-24 h-24 rounded-full flex items-center justify-center text-2xl font-bold text-white"
+                className={`w-24 h-24 rounded-full flex items-center justify-center text-2xl font-bold text-white transition-opacity ${savingAvatar ? "opacity-50" : ""}`}
                 style={{ backgroundColor: "var(--brand)" }}
               >
                 {initials}
@@ -228,7 +234,8 @@ export default function SettingsPage() {
             )}
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="absolute bottom-0 right-0 w-8 h-8 rounded-full flex items-center justify-center shadow-md border-2 border-card"
+              disabled={savingAvatar}
+              className="absolute bottom-0 right-0 w-8 h-8 rounded-full flex items-center justify-center shadow-md border-2 border-card disabled:opacity-60"
               style={{ backgroundColor: "var(--brand)" }}
             >
               <Camera className="w-4 h-4 text-white" />
@@ -542,6 +549,15 @@ export default function SettingsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ── 頭貼裁切視窗 ── */}
+      <AvatarCropModal
+        open={cropOpen}
+        imageSrc={cropSrc}
+        fileName={`${user?.uid ?? "avatar"}.jpg`}
+        onClose={() => setCropOpen(false)}
+        onSave={handleCropSave}
+      />
 
     </div>
   )

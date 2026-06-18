@@ -56,10 +56,20 @@ export function useSprint(projectId: string, sprintId: string) {
   }
 
 
-  // 開始 sprint
+  // 開始 sprint（同一個 project 只允許一個 active sprint）
   const startSprint = async () => {
-    const ref = doc(db, "projects", projectId, "sprints", sprintId) //找到sprint後
-    await updateDoc(ref, { status: "active" }) //把他的狀態改為active表示該專案已經開啟
+    // 先查這個 project 是否已有 active sprint
+    const existing = await getDocs(
+      query(
+        collection(db, "projects", projectId, "sprints"),
+        where("status", "==", "active")
+      )
+    )
+    if (!existing.empty) {
+      throw new Error("There is already an active sprint. Complete it before starting a new one.")
+    }
+    const ref = doc(db, "projects", projectId, "sprints", sprintId)
+    await updateDoc(ref, { status: "active" })
   }
 
   // 結束 sprint -> 未完成任務退回 Backlog 頁面 並把 sprint 標記為 completed

@@ -8,7 +8,8 @@ import { useAuth } from "@/contexts/AuthContext"
 import SprintsTab from "./tabs/SprintsTab"
 import BacklogTab from "@/pages/tabs/BacklogTab"
 import TeamTab from "@/pages/tabs/TeamTab"
-import { MoreHorizontal, Pencil, LogOut, Trash2, Plus, ListChecks, Zap, ArrowUpDown, Check, Copy, RefreshCw, AlertCircle } from "lucide-react"
+import { MoreHorizontal, Pencil, LogOut, Trash2, Plus, ListChecks, Zap, ArrowUpDown, Check, Copy, RefreshCw } from "lucide-react"
+import ConfirmDialog from "@/components/shared/ConfirmDialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +28,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { COLOR_OPTIONS } from "@/lib/constants"
 
 type Tab = "sprints" | "backlog" | "team"
 type SortBy = "priority" | "createdAt" | "dueDate" | "storyPoints"
@@ -36,11 +38,6 @@ const SORT_OPTIONS: { value: SortBy; label: string }[] = [
   { value: "createdAt", label: "Created Time" },
   { value: "dueDate", label: "Due Date" },
   { value: "storyPoints", label: "Story Points" },
-]
-
-//創建專案的自定義顏色
-const COLOR_OPTIONS = [
-  "#d16e56", "#4A5270", "#8B3A42", "#9B7EC8", "#C96B8E", "#73a38c", "#B8893A", "#5a6438",
 ]
 
 export default function ProjectDetailPage() {
@@ -372,13 +369,13 @@ export default function ProjectDetailPage() {
               <div className="flex gap-2 flex-wrap">
                 {COLOR_OPTIONS.map((c) => (
                   <button
-                    key={c}
+                    key={c.value}
                     type="button"
-                    onClick={() => setEditColor(c)}
+                    onClick={() => setEditColor(c.value)}
                     className="w-8 h-8 rounded-full transition-all"
                     style={{
-                      backgroundColor: c,
-                      outline: editColor === c ? `2px solid ${c}` : "none",
+                      backgroundColor: c.value,
+                      outline: editColor === c.value ? `2px solid ${c.value}` : "none",
                       outlineOffset: "2px",
                     }}
                   />
@@ -399,46 +396,24 @@ export default function ProjectDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* 刪除確認 */}
       {/* 刪除專案確認 */}
-      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent className="sm:max-w-sm rounded-3xl p-8">
-          <DialogHeader className="mb-4">
-            <AlertCircle className="w-7 h-7 text-destructive mb-3" />
-            <DialogTitle className="text-xl font-bold text-destructive">Delete Project</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground mb-4">
-            "{project.name}" and all its data will be permanently deleted.
-          </p>
-          <blockquote className="border-l-2 border-destructive pl-3 mb-6">
-            <p className="text-sm font-semibold">This action cannot be undone.</p>
-          </blockquote>
-          <div className="flex gap-3">
-            <Button variant="ghost" className="flex-1 rounded-full" onClick={() => setDeleteOpen(false)}>Cancel</Button>
-            <Button className="flex-1 rounded-full bg-destructive hover:opacity-90 text-white" onClick={handleDelete}>Delete</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete Project"
+        description={`"${project.name}" and all its data will be permanently deleted.`}
+        onConfirm={handleDelete}
+      />
 
       {/* 離開專案確認 */}
-      <Dialog open={leaveOpen} onOpenChange={setLeaveOpen}>
-        <DialogContent className="sm:max-w-sm rounded-3xl p-8">
-          <DialogHeader className="mb-4">
-            <AlertCircle className="w-7 h-7 text-destructive mb-3" />
-            <DialogTitle className="text-xl font-bold text-destructive">Leave Project</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground mb-4">
-            You will need a new invite link to rejoin this project.
-          </p>
-          <blockquote className="border-l-2 border-destructive pl-3 mb-6">
-            <p className="text-sm font-semibold">This action cannot be undone.</p>
-          </blockquote>
-          <div className="flex gap-3">
-            <Button variant="ghost" className="flex-1 rounded-full" onClick={() => setLeaveOpen(false)}>Cancel</Button>
-            <Button className="flex-1 rounded-full bg-destructive hover:opacity-90 text-white" onClick={handleLeave}>Leave</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        open={leaveOpen}
+        onOpenChange={setLeaveOpen}
+        title="Leave Project"
+        description="You will need a new invite link to rejoin this project."
+        confirmLabel="Leave"
+        onConfirm={handleLeave}
+      />
     </div>
   )
 }

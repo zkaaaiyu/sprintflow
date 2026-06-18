@@ -6,6 +6,9 @@ import {
   updateDoc, // 更新「單一文件」
   deleteDoc,
   addDoc,
+  getDocs,
+  query,
+  where,
   collection,
   serverTimestamp,
   Timestamp,
@@ -95,8 +98,22 @@ export function useTask(projectId: string, taskId: string) {
   }
 
   const deleteTask = async () => {
-    const ref = doc(db, "projects", projectId, "tasks", taskId)
-    await deleteDoc(ref)
+    const taskRef = doc(db, "projects", projectId, "tasks", taskId)
+
+    // 刪除 task 底下的 comments 子集合
+    const commentsSnap = await getDocs(collection(db, "projects", projectId, "tasks", taskId, "comments"))
+    for (const d of commentsSnap.docs) await deleteDoc(d.ref)
+
+    // 刪除 task 底下的 activities 子集合
+    const activitiesSnap = await getDocs(collection(db, "projects", projectId, "tasks", taskId, "activities"))
+    for (const d of activitiesSnap.docs) await deleteDoc(d.ref)
+
+    // 刪除頂層 activities 集合中跟此 task 相關的紀錄（Dashboard 用的跨專案活動流）
+    const globalSnap = await getDocs(query(collection(db, "activities"), where("taskId", "==", taskId)))
+    for (const d of globalSnap.docs) await deleteDoc(d.ref)
+
+    // 最後刪 task 本體
+    await deleteDoc(taskRef)
   }
 
   return { task, loading, updateField, deleteTask }

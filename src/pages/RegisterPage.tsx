@@ -1,7 +1,8 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth"
 import { auth } from "@/lib/firebase"
 import { useNavigate, Link } from "react-router-dom"
+import { useAuth } from "@/contexts/AuthContext"
 import {toast} from 'sonner'
 
 export default function RegisterPage() {
@@ -10,6 +11,12 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const navigate = useNavigate()
+  const { user } = useAuth()
+
+  // 等 AuthContext 的 onAuthStateChanged 確認登入後再跳轉，確保 Firestore user 文件已寫入
+  useEffect(() => {
+    if (user) navigate("/dashboard", { replace: true })
+  }, [user, navigate])
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -22,7 +29,7 @@ export default function RegisterPage() {
       const { user } = await createUserWithEmailAndPassword(auth, email, password)
       await updateProfile(user, { displayName: name })
       toast.success('Account created successfully')
-      navigate("/dashboard")
+      // 不直接 navigate，等上方 useEffect 監聽到 user 後自動跳轉
     } catch {
       setError("Registration failed. This email may already be in use.")
     }

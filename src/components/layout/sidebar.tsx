@@ -14,7 +14,8 @@ import { cn } from "@/lib/utils"
 import { BRAND } from "@/lib/colors"
 import { useSidebar } from "@/contexts/SidebarContext"
 import { useWorkspace } from "@/hooks/useWorkspace"
-import { useSprints } from "@/hooks/useSprints"
+import { useAllActiveSprints } from "@/hooks/useAllActiveSprints"
+import type { Sprint } from "@/hooks/useSprints"
 import {
   Dialog,
   DialogContent,
@@ -26,28 +27,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import type { Project } from "@/hooks/useWorkspace"
-
-const PROJECT_COLORS = ["#d16e56", "#4A5270", "#8B3A42", "#9B7EC8", "#C96B8E", "#73a38c", "#B8893A", "#5a6438"]
-
-const COLOR_OPTIONS = [
-  { label: "Clay",     value: "#d16e56" },
-  { label: "Slate",    value: "#4A5270" },
-  { label: "Wine",     value: "#8B3A42" },
-  { label: "Lavender", value: "#9B7EC8" },
-  { label: "Blush",    value: "#C96B8E" },
-  { label: "Sage",     value: "#73a38c" },
-  { label: "Amber",    value: "#B8893A" },
-  { label: "Olive",    value: "#5a6438" },
-]
+import { COLOR_OPTIONS } from "@/lib/constants"
 
 type ModalTab = "create" | "join"
 
-function ProjectNavItem({ project }: { project: Project }) {
+function ProjectNavItem({ project, activeSprint }: { project: Project; activeSprint: Sprint | null }) {
   const { collapsed } = useSidebar()
   const [open, setOpen] = useState(false)
-  const { sprints } = useSprints(project.id)
   const isActive = !!useMatch(`/projects/${project.id}`)
-  const activeSprint = sprints.find((s) => s.status === "active")
 
   if (collapsed) return null
 
@@ -112,6 +99,7 @@ function ProjectNavItem({ project }: { project: Project }) {
 export default function Sidebar() {
   const { collapsed, toggle } = useSidebar()
   const { projects, createProject, joinProject } = useWorkspace()
+  const { activeSprintMap } = useAllActiveSprints(projects.map(p => p.id))
   const navigate = useNavigate()
 
   const workspaceActive = !!useMatch("/projects")
@@ -245,7 +233,7 @@ export default function Sidebar() {
           {!collapsed && workspaceOpen && (
             <div className="space-y-0.5 pl-2">
               {projects.map((project) => (
-                <ProjectNavItem key={project.id} project={project} />
+                <ProjectNavItem key={project.id} project={project} activeSprint={activeSprintMap[project.id] ?? null} />
               ))}
               {projects.length === 0 && (
                 <p className="px-3 py-2 text-xs text-gray-600">No projects yet</p>

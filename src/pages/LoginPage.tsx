@@ -17,7 +17,7 @@ export default function LoginPage() {
   // 當 user 被 AuthContext 設定好後才真正跳轉，避免 race condition
   useEffect(() => {
     if (user) navigate("/dashboard", { replace: true })
-  }, [user])
+  }, [user, navigate])
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault()

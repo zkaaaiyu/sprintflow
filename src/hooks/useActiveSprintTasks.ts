@@ -4,12 +4,7 @@ import { useState, useEffect } from "react"
 import { collection, query, where, getDocs, Timestamp } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import type { TaskStatus } from "@/hooks/useTasks"
-
-type Project = {
-  id: string
-  name: string
-  color: string
-}
+import type { Project } from "@/hooks/useWorkspace"
 
 export type ActiveSprintTask = {
   id: string
@@ -43,21 +38,22 @@ export function useActiveSprintTasks(projects: Project[], projectsLoading: boole
 
     const fetchData = async () => {
       setLoading(true)
-      const result: ActiveSprintGroup[] = []
 
-      for (const project of projects) {
-        // 每個 project 最多一個 active sprint
-        const sprintSnap = await getDocs(
-          query(
-            collection(db, "projects", project.id, "sprints"),
-            where("status", "==", "active")
+      // Promise.all 讓所有 project 的 sprint 查詢同時發出，不再串行等待
+      const groups = await Promise.all(
+        projects.map(async (project): Promise<ActiveSprintGroup | null> => {
+          const sprintSnap = await getDocs(
+            query(
+              collection(db, "projects", project.id, "sprints"),
+              where("status", "==", "active")
+            )
           )
-        )
+          if (sprintSnap.empty) return null
 
-        for (const sprintDoc of sprintSnap.docs) {
+          const sprintDoc = sprintSnap.docs[0]
           const sprintData = sprintDoc.data()
 
-          // 取得該 sprint 所有任務（只抓統計需要的欄位）
+          // sprint 查到後，立即發出 tasks 查詢（同樣是平行的一部分）
           const tasksSnap = await getDocs(
             query(
               collection(db, "projects", project.id, "tasks"),
@@ -65,7 +61,7 @@ export function useActiveSprintTasks(projects: Project[], projectsLoading: boole
             )
           )
 
-          result.push({
+          return {
             projectId: project.id,
             projectName: project.name,
             projectColor: project.color,
@@ -83,11 +79,11 @@ export function useActiveSprintTasks(projects: Project[], projectsLoading: boole
                 dueDate: data.dueDate ? (data.dueDate as Timestamp).toDate() : null,
               }
             }),
-          })
-        }
-      }
+          }
+        })
+      )
 
-      setGroups(result)
+      setGroups(groups.filter((g): g is ActiveSprintGroup => g !== null))
       setLoading(false)
     }
 
