@@ -109,15 +109,23 @@ export function useWorkspace() {
     setProjects((prev) => [...prev, newProject])
   }
 
-  // 刪除 Project：先清除 sprints 和 tasks 子集合，再刪 project 本體
+  // 刪除 Project：遞迴清除所有子集合再刪 project 本體
   const deleteProject = async (projectId: string) => {
     // 刪除所有 sprints
-    const sprintsSnap = await getDocs(query(collection(db, "sprints"), where("projectId", "==", projectId)))
+    const sprintsSnap = await getDocs(collection(db, "projects", projectId, "sprints"))
     for (const d of sprintsSnap.docs) await deleteDoc(d.ref)
 
-    // 刪除所有 tasks（tasks 底下的 comments/activities 子集合無法從前端遞迴清除，是已知限制）
-    const tasksSnap = await getDocs(query(collection(db, "tasks"), where("projectId", "==", projectId)))
-    for (const d of tasksSnap.docs) await deleteDoc(d.ref)
+    // 刪除所有 tasks，並遞迴清除每個 task 底下的 comments 和 activities
+    const tasksSnap = await getDocs(collection(db, "projects", projectId, "tasks"))
+    for (const taskDoc of tasksSnap.docs) {
+      const commentsSnap = await getDocs(collection(db, "projects", projectId, "tasks", taskDoc.id, "comments"))
+      for (const c of commentsSnap.docs) await deleteDoc(c.ref)
+
+      const activitiesSnap = await getDocs(collection(db, "projects", projectId, "tasks", taskDoc.id, "activities"))
+      for (const a of activitiesSnap.docs) await deleteDoc(a.ref)
+
+      await deleteDoc(taskDoc.ref)
+    }
 
     // 最後刪 project 本體
     await deleteDoc(doc(db, "projects", projectId))

@@ -1,6 +1,6 @@
-//小鈴噹通知
 import type { GlobalActivity } from "@/hooks/useGlobalActivities"
 import type { Project } from "@/hooks/useWorkspace"
+import { avatarColor } from "@/lib/utils"
 
 // 把 Date 轉換成「幾分鐘前」這類相對時間
 function timeAgo(date: Date | null): string {
@@ -34,7 +34,10 @@ function Avatar({ name, photoURL }: { name: string; photoURL: string | null }) {
     )
   }
   return (
-    <div className="w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center text-xs font-semibold shrink-0">
+    <div
+      className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white shrink-0"
+      style={{ backgroundColor: avatarColor(name) }}
+    >
       {initial}
     </div>
   )

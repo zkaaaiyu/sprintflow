@@ -493,12 +493,13 @@ const confirmDelete = async () => {
           </div>
           <div className="space-y-2">
             <Label htmlFor="desc" className="font-semibold text-sm">Description</Label>
-            <Input
+            <textarea
               id="desc"
               placeholder="What's this project about..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="rounded-xl bg-muted border-0 h-11 focus-visible:ring-1"
+              rows={3}
+              className="w-full rounded-xl bg-muted border-0 px-3 py-2.5 text-sm resize-none outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
           <div className="space-y-2">

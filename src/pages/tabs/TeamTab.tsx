@@ -8,8 +8,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
-
-const AVATAR_COLORS = ["#F97316", "#3B82F6", "#10B981", "#8B5CF6", "#EF4444"]
+import { avatarColor } from "@/lib/utils"
 
 export default function TeamTab({ project, onRemoveMember }: {
   project: Project
@@ -70,7 +69,7 @@ export default function TeamTab({ project, onRemoveMember }: {
                 ) : (
                   <div
                     className="w-9 h-9 rounded-full flex items-center justify-center text-sm text-white font-semibold shrink-0"
-                    style={{ backgroundColor: AVATAR_COLORS[i % AVATAR_COLORS.length] }}
+                    style={{ backgroundColor: avatarColor(member.uid) }}
                   >
                     {member.displayName?.[0]?.toUpperCase() ?? "U"}
                   </div>

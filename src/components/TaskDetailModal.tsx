@@ -8,6 +8,7 @@ import { useComments } from "@/hooks/useComments"
 import { useMembers } from "@/hooks/useMembers"
 import { MemberAvatar } from "@/components/shared/MemberAvatar"
 import type { Priority, TaskStatus, StoryPoints } from "@/hooks/useTasks"
+import { avatarColor } from "@/lib/utils"
 import { PRIORITY_CONFIG } from "@/lib/priority"
 import { TASK_STATUS_CONFIG } from "@/lib/taskStatus"
 import { BRAND } from "@/lib/colors"
@@ -33,13 +34,16 @@ function formatDateTime(date: Date | null): string {
 }
 
 // 負責activity 欄位的頭像 有照片就顯示照片，沒有就顯示名字縮寫
-function ActivityAvatar({ name, photoURL }: { name: string; photoURL: string | null }) {
-  const initial = name[0]?.toUpperCase() ?? "?" //用name[0]抓首字母 , ?.(如果抓不到名字就返回undefine) , .toUpperCase 改大寫 ,  '??'如果前面的東西是undefine就返回後面的字串問號
+function ActivityAvatar({ name, photoURL }: { name?: string; photoURL: string | null }) {
+  const initial = name?.[0]?.toUpperCase() ?? "?"
   if (photoURL) {
     return <img src={photoURL} referrerPolicy="no-referrer" className="w-7 h-7 rounded-full object-cover shrink-0" />
   }
   return (
-    <div className="w-7 h-7 rounded-full bg-muted border border-border flex items-center justify-center text-[10px] font-semibold text-foreground shrink-0">
+    <div
+      className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold text-white shrink-0"
+      style={{ backgroundColor: avatarColor(name ?? "?") }}
+    >
       {initial}
     </div>
   )
@@ -474,7 +478,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
 
                       {/* 內容 */}
                       <div className="flex-1 min-w-0 pb-5">
-                        <p className="text-xs font-semibold leading-snug">{act.changedByName}
+                        <p className="text-xs font-semibold leading-snug">{act.changedByName ?? "Unknown"}
                           <span className="font-normal text-muted-foreground"> updated {act.label}</span>
                         </p>
                         <p className="text-[10px] text-muted-foreground mt-0.5 mb-2">

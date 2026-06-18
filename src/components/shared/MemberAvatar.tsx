@@ -1,5 +1,5 @@
-// MemberAvatar — 共用的成員頭像元件：有照片就顯示照片，沒有就顯示名字縮寫
 import type { UserProfile } from "@/hooks/useMembers"
+import { avatarColor } from "@/lib/utils"
 
 const SIZE_CLASS = {
   sm: "w-6 h-6 text-[10px]",
@@ -30,7 +30,10 @@ export function MemberAvatar({
     )
   }
   return (
-    <div className={`${sz} rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold shrink-0`}>
+    <div
+      className={`${sz} rounded-full flex items-center justify-center text-white font-semibold shrink-0`}
+      style={{ backgroundColor: avatarColor(user.uid) }}
+    >
       {initials}
     </div>
   )

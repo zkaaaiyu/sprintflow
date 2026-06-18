@@ -7,6 +7,7 @@ import ProjectsPage from "@/pages/ProjectsPage"
 import ProjectDetailPage from "./pages/ProjectDetailPage"
 import SprintKanbanPage from "./pages/SprintKanbanPage"
 import SettingsPage from "./pages/SettingsPage"
+import SeedPage from "./pages/SeedPage"
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="/projects/:projectId" element={<ProjectDetailPage />} />  {/*  :projectId params 查詢參數的佔位符 */}
           <Route path="/projects/:projectId/sprints/:sprintId" element={<SprintKanbanPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/seed" element={<SeedPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

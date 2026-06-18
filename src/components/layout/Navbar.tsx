@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/popover"
 import { toast } from "sonner"
 import { useTheme } from "@/contexts/ThemeContext"
+import { avatarColor } from "@/lib/utils"
 
 // 相對時間格式化
 function timeAgo(date: Date | null): string {
@@ -47,7 +48,10 @@ function MiniAvatar({ name, photoURL }: { name: string; photoURL: string | null 
     return <img src={photoURL} referrerPolicy="no-referrer" className="w-7 h-7 rounded-full object-cover shrink-0" />
   }
   return (
-    <div className="w-7 h-7 rounded-full bg-muted border border-border flex items-center justify-center text-[10px] font-semibold shrink-0">
+    <div
+      className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold text-white shrink-0"
+      style={{ backgroundColor: avatarColor(name) }}
+    >
       {initial}
     </div>
   )
@@ -267,7 +271,10 @@ export default function Navbar() {
                   className="w-8 h-8 rounded-full object-cover"
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-semibold">
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold"
+                  style={{ backgroundColor: avatarColor(user?.uid ?? "") }}
+                >
                   {getInitials()}
                 </div>
               )}
