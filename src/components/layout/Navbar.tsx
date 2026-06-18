@@ -307,7 +307,7 @@ export default function Navbar() {
               </div>
               {/* 自製 toggle 開關：flex + p-0.5 讓圓圈完整在軌道內 */}
               <button
-                onClick={() => setDark((d) => !d)}
+                onClick={() => setDark(!dark)}
                 className={`flex items-center w-9 h-5 rounded-full p-0.5 transition-colors shrink-0 focus:outline-none ${
                   dark ? "bg-brand" : "bg-gray-300"
                 }`}

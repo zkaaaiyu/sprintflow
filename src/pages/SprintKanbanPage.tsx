@@ -320,6 +320,7 @@ export default function SprintKanbanPage() {
 
   // task edit modal 原資料回填
   const openEditModal = () => {
+    if (!sprint) return
     setEditName(sprint.name)
     setEditGoal(sprint.goal ?? "")
     setEditStartDate(sprint.startDate ? sprint.startDate.toISOString().slice(0, 10) : "")
