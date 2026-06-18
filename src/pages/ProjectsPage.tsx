@@ -447,7 +447,7 @@ const confirmDelete = async () => {
         <DragOverlay dropAnimation={null}>
           {draggingProject && (
             <div className="shadow-xl rotate-1 opacity-90">
-              <ProjectCard project={draggingProject} isOwner={false} onDelete={() => {}} />
+              <ProjectCard project={draggingProject} isOwner={false} onDelete={() => {}} activeSprint={null} members={[]} />
             </div>
           )}
         </DragOverlay>

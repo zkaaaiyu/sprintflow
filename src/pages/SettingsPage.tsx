@@ -24,6 +24,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog"
 import AvatarCropModal from "@/components/AvatarCropModal"
+import { avatarColor } from "@/lib/utils"
 
 // 判斷是否為 Google 登入（沒有 password provider）
 function isGoogleUser(user: ReturnType<typeof useAuth>["user"]) {
@@ -227,7 +228,7 @@ export default function SettingsPage() {
             ) : (
               <div
                 className={`w-24 h-24 rounded-full flex items-center justify-center text-2xl font-bold text-white transition-opacity ${savingAvatar ? "opacity-50" : ""}`}
-                style={{ backgroundColor: "var(--brand)" }}
+                style={{ backgroundColor: avatarColor(user?.uid ?? "") }}
               >
                 {initials}
               </div>

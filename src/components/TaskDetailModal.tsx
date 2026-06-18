@@ -389,7 +389,10 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                       {c.authorPhotoURL ? (
                         <img src={c.authorPhotoURL} referrerPolicy="no-referrer" className="w-7 h-7 rounded-full object-cover" />
                       ) : (
-                        <div className="w-7 h-7 rounded-full bg-muted border border-border flex items-center justify-center text-[10px] font-semibold">
+                        <div
+                          className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold text-white"
+                          style={{ backgroundColor: avatarColor(c.authorName) }}
+                        >
                           {c.authorName[0]?.toUpperCase() ?? "?"}
                         </div>
                       )}
