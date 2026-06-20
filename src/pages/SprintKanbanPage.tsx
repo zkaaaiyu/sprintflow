@@ -1024,6 +1024,7 @@ export default function SprintKanbanPage() {
           memberIds={memberIds}
           open={!!selectedTaskId}
           onClose={() => setSelectedTaskId(null)}
+          readOnly={sprint?.status === "completed"}
         />
       )}
     </div>

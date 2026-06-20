@@ -72,9 +72,10 @@ type Props = {
   memberIds: string[]
   open: boolean
   onClose: () => void
+  readOnly?: boolean
 }
 
-export default function TaskDetailModal({ projectId, taskId, memberIds, open, onClose }: Props) {
+export default function TaskDetailModal({ projectId, taskId, memberIds, open, onClose, readOnly = false }: Props) {
   const { user } = useAuth()
   const { task, loading, updateField, deleteTask } = useTask(projectId, taskId)
   const { activities } = useActivities(projectId, taskId)
@@ -92,6 +93,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const stopEditing = () => setEditingField(null)
+  const startEditing = (field: string) => { if (!readOnly) setEditingField(field) }
 
   const returnToBacklog = async () => {
     const taskRef = doc(db, "projects", projectId, "tasks", taskId)
@@ -131,8 +133,9 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
       <DialogContent className="sm:max-w-4xl h-[82vh] p-0 overflow-hidden rounded-2xl flex flex-col gap-0">
 
         {/* Header */}
-        <div className="px-6 py-4 border-b border-border shrink-0">
+        <div className="px-6 py-4 border-b border-border shrink-0 flex items-center gap-3">
           <span className="text-sm font-medium text-muted-foreground">Task Detail</span>
+          {readOnly && <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Completed Sprint · Read Only</span>}
         </div>
 
         {/* 載入中 */}
@@ -168,16 +171,15 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                   <div className="flex items-start gap-2">
                     {/* 標題文字 + 鉛筆 */}
                     <div
-                      className="flex items-start gap-2 cursor-text flex-1"
-                      onClick={() => { setEditTitle(task.title); setEditingField("title") }}
+                      className={`flex items-start gap-2 flex-1 ${readOnly ? "cursor-default" : "cursor-text"}`}
+                      onClick={() => { if (!readOnly) { setEditTitle(task.title); setEditingField("title") } }}
                     >
                       <h1 className="text-2xl font-bold leading-tight flex-1">{task.title}</h1>
-                      <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-40 text-muted-foreground mt-1.5 shrink-0 transition-opacity" />
+                      {!readOnly && <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-40 text-muted-foreground mt-1.5 shrink-0 transition-opacity" />}
                     </div>
 
-                    {/* 右側按鈕區 */}
-                    {task.sprintId !== null ? (
-                      // Kanban task：多功能 dropdown
+                    {/* 右側按鈕區：readOnly 時隱藏 */}
+                    {!readOnly && (task.sprintId !== null ? (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button className="text-muted-foreground hover:text-foreground transition-colors shrink-0 mt-1">
@@ -194,14 +196,13 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                         </DropdownMenuContent>
                       </DropdownMenu>
                     ) : (
-                      // Backlog task：只有垃圾桶，hover 才顯示
                       <button
                         onClick={() => setShowDeleteConfirm(true)}
                         className="opacity-0 group-hover:opacity-40 hover:!opacity-100 text-muted-foreground hover:text-destructive transition-all shrink-0 mt-1"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
-                    )}
+                    ))}
                   </div>
                 )}
               </div>
@@ -224,13 +225,13 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                   />
                 ) : (
                   <div
-                    className="flex items-start gap-2 cursor-text"
-                    onClick={() => { setEditDescription(task.description || ""); setEditingField("description") }}
+                    className={`flex items-start gap-2 ${readOnly ? "cursor-default" : "cursor-text"}`}
+                    onClick={() => { if (!readOnly) { setEditDescription(task.description || ""); setEditingField("description") } }}
                   >
                     <p className="text-sm text-muted-foreground flex-1 leading-relaxed whitespace-pre-wrap">
-                      {task.description || "Click to add description..."}
+                      {task.description || (readOnly ? "No description." : "Click to add description...")}
                     </p>
-                    <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-50 text-muted-foreground mt-0.5 shrink-0 transition-opacity" />
+                    {!readOnly && <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-50 text-muted-foreground mt-0.5 shrink-0 transition-opacity" />}
                   </div>
                 )}
               </div>
@@ -256,9 +257,9 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                       ))}
                     </div>
                   ) : (
-                    <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => setEditingField("assignee")}>
+                    <div className={`flex items-center gap-1.5 ${readOnly ? "cursor-default" : "cursor-pointer"}`} onClick={() => startEditing("assignee")}>
                       {assignee ? <><MemberAvatar user={assignee} /><span>{assignee.displayName || assignee.email}</span></> : <span className="text-muted-foreground">Unassigned</span>}
-                      <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-50 text-muted-foreground transition-opacity" />
+                      {!readOnly && <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-50 text-muted-foreground transition-opacity" />}
                     </div>
                   )}
                 </div>
@@ -282,9 +283,9 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                       <button onClick={stopEditing} className="text-xs text-muted-foreground">✕</button>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => setEditingField("status")}>
+                    <div className={`flex items-center gap-1.5 ${readOnly ? "cursor-default" : "cursor-pointer"}`} onClick={() => startEditing("status")}>
                       {status && <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ color: status.color, backgroundColor: status.bg }}>{status.label}</span>}
-                      <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-50 text-muted-foreground transition-opacity" />
+                      {!readOnly && <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-50 text-muted-foreground transition-opacity" />}
                     </div>
                   )}
                 </div>
@@ -305,9 +306,9 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                       <button onClick={stopEditing} className="text-xs text-muted-foreground px-1">✕</button>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => setEditingField("storyPoints")}>
+                    <div className={`flex items-center gap-1.5 ${readOnly ? "cursor-default" : "cursor-pointer"}`} onClick={() => startEditing("storyPoints")}>
                       <span className="font-semibold">{task.storyPoints ? `${task.storyPoints} SP` : "—"}</span>
-                      <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-50 text-muted-foreground transition-opacity" />
+                      {!readOnly && <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-50 text-muted-foreground transition-opacity" />}
                     </div>
                   )}
                 </div>
@@ -328,10 +329,10 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                       }}
                       className="w-full bg-muted rounded-lg px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-primary" />
                   ) : (
-                    <div className="flex items-center gap-1.5 cursor-pointer"
-                      onClick={() => { setEditDueDate(task.dueDate ? task.dueDate.toISOString().split("T")[0] : ""); setEditingField("dueDate") }}>
+                    <div className={`flex items-center gap-1.5 ${readOnly ? "cursor-default" : "cursor-pointer"}`}
+                      onClick={() => { if (!readOnly) { setEditDueDate(task.dueDate ? task.dueDate.toISOString().split("T")[0] : ""); setEditingField("dueDate") } }}>
                       <span>{task.dueDate ? task.dueDate.toLocaleDateString("en-US") : "—"}</span>
-                      <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-50 text-muted-foreground transition-opacity" />
+                      {!readOnly && <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-50 text-muted-foreground transition-opacity" />}
                     </div>
                   )}
                 </div>
@@ -355,9 +356,9 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                       <button onClick={stopEditing} className="text-xs text-muted-foreground">✕</button>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => setEditingField("priority")}>
+                    <div className={`flex items-center gap-1.5 ${readOnly ? "cursor-default" : "cursor-pointer"}`} onClick={() => startEditing("priority")}>
                       {priority && <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ color: priority.color, backgroundColor: priority.bg }}>{priority.label}</span>}
-                      <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-50 text-muted-foreground transition-opacity" />
+                      {!readOnly && <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-50 text-muted-foreground transition-opacity" />}
                     </div>
                   )}
                 </div>
