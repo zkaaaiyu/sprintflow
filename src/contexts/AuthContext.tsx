@@ -1,12 +1,11 @@
 // 全域登入狀態管理
-
 import { createContext, useContext, useEffect, useState } from "react"
 import { type User, onAuthStateChanged, signOut } from "firebase/auth"
 import { auth } from "@/lib/firebase"
 import { doc, setDoc } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 
-// 定義型別
+// 定義context 裡面會用到的型別
 type AuthContextType = {
   user: User | null
   loading: boolean
@@ -19,7 +18,7 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | null>(null)
 
 // 建立provider組件
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {  // *ts : 表示這個元件是用來接收子元件，子元件是任意 React 內容
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [projectOrder, setProjectOrderState] = useState<string[]>([])
@@ -29,7 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
     if (firebaseUser) {
       try {
-        await setDoc(
+        await setDoc(    // 如果登入了：把用戶資料寫進 Firestore
           doc(db, "users", firebaseUser.uid),
           {
             uid: firebaseUser.uid,
@@ -37,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             email: firebaseUser.email ?? "",
             photoURL: firebaseUser.photoURL ?? null,
           },
-          { merge: true }
+          { merge: true } //只更新有的欄位，不覆蓋整份文件
         )
       } catch (e) {
         console.warn("Firestore write failed:", e)
@@ -62,9 +61,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    // 透value 屬性 傳遞user loading logout 給其他組件
+    // 透過 value 屬性 傳遞user loading logout 給其他組件 
     <AuthContext.Provider value={{ user, loading, logout, projectOrder, setProjectOrder }}>
-      {!loading && children}
+      {!loading && children } 
     </AuthContext.Provider>
   )
 }

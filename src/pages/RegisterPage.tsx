@@ -1,3 +1,4 @@
+// 註冊頁面 UI + 表單邏輯
 import { useState, useEffect } from "react"
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth"
 import { auth } from "@/lib/firebase"
@@ -26,8 +27,8 @@ export default function RegisterPage() {
       return
     }
     try {
-      const { user } = await createUserWithEmailAndPassword(auth, email, password)
-      await updateProfile(user, { displayName: name })
+      const { user } = await createUserWithEmailAndPassword(auth, email, password) //解構出firebase回傳的物件user
+      await updateProfile(user, { displayName: name }) //用firebase 的更新函式更新user裡面的displayname為用戶填的name
       toast.success('Account created successfully')
       // 不直接 navigate，等上方 useEffect 監聽到 user 後自動跳轉
     } catch {

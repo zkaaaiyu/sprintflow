@@ -1,3 +1,4 @@
+ // 登入頁面 UI + 表單邏輯
 import { useState, useEffect } from "react"
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth"
 import { auth } from "@/lib/firebase"
@@ -5,7 +6,7 @@ import { useNavigate, Link } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import {toast} from 'sonner'
 
-const googleProvider = new GoogleAuthProvider()
+const googleProvider = new GoogleAuthProvider() //建立Google 登入的設定物件
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -16,14 +17,14 @@ export default function LoginPage() {
 
   // 當 user 被 AuthContext 設定好後才真正跳轉，避免 race condition
   useEffect(() => {
-    if (user) navigate("/dashboard", { replace: true })
-  }, [user, navigate])
+    if (user) navigate("/dashboard", { replace: true }) //用replace: true替代掉login頁面
+  }, [user, navigate]) 
 
   const handleEmailLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault() //阻止表單的預設行為
     setError("")
     try {
-      await signInWithEmailAndPassword(auth, email, password)
+      await signInWithEmailAndPassword(auth, email, password) //用signInWithEmailAndPassword 傳給firebase處理後端登入邏輯
       toast.success('Signed in successfully')
     } catch {
       setError("Incorrect email or password")
@@ -46,7 +47,7 @@ export default function LoginPage() {
         <h1 className="text-2xl font-bold text-foreground mb-1">Welcome back</h1>
         <p className="text-sm text-muted-foreground mb-6">Sign in to your SprintFlow account</p>
 
-        <form onSubmit={handleEmailLogin} className="space-y-4">
+        <form onSubmit={handleEmailLogin} className="space-y-4"> 
           <div>
             <label className="text-sm font-medium text-foreground">Email</label>
             <input

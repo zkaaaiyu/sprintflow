@@ -1,3 +1,4 @@
+// 編寫router
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import AppLayout from "@/components/layout/AppLayout"
 import LoginPage from "@/pages/LoginPage"
@@ -11,7 +12,8 @@ import SeedPage from "./pages/SeedPage"
 
 export default function App() {
   return (
-    <BrowserRouter>
+    //用BrowserRouter包裹路由，讓 React 可以監聽網址的變化
+    <BrowserRouter>  
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
