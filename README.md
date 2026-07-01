@@ -6,6 +6,15 @@
 
 > Demo 帳號 — Email：`sprintflowdemo@gmail.com` ／ 密碼：`Sprintflow2026`
 
+## Dashboard 
+<img width="1470" height="834" alt="截圖 2026-07-01 晚上8 35 46" src="https://github.com/user-attachments/assets/81269e11-de76-44fc-aa4d-615869af197d" />
+
+## Kanban
+<img width="1469" height="834" alt="截圖 2026-07-01 晚上8 36 45" src="https://github.com/user-attachments/assets/f588b00d-3d58-4a38-b54f-5518b61050e8" />
+
+## Task detil
+<img width="1470" height="837" alt="截圖 2026-07-01 晚上8 37 22" src="https://github.com/user-attachments/assets/efd77ce9-8dd7-4d3a-96d9-8936afe0ba6f" />
+
 ---
 
 ## 功能介紹
