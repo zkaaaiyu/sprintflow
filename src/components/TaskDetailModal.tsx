@@ -77,12 +77,13 @@ type Props = {
 
 export default function TaskDetailModal({ projectId, taskId, memberIds, open, onClose, readOnly = false }: Props) {
   const { user } = useAuth()
-  const { task, loading, updateField, deleteTask } = useTask(projectId, taskId)
-  const { activities } = useActivities(projectId, taskId)
-  const { members } = useMembers(memberIds)
+  const { task, loading, updateField, deleteTask } = useTask(projectId, taskId) // 單一任務資料 + 操作函式
+  const { activities } = useActivities(projectId, taskId) // 右半邊的活動紀錄
+  const { members } = useMembers(memberIds) // 成員資料（用來顯示指派人選單）
 
   const { comments, addComment } = useComments(projectId, taskId)
   const [editingField, setEditingField] = useState<string | null>(null) //紀錄現在在編輯哪一個欄位 null 代表沒有在編輯
+  
   //定義編輯狀態暫時存儲 讓資料在編輯的時候不會直接覆蓋刪除原本的資料
   const [editTitle, setEditTitle] = useState("")
   const [editDescription, setEditDescription] = useState("")
@@ -123,9 +124,9 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
     onClose()
   }
 
-  const assignee = task ? members.find((m) => m.uid === task.assigneeId) : undefined
-  const priority = task ? PRIORITY_CONFIG[task.priority] : null
-  const status   = task ? TASK_STATUS_CONFIG[task.status]     : null
+  const assignee = task ? members.find((m) => m.uid === task.assigneeId) : undefined // 從 members 找出目前指派人的完整資料
+  const priority = task ? PRIORITY_CONFIG[task.priority] : null  // 優先級的顏色設定
+  const status   = task ? TASK_STATUS_CONFIG[task.status]     : null // 狀態的顏色設定
 
   return (
     <>
@@ -154,6 +155,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
               {/* 標題 — 可編輯 */}
               <div className="group relative mb-3">
                 {editingField === "title" ? (
+                   // ── 編輯模式：顯示 input ──
                   <input
                     autoFocus
                     value={editTitle}
@@ -168,8 +170,8 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                     className="text-2xl font-bold w-full bg-muted rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-primary"
                   />
                 ) : (
+                   // ── 顯示模式：顯示標題文字 ──
                   <div className="flex items-start gap-2">
-                    {/* 標題文字 + 鉛筆 */}
                     <div
                       className={`flex items-start gap-2 flex-1 ${readOnly ? "cursor-default" : "cursor-text"}`}
                       onClick={() => { if (!readOnly) { setEditTitle(task.title); setEditingField("title") } }}
@@ -178,7 +180,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                       {!readOnly && <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-40 text-muted-foreground mt-1.5 shrink-0 transition-opacity" />}
                     </div>
 
-                    {/* 右側按鈕區：readOnly 時隱藏 */}
+                    {/* 右側多功能按鈕區：readOnly 時隱藏 */}
                     {!readOnly && (task.sprintId !== null ? (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -207,13 +209,14 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                 )}
               </div>
 
-              {/* 描述 — 標題下方 */}
+              {/* 描述 — 可編輯 */}
               <div className="group mb-6">
                 {editingField === "description" ? (
+                  // ── 編輯模式 ──
                   <textarea
                     autoFocus
                     value={editDescription}
-                    onChange={(e) => setEditDescription(e.target.value)}
+                    onChange={(e) => setEditDescription(e.target.value)} 
                     onBlur={async () => {
                       if (editDescription !== task.description) {
                         await updateField("description", editDescription, "Description", task.description || "", editDescription)
@@ -223,7 +226,8 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                     onKeyDown={(e) => { if (e.key === "Escape") stopEditing() }}
                     className="w-full min-h-[80px] bg-muted rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary resize-none"
                   />
-                ) : (
+                ) : ( 
+                  // ── 顯示模式 ──
                   <div
                     className={`flex items-start gap-2 ${readOnly ? "cursor-default" : "cursor-text"}`}
                     onClick={() => { if (!readOnly) { setEditDescription(task.description || ""); setEditingField("description") } }}
@@ -236,13 +240,14 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                 )}
               </div>
 
-              {/* 欄位 Grid — 每列 3 格 */}
+              {/* 左側中間資訊欄位 */}
               <div className="grid grid-rows-3 grid-flow-col gap-x-10 gap-y-5 text-sm">
 
                 {/* Assignee */}
                 <div className="group">
                   <p className="text-xs text-muted-foreground mb-1.5">Assignee</p>
                   {editingField === "assignee" ? (
+                    // ── 編輯模式：下拉選人 ──
                     <div className="bg-popover border border-border rounded-xl shadow-lg overflow-hidden z-10 relative">
                       <button className="w-full px-3 py-2 text-xs hover:bg-accent text-muted-foreground text-left"
                         onClick={async () => { await updateField("assigneeId", null, "Assignee", assignee?.displayName ?? "Unassigned", "Unassigned"); stopEditing() }}>
@@ -256,7 +261,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                         </button>
                       ))}
                     </div>
-                  ) : (
+                  ) : ( // ── 顯示模式 ──
                     <div className={`flex items-center gap-1.5 ${readOnly ? "cursor-default" : "cursor-pointer"}`} onClick={() => startEditing("assignee")}>
                       {assignee ? <><MemberAvatar user={assignee} /><span>{assignee.displayName || assignee.email}</span></> : <span className="text-muted-foreground">Unassigned</span>}
                       {!readOnly && <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-50 text-muted-foreground transition-opacity" />}
@@ -416,7 +421,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                 {/* 新增留言輸入框 */}
                 <div className="flex gap-2.5 pt-2">
                   <div className="shrink-0">
-                    <ActivityAvatar
+                    <ActivityAvatar //自己頭像的顯示
                       name={user?.displayName || user?.email || "Me"}
                       photoURL={user?.photoURL ?? null}
                     />
@@ -428,7 +433,7 @@ export default function TaskDetailModal({ projectId, taskId, memberIds, open, on
                       onChange={(e) => setCommentText(e.target.value)}
                       onKeyDown={async (e) => {
                         if (e.key === "Enter") {
-                          e.preventDefault()
+                          e.preventDefault() //防止表單提交
                           if (!commentText.trim() || submittingComment) return
                           setSubmittingComment(true)
                           await addComment(commentText)

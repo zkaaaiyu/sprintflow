@@ -33,6 +33,7 @@ import { COLOR_OPTIONS } from "@/lib/constants"
 type Tab = "sprints" | "backlog" | "team"
 type SortBy = "priority" | "createdAt" | "dueDate" | "storyPoints"
 
+// 排序選單的選項陣列，直接定義在元件外面（不需要每次渲染都重建）
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
   { value: "priority", label: "Priority" },
   { value: "createdAt", label: "Created Time" },
@@ -41,22 +42,22 @@ const SORT_OPTIONS: { value: SortBy; label: string }[] = [
 ]
 
 export default function ProjectDetailPage() {
-  const { projectId } = useParams() //用useParams查網址上的查詢參數
+  const { projectId } = useParams() //用useParams查網址上的projectid
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { projects, loading, updateProject, deleteProject, removeMember, leaveProject, regenerateInviteCode } = useWorkspace()
+  const { projects, loading, updateProject, deleteProject, removeMember, leaveProject, regenerateInviteCode } = useWorkspace()  // 所有專案資料與操作函式
   const { sprints } = useSprints(projectId!)
   const { tasks } = useTasks(projectId!)
 
-  const location = useLocation()
+  const location = useLocation() // 從其他地方跳轉，指定要開哪個 tab
   const [activeTab, setActiveTab] = useState<Tab>(
-    (location.state as { tab?: Tab } | null)?.tab ?? "sprints"
+    (location.state as { tab?: Tab } | null)?.tab ?? "sprints" //定義localtion.state的型別
   )
   const [createSprintOpen, setCreateSprintOpen] = useState(false)
   const [backlogCreateOpen, setBacklogCreateOpen] = useState(false)
   const [backlogSort, setBacklogSort] = useState<SortBy>("priority")
 
-  // [...] 多功能選單相關狀態
+  // 右上角多功能選單相關狀態
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [leaveOpen, setLeaveOpen] = useState(false)
@@ -71,8 +72,8 @@ export default function ProjectDetailPage() {
     <div className="flex items-center justify-center h-full text-muted-foreground">Loading...</div>
   )
 
-  const project = projects.find((p) => p.id === projectId)
-  if (!project) return (
+  const project = projects.find((p) => p.id === projectId) //找到proojects陣列裡面匹配當前網址projectid的專案
+  if (!project) return ( //找不到表示可能被刪除了回傳not found
     <div className="flex items-center justify-center h-full text-muted-foreground">Project not found</div>
   )
 

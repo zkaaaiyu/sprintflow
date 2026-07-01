@@ -1,3 +1,4 @@
+//  個人設定頁
 import { useState, useRef } from "react"
 import {
   updateProfile,
@@ -50,7 +51,7 @@ function Divider() {
 export default function SettingsPage() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null) // 綁定隱藏的 <input type="file">  點擊時用.click() 觸發它，讓用戶選圖片
 
   // ── Profile ──
   const [displayName, setDisplayName] = useState(user?.displayName ?? "")

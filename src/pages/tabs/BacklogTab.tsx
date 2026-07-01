@@ -26,7 +26,7 @@ const PRIORITY_ORDER: Record<string, number> = { urgent: 0, high: 1, medium: 2, 
 //任務指派選單
 function AssigneePicker({
   members,
-  value,
+  value, 
   onChange,
 }: {
   members: UserProfile[]
@@ -34,7 +34,7 @@ function AssigneePicker({
   onChange: (uid: string | null) => void
 }) {
   const [open, setOpen] = useState(false)  
-  const selected = members.find((m) => m.uid === value)
+  const selected = members.find((m) => m.uid === value) // value 是目前選中的 uid，找出對應的完整用戶物件
 
   return (
     <div className="relative">
@@ -133,7 +133,7 @@ export default function BacklogTab({
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [searchParams, setSearchParams] = useSearchParams()
 
-  // 從 Command Palette 搜尋結果跳轉過來：網址帶 ?openTask=taskId 時自動開啟該任務，並把參數清掉
+  // 從 Command Palette 搜尋結果跳轉過來：網址帶 ?openTask=taskId 時 自動開啟該任務，並把參數清掉
   useEffect(() => {
     const openTask = searchParams.get("openTask")
     if (!openTask) return
@@ -141,6 +141,8 @@ export default function BacklogTab({
     searchParams.delete("openTask")
     setSearchParams(searchParams, { replace: true })
   }, [searchParams])
+
+  //任務相關state
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [priority, setPriority] = useState<Priority>("medium")
@@ -149,7 +151,8 @@ export default function BacklogTab({
   const [dueDate, setDueDate] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
-  const backlogTasks = [...tasks.filter((t) => t.sprintId === null)].sort((a, b) => {
+  //Backlog 任務過濾 + 排序
+  const backlogTasks = [...tasks.filter((t) => t.sprintId === null)].sort((a, b) => { //篩選出沒有被排進sprint 裡面的任務
     switch (sortBy) {     // 用 swich case 處理不同情況的排序問題
       case "priority":
         return PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]
@@ -171,7 +174,7 @@ export default function BacklogTab({
     }
   })
 
-  //處理創建task
+  //處理創建task的函式
   const handleCreate = async () => {
     if (!title.trim()) { toast.error("Please enter a task title"); return }
     setSubmitting(true)
@@ -184,6 +187,7 @@ export default function BacklogTab({
       assigneeId,
     })
     toast.success("Task created")
+    //還原表單
     setTitle(""); setDescription(""); setPriority("medium")
     setStoryPoints(null); setAssigneeId(null); setDueDate("")
     onCreateOpenChange(false)
@@ -194,16 +198,19 @@ export default function BacklogTab({
 
   return (
     <>
-      {/* Backlog 卡片 */}
+      {/* Backlog 卡片列表 */}
+
+      {/* 容器頂部 header */}
       <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden min-h-[calc(100vh-180px)]">
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2">
             <LayoutList className="w-4 h-4 text-muted-foreground" />
             <span className="font-semibold text-sm">Backlog</span>
           </div>
-          <span className="text-xs text-muted-foreground">{backlogTasks.length} items</span>
+          <span className="text-xs text-muted-foreground">{backlogTasks.length} items</span> 
         </div>
 
+        {/* 有沒有任務時的條件渲染 */}
         {backlogTasks.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground">
             <p>Backlog is empty</p>
@@ -213,6 +220,7 @@ export default function BacklogTab({
           <div className="p-5 grid grid-cols-4 gap-3">
             {backlogTasks.map((task) => {
               const assignee = members.find((m) => m.uid === task.assigneeId)
+              // 從 members 陣列裡找出這個任務的指派人物件 task 裡面只存 assigneeId 要到members裏
               return (
                 <div key={task.id} onClick={() => setSelectedTaskId(task.id)}>
                   <TaskCard task={task} assignee={assignee} />
@@ -226,6 +234,7 @@ export default function BacklogTab({
       {/* Create Task Dialog — 由 ProjectDetailPage 控制開關 */}
       <Dialog open={createOpen} onOpenChange={onCreateOpenChange}>
         <DialogContent className="sm:max-w-2xl rounded-2xl p-8">
+
           <DialogHeader className="mb-6">
             <DialogTitle className="text-xl font-bold">Create Task</DialogTitle>
           </DialogHeader>
@@ -333,7 +342,7 @@ export default function BacklogTab({
         </DialogContent>
       </Dialog>
 
-      {selectedTaskId && (
+      {selectedTaskId && (    // 點擊卡片跳出detailmodal
         <TaskDetailModal
           projectId={projectId}
           taskId={selectedTaskId}

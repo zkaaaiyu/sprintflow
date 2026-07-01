@@ -1,10 +1,11 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+// 工具函式：cn() 合併 Tailwind class、avatarColor() 產生頭像顏色
+import { clsx, type ClassValue } from "clsx" 
+import { twMerge } from "tailwind-merge" 
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
-
+// ─── 頭像背景顏色色盤 ───
 const AVATAR_PALETTE = [
   "#C4938A", // dusty rose
   "#8FA898", // sage
@@ -16,8 +17,8 @@ const AVATAR_PALETTE = [
   "#8A9472", // muted olive
 ]
 
-// 將任意字串（uid 或 name）穩定對應到一個顏色，同一個人在所有元件顏色一致
-export function avatarColor(seed: string): string {
+// 一個uid對應一個顏色
+export function avatarColor(seed: string): string {      //seed參數是用戶id
   let hash = 0
   for (let i = 0; i < seed.length; i++) {
     hash = (hash * 31 + seed.charCodeAt(i)) >>> 0

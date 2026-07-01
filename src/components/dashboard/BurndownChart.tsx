@@ -13,7 +13,7 @@ type Props = {
 }
 
 export default function BurndownChart({ summaries }: Props) {
-  const defaultId = summaries.length > 0
+  const defaultId = summaries.length > 0    //預設選中的 Sprint
     ? (() => {
         const sorted = [...summaries].sort((a, b) =>
           (b.startDate?.getTime() ?? 0) - (a.startDate?.getTime() ?? 0)
@@ -21,7 +21,7 @@ export default function BurndownChart({ summaries }: Props) {
         // 優先選有任務的 sprint，沒有才 fallback 到最新的
         return (sorted.find((s) => s.totalTasks > 0) ?? sorted[0]).sprintId
       })()
-    : ""
+    : "" // 沒有任何 summaries → 空字串
 
   const [selectedId, setSelectedId] = useState(defaultId)
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -45,9 +45,10 @@ export default function BurndownChart({ summaries }: Props) {
     return () => document.removeEventListener("mousedown", handler)
   }, [dropdownOpen])
 
-  const selected = summaries.find((s) => s.sprintId === selectedId)
-  const selectedLabel = selected ? `${selected.projectName} · ${selected.sprintName}` : "Select sprint"
+  const selected = summaries.find((s) => s.sprintId === selectedId)  // 從 summaries 找出目前選中的那一筆完整資料
+  const selectedLabel = selected ? `${selected.projectName} · ${selected.sprintName}` : "Select sprint" //顯示選中的是哪一個project 哪一個 sprint 
 
+  // 把選中的 Sprint 資訊傳給 useBurndownData，讓它去查 Firestore 並計算點陣列
   const { data, loading } = useBurndownData(
     selected?.projectId ?? "",
     selected?.sprintId ?? "",

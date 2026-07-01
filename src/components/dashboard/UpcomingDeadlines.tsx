@@ -27,8 +27,8 @@ export default function UpcomingDeadlines({ tasks }: { tasks: UpcomingTask[] }) 
   const visibleTasks = tasks.slice(0, MAX_VISIBLE)
   const hiddenTasks  = tasks.slice(MAX_VISIBLE)
 
-  // 隱藏任務中最早到期且有 sprintId 的任務
-  const targetTask = hiddenTasks.find((t) => t.sprintId !== null)
+
+  const targetTask = hiddenTasks.find((t) => t.sprintId !== null) //找到沒有顯示的任務裡面最快到期的
 
   return (
     <div className="flex flex-col min-w-0">

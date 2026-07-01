@@ -14,7 +14,7 @@ export default function RegisterPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
 
-  // 等 AuthContext 的 onAuthStateChanged 確認登入後再跳轉，確保 Firestore user 文件已寫入
+  // 用useEffect監聽 user 狀態 登入完成後再跳轉
   useEffect(() => {
     if (user) navigate("/dashboard", { replace: true })
   }, [user, navigate])
@@ -22,6 +22,7 @@ export default function RegisterPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+    // 前端驗證密碼長度
     if (password.length < 6) {
       setError("Password must be at least 6 characters")
       return

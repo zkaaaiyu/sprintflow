@@ -109,7 +109,7 @@ export function useSprint(projectId: string, sprintId: string) {
 
     const sprintRef = doc(db, "projects", projectId, "sprints", sprintId)
     batch.delete(sprintRef) //刪除sprint加到batch裡面
-    await batch.commit() //提交batch確認刪除
+    await batch.commit() //提交batch確認刪除 
   }
 
   return { sprint, loading, updateSprint, startSprint, completeSprint, deleteSprint }

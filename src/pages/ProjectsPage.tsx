@@ -1,6 +1,6 @@
 //Project 頁面
 import { useState, useEffect, useRef, useMemo } from "react"
-import { motion } from "framer-motion"
+import { motion } from "framer-motion" //動畫套件
 import { useNavigate } from "react-router-dom"
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragOverlay } from "@dnd-kit/core"
 import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core"
@@ -31,19 +31,13 @@ import { type Sprint } from "@/hooks/useSprints"
 import { useAllActiveSprints } from "@/hooks/useAllActiveSprints"
 import { COLOR_OPTIONS } from "@/lib/constants"
 
-// 顏色減淡作為project cards 左上角標籤
-function toAlpha(hex: string, alpha: number) {
-  const r = parseInt(hex.slice(1, 3), 16)
-  const g = parseInt(hex.slice(3, 5), 16)
-  const b = parseInt(hex.slice(5, 7), 16)
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
-}
-
+// ─── 處理堆疊頭像 ───
 function MemberAvatars({ members, totalCount }: { members: UserProfile[]; totalCount: number }) {
   return (
     <div className="flex -space-x-2">
       {members.map((m) => <MemberAvatar key={m.uid} user={m} size="md" />)}
       {totalCount > 3 && (
+        // 超過 3 個成員，只顯示 3 個頭像 + "+N" 的灰色圓圈
         <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-[10px] text-muted-foreground font-semibold">
           +{totalCount - 3}
         </div>
@@ -52,8 +46,28 @@ function MemberAvatars({ members, totalCount }: { members: UserProfile[]; totalC
   )
 }
 
-// 封裝projectCard 組件
+// 根據任務狀態產生互動短句
+function getStatusMessage(
+  overdueCount: number,
+  dueTodayCount: number,
+  completedThisWeekCount: number,
+  loading: boolean,
+  firstName: string
+): string {
+  if (loading) return ""
+  if (overdueCount > 0)
+    return `You have ${overdueCount} overdue task${overdueCount > 1 ? "s" : ""} — your past self is judging you. Time to make things right. 😬`
+  if (dueTodayCount > 0)
+    return `${dueTodayCount} task${dueTodayCount > 1 ? "s" : ""} need${dueTodayCount === 1 ? "s" : ""} you today, ${firstName}. The deadline gods are watching. 🔥`
+  if (completedThisWeekCount > 0)
+    return `All caught up! ${completedThisWeekCount} task${completedThisWeekCount > 1 ? "s" : ""} crushed in active sprints. You're basically a productivity ninja. 🎉`
+  return "No tasks assigned yet — living the dream. Enjoy the calm before the storm. ☁️"
+}
+
+
+// 封裝 projectCard 
 function ProjectCard({ project, onDelete, isOwner, activeSprint, members }: {
+  //定義參數型別
   project: Project
   onDelete: (e: React.MouseEvent) => void
   isOwner: boolean
@@ -64,8 +78,12 @@ function ProjectCard({ project, onDelete, isOwner, activeSprint, members }: {
 
   return (
     <div
-      onClick={() => navigate(`/projects/${project.id}`)}
-      className="border border-border rounded-2xl p-4 shadow-sm hover:scale-[1.02] hover:shadow-md transition-all cursor-pointer group flex flex-col aspect-[3/2] bg-card overflow-hidden"
+      onClick={() => navigate(`/projects/${project.id}`)}  // 點卡片跳到專案詳情頁
+      className="border 
+      border-border rounded-2xl p-4 shadow-sm hover:scale-[1.02] hover:shadow-md transition-all cursor-pointer group flex flex-col aspect-[3/2] bg-card overflow-hidden"
+      // hover:scale-[1.02]：hover 時卡片放大到 102%
+      // group：讓子元素可以用 group-hover: 偵測父元素的 hover 狀態
+      // aspect-[3/2]：寬高比固定 3:2
     >
       {/* 頂部顏色條 */}
       <div className="-mx-4 -mt-4 mb-4 h-3" style={{ backgroundColor: project.color }} />
@@ -83,7 +101,8 @@ function ProjectCard({ project, onDelete, isOwner, activeSprint, members }: {
       </div>
 
       {project.description ? (
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-4 flex-1">
+        // 用 line-clamp-2 限制只顯示兩行
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-4 flex-1"> 
           {project.description}
         </p>
       ) : (
@@ -106,7 +125,7 @@ function ProjectCard({ project, onDelete, isOwner, activeSprint, members }: {
   )
 }
 
-// 拖拉排序包裝層（永遠啟用，拖拉後自動切換 custom 模式）
+// 拖拉排序包裝層（拖拉後自動切換 custom 模式）
 function SortableProjectCard({ project, onDelete, isOwner, activeSprint, members }: {
   project: Project
   onDelete: (e: React.MouseEvent) => void
@@ -114,38 +133,28 @@ function SortableProjectCard({ project, onDelete, isOwner, activeSprint, members
   activeSprint: Sprint | null
   members: UserProfile[]
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const { 
+    attributes,   // 無障礙屬性
+    listeners,    // 滑鼠/觸控事件監聽（mousedown, touchstart）
+    setNodeRef,   // 把這個 div 註冊為「可拖拉的節點」
+    transform,    // 拖拉時的位移數值 { x, y, scaleX, scaleY }
+    transition,   // 放開後回彈的動畫
+    isDragging,   // 是否正在被拖拉中
+   } = useSortable({
     id: project.id,
   })
   return (
     <div
-      ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition, visibility: isDragging ? "hidden" : "visible" }}
+      ref={setNodeRef} // 把這個 DOM 元素交給 dnd-kit 管理
+      style={{ transform: CSS.Transform.toString(transform), transition, 
+        visibility: isDragging ? "hidden" : "visible" }}  // 拖拉時隱藏原位置的卡片
       className="cursor-grab active:cursor-grabbing"
-      {...attributes}
-      {...listeners}
+      {...attributes}   // 展開無障礙屬性
+      {...listeners}   // 展開拖拉事件監聽
     >
       <ProjectCard project={project} onDelete={onDelete} isOwner={isOwner} activeSprint={activeSprint} members={members} />
     </div>
   )
-}
-
-// 根據任務狀態產生幽默互動短句
-function getStatusMessage(
-  overdueCount: number,
-  dueTodayCount: number,
-  completedThisWeekCount: number,
-  loading: boolean,
-  firstName: string
-): string {
-  if (loading) return ""
-  if (overdueCount > 0)
-    return `You have ${overdueCount} overdue task${overdueCount > 1 ? "s" : ""} — your past self is judging you. Time to make things right. 😬`
-  if (dueTodayCount > 0)
-    return `${dueTodayCount} task${dueTodayCount > 1 ? "s" : ""} need${dueTodayCount === 1 ? "s" : ""} you today, ${firstName}. The deadline gods are watching. 🔥`
-  if (completedThisWeekCount > 0)
-    return `All caught up! ${completedThisWeekCount} task${completedThisWeekCount > 1 ? "s" : ""} crushed in active sprints. You're basically a productivity ninja. 🎉`
-  return "No tasks assigned yet — living the dream. Enjoy the calm before the storm. ☁️"
 }
 
 // 主頁面
@@ -153,7 +162,7 @@ export default function ProjectsPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { projects, loading, createProject, deleteProject, joinProject } = useWorkspace()
-  const { projectOrder, setProjectOrder } = useAuth()
+  const { projectOrder, setProjectOrder } = useAuth() //projectorder存在localstorage裡面
   const { groups: activeSprintGroups, loading: groupsLoading } = useActiveSprintTasks(projects, loading)
   const wsStats = useWorkspaceStats(activeSprintGroups, groupsLoading)
 
@@ -162,18 +171,22 @@ export default function ProjectsPage() {
   const allMemberIds = useMemo(() => [...new Set(projects.flatMap(p => p.memberIds))], [projects])
   const { members: allMembers } = useMembers(allMemberIds)
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
-  const [draggingProject, setDraggingProject] = useState<Project | null>(null)
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } })) //用useSensors告訴dndkit要拖動超過5px才算是啟動拖拉
+  const [draggingProject, setDraggingProject] = useState<Project | null>(null) //記錄正在被拖拉的專案是哪一個
 
   type ModalTab = "create" | "join"
+  // ─── 排序相關 state ───
   type SortMode = "default" | "createdAt" | "custom"
   const [open, setOpen] = useState(false)
   const [modalTab, setModalTab] = useState<ModalTab>("create")
   const [sortMode, setSortMode] = useState<SortMode>("default")
   const [sortMenuOpen, setSortMenuOpen] = useState(false)
   const sortRef = useRef<HTMLDivElement>(null)
-  const [iconAnimKey, setIconAnimKey] = useState(0)
-  const iconAnimating = useRef(false)
+
+  const [iconAnimKey, setIconAnimKey] = useState(0) //wks互動動畫
+  const iconAnimating = useRef(false) //用 useRef 而不是 useState 的原因 -> 改變 ref 的值不會觸發 re-render，只是單純記錄一個狀態。
+
+  //點擊排序選單外部 就關閉
   useEffect(() => {
     if (!sortMenuOpen) return
     const handler = (e: MouseEvent) => {
@@ -185,19 +198,20 @@ export default function ProjectsPage() {
     return () => document.removeEventListener("mousedown", handler)
   }, [sortMenuOpen])
 
-  //create project相關
+  //create project相關state 
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [color, setColor] = useState(COLOR_OPTIONS[0].value)
   const [submitting, setSubmitting] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
-  // join project相關
+  // join project相關state 
   const [inviteCode, setInviteCode] = useState("")
   const [joining, setJoining] = useState(false)
 
+  // 排序與事件處理函式
   const sortedProjects = [...projects].sort((a, b) => {
-    if (sortMode === "createdAt") {
+    if (sortMode === "createdAt") { 
       return (b.createdAt?.getTime?.() ?? 0) - (a.createdAt?.getTime?.() ?? 0)
     }
     if (sortMode === "custom") {
@@ -210,7 +224,7 @@ export default function ProjectsPage() {
     }
     return 0
   })
-
+  //變更排序模式
   const handleSortChange = (mode: SortMode) => {
     setSortMode(mode)
     if (mode === "custom" && projectOrder.length === 0) {
@@ -221,7 +235,7 @@ export default function ProjectsPage() {
 
   const handleOpenChange = (o: boolean) => {
     setOpen(o)
-    if (!o) {
+    if (!o) { //如果是false 執行清空表單
       setModalTab("create")
       setName(""); setDescription(""); setColor(COLOR_OPTIONS[0].value)
       setInviteCode("")
@@ -257,12 +271,12 @@ export default function ProjectsPage() {
     setJoining(false)
   }
 
-// Delete Alert 
+// Delete Alert （警告）
 const handleDelete = (e: React.MouseEvent, projectId: string, projectName: string) => {
-  e.stopPropagation() //阻止事件冒泡 Event Bubbling
+  e.stopPropagation() //阻止事件冒泡 Event Bubbling 因為刪除按鈕在卡片 div 裡面，不阻止的話點刪除會同時觸發卡片的 onClick 跳到projectdetailpage 
   setDeleteTarget({ id: projectId, name: projectName })
 }
-// project delete
+// project delete （執行刪除）
 const confirmDelete = async () => {
   if (!deleteTarget) return
   await deleteProject(deleteTarget.id) //調自定義hooks裡面的 deleteProject 刪除firebase裡面的project資料
@@ -271,14 +285,15 @@ const confirmDelete = async () => {
 }
   const handleDragStart = ({ active }: DragStartEvent) => {
     setDraggingProject(sortedProjects.find((p) => p.id === active.id) ?? null)
+    //從sortprojects 用find 找到被點擊的 project 是哪一個 找不到用null代替
   }
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
-    setDraggingProject(null)
-    if (!over || active.id === over.id) return
+    setDraggingProject(null) //清除懸浮卡片
+    if (!over || active.id === over.id) return 
     const ids = sortedProjects.map((p) => p.id)
-    const oldIndex = ids.indexOf(active.id as string)
-    const newIndex = ids.indexOf(over.id as string)
+    const oldIndex = ids.indexOf(active.id as string)//拖動之前在哪裡
+    const newIndex = ids.indexOf(over.id as string) //拖動之後放到哪裡
     const newOrder = arrayMove(ids, oldIndex, newIndex)
     setSortMode("custom")   // 拖拉後自動切換到自定義排序
     setProjectOrder(newOrder)
@@ -293,7 +308,7 @@ const confirmDelete = async () => {
   <Dialog open={open} onOpenChange={handleOpenChange}>
     <div className="max-w-6xl mx-auto pt-4">
 
-      {/* ── 新版 Header ── */}
+      {/* ── Header 問候語 + 狀態統計── */}
       {(() => {
         const hour = new Date().getHours()
         const isEvening = hour >= 18 || hour < 5
@@ -314,7 +329,7 @@ const confirmDelete = async () => {
                 <motion.span
                   key={iconAnimKey}
                   className="inline-flex shrink-0 cursor-default select-none"
-                  animate={
+                  animate={ 
                     isEvening
                       ? { rotate: [0, -18, 22, -12, 10, 0], scale: [1, 1.15, 1.1, 1.12, 1.05, 1] }
                       : isAfternoon
@@ -323,7 +338,7 @@ const confirmDelete = async () => {
                   }
                   transition={{ duration: isEvening ? 0.6 : 0.7, ease: "easeInOut" }}
                   onHoverStart={() => {
-                    if (iconAnimating.current) return
+                    if (iconAnimating.current) return // 動畫中不重複觸發
                     iconAnimating.current = true
                     setIconAnimKey((k) => k + 1)
                     setTimeout(() => { iconAnimating.current = false }, 750)
@@ -382,7 +397,7 @@ const confirmDelete = async () => {
         {/* Sort 按鈕 */}
         <div className="relative" ref={sortRef}>
           <button
-            onClick={() => setSortMenuOpen((o) => !o)}
+            onClick={() => setSortMenuOpen((o) => !o)} //點擊打開排序選單
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border text-sm text-muted-foreground hover:bg-foreground hover:text-background hover:border-foreground transition-colors duration-500"
           >
             <ArrowUpDown className="w-3.5 h-3.5" />
@@ -461,13 +476,13 @@ const confirmDelete = async () => {
       </DialogTitle>
     </DialogHeader>
 
-    {/* Tab 切換 */}
+    {/* create / join    Tab 切換 */}
     <div className="flex gap-1 bg-muted p-1 rounded-xl mb-6">
       {(["create", "join"] as ModalTab[]).map((tab) => (
         <button
           key={tab}
           type="button"
-          onClick={() => setModalTab(tab)}
+          onClick={() => setModalTab(tab)}  //點擊調用函式切換tab
           className={cn(
             "flex-1 py-1.5 rounded-lg text-sm font-medium transition-all",
             modalTab === tab ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
@@ -477,7 +492,8 @@ const confirmDelete = async () => {
         </button>
       ))}
     </div>
-
+    
+    {/* 內容區（條件渲染） create 分頁 */}
     {modalTab === "create" ? (
       <div key="create" className="animate-in fade-in duration-200 flex flex-col flex-1">
         <div className="space-y-5">
@@ -537,6 +553,7 @@ const confirmDelete = async () => {
         </div>
       </div>
     ) : (
+      // join tab
       <div key="join" className="animate-in fade-in duration-200 flex flex-col flex-1">
         <div className="space-y-5">
           <div className="space-y-2">
@@ -565,7 +582,6 @@ const confirmDelete = async () => {
       </div>
     )}
   </DialogContent>
-
   </Dialog>
   )
 }

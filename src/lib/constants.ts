@@ -1,3 +1,4 @@
+// create project 顏色管理
 export const COLOR_OPTIONS = [
   { label: "Clay",     value: "#d16e56" },
   { label: "Slate",    value: "#4A5270" },

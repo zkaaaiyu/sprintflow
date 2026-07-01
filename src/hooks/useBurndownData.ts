@@ -3,7 +3,7 @@ import { collection, query, where, getDocs, Timestamp } from "firebase/firestore
 import { db } from "@/lib/firebase"
 
 export type BurndownPoint = {
-  date: string        // 顯示用日期，如 "6/1"
+  date: string        // 顯示用日期
   ideal: number       // 理想剩餘 SP
   actual: number | null  // 實際剩餘 SP（未來日期為 null）
 }
@@ -17,8 +17,9 @@ export function useBurndownData(
   const [data, setData] = useState<BurndownPoint[]>([])
   const [loading, setLoading] = useState(true)
 
+// 查詢任務並計算 total
   useEffect(() => {
-    if (!projectId || !sprintId || !startDate || !endDate) {
+    if (!projectId || !sprintId || !startDate || !endDate) { //四個參數都必須要有
       setData([])
       setLoading(false)
       return
@@ -39,7 +40,7 @@ export function useBurndownData(
         storyPoints: d.data().storyPoints as number | null,
         status: d.data().status as string,
         doneAt: (d.data().doneAt as Timestamp)?.toDate() ?? null,
-      }))
+      })) 
 
       // 若所有任務都沒設 SP，fallback 用任務數量（1 task = 1 point）
       const hasAnyPoints = tasks.some((t) => t.storyPoints != null && t.storyPoints > 0)
@@ -67,7 +68,8 @@ export function useBurndownData(
       cur.setHours(0, 0, 0, 0)
       let dayIndex = 0
 
-      while (cur <= endDate) {
+      // 逐日迴圈產生每個點
+      while (cur <= endDate) { // 從 startDate 開始，每次加一天，直到超過 endDate
         const dayEnd = new Date(cur)
         dayEnd.setHours(23, 59, 59, 999)
 

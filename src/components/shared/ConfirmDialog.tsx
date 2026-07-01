@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button"
 import { AlertCircle } from "lucide-react"
 
 export default function ConfirmDialog({
-  open,
-  onOpenChange,
-  title,
+  open,                       // 控制彈窗是否顯示
+  onOpenChange,               // 彈窗狀態改變時的callback 
+  title,                      
   description,
   confirmLabel = "Delete",
   onConfirm,

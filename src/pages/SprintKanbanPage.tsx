@@ -1,26 +1,26 @@
 import { useState, useEffect } from "react"
-import type { ReactNode } from "react"
+import type { ReactNode } from "react" // 這裡用來標注 DroppableColumn 的 children 參數型別
 import { useParams, useNavigate, useSearchParams } from "react-router-dom"
 import { doc, updateDoc, writeBatch, addDoc, collection, serverTimestamp } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import {  // 引入拖曳套件 @dnd-kit 
-  DndContext,
-  DragOverlay,
-  closestCorners,
-  useDroppable,
-  MouseSensor,
-  TouchSensor,
+  DndContext,               // 最外層的拖曳環境容器
+  DragOverlay,              // 拖 曳時跟著滑鼠移動的「分身卡片」
+  closestCorners,           // 碰撞偵測演算法：找最近的角落
+  useDroppable,             // 讓某個區域變成「可放置區」
+  MouseSensor,              // 滑鼠拖曳感應器
+  TouchSensor,              // 觸控拖曳感應器（手機用）
   useSensor,
   useSensors,
 } from "@dnd-kit/core"
 import type { DragEndEvent, DragStartEvent, DragOverEvent } from "@dnd-kit/core"
 import {
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-  arrayMove,
+  SortableContext,             // 讓一組元素可以互相排序
+  useSortable,                 // 讓單一元素具備拖曳排序能力
+  verticalListSortingStrategy, // 垂直排列的排序策略
+  arrayMove,                   // 陣列換位工具：把第 i 個元素移到第 j 個
 } from "@dnd-kit/sortable"
-import { CSS } from "@dnd-kit/utilities"
+import { CSS } from "@dnd-kit/utilities"// CSS.Transform.toString()：把 dnd-kit 的 transform 物件轉成 CSS 字串
 //引入 前面寫好的hook
 import { useSprint } from "@/hooks/useSprint"
 import { useTasks, type TaskStatus, type Task, type Priority, type StoryPoints } from "@/hooks/useTasks"
@@ -63,7 +63,7 @@ const COLUMNS: { id: TaskStatus; label: string }[] = [
   { id: "done",        label: "Done" },
 ]
 
-const COLUMN_IDS = new Set(["todo", "in_progress", "review", "done"])
+const COLUMN_IDS = new Set(["todo", "in_progress", "review", "done"]) //set是類似陣列的容器但是內容不能重複 用來判斷裡裡面是否有某個東西很好用 
 
 // 日期格式化
 function formatDateRange(start: Date | null, end: Date | null) {
@@ -76,12 +76,13 @@ function formatDateRange(start: Date | null, end: Date | null) {
 function AssigneePicker({ members, value, onChange }: {
   members: UserProfile[]
   value: string | null
-  onChange: (uid: string | null) => void
+  onChange: (uid: string | null) => void 
 }) {
   const [open, setOpen] = useState(false)
-  const selected = members.find((m) => m.uid === value)
+  const selected = members.find((m) => m.uid === value)// 從 members 陣列找出目前選中的完整用戶物件
   return (
     <div className="relative">
+      {/* 觸發按鈕 */}
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -97,6 +98,8 @@ function AssigneePicker({ members, value, onChange }: {
         )}
         <ChevronDown className="w-4 h-4 ml-auto text-muted-foreground shrink-0" />
       </button>
+
+      {/* 下拉選單本體 */}
       {open && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-xl shadow-lg z-50 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150">
           <button
@@ -106,6 +109,7 @@ function AssigneePicker({ members, value, onChange }: {
           >
             Unassigned
           </button>
+          {/* 每個成員一個選項 */}
           {members.map((m) => (
             <button
               key={m.uid}
@@ -242,9 +246,9 @@ export default function SprintKanbanPage() {
 
   const { members } = useMembers(memberIds)
 
-  // 只顯示這個 sprint 的任務
+  // 用filter 過濾 只顯示這個 sprint 的任務
   const sprintTasks = tasks.filter((t) => t.sprintId === sprintId)
-  // 還在 Backlog 的任務
+  //  用filter 過濾出還在 Backlog 的任務
   const backlogTasks = tasks.filter((t) => t.sprintId === null)
 
   // 任務進度
@@ -499,7 +503,7 @@ export default function SprintKanbanPage() {
   return (
     <div
       className="flex flex-col gap-3 p-5"
-      onClick={() => {
+      onClick={() => { // 在外層容器加上一個onclick事件如果點擊的話就清空篩選條件
         if (filterMemberIds.length > 0 || filterPriority !== null) {
           setFilterMemberIds([])
           setFilterPriority(null)
@@ -547,7 +551,7 @@ export default function SprintKanbanPage() {
         {/* 彈性空間，讓右側靠右 */}
         <div className="flex-1" />
 
-        {/* 成員頭像 + 優先級篩選（stopPropagation 防止點按鈕時觸發外層清除） */}
+        {/* 成員頭像 + 優先級篩選（stopPropagation 防止點按鈕時觸發清除篩選項目） */}
         <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
           {members.length > 0 && (
             <div className="flex items-center">
@@ -560,27 +564,30 @@ export default function SprintKanbanPage() {
                       ? "ring-2 ring-brand ring-offset-1 z-10"
                       : "opacity-70 hover:opacity-100"
                   }`}
-                  style={{ zIndex: i }}
+                  style={{ zIndex: i }} // 用 zIndex 控制排列重疊層級
                 >
                   <MemberAvatar user={m} />
                 </button>
               ))}
             </div>
           )}
-
+          {/* 垂直分隔線 */}
           <div className="w-px h-5 bg-border shrink-0" />
-
+          
+          {/* 優先級篩選按鈕列 */} 
           <div className="flex items-center gap-1">
+            {/* All 按鈕：清除優先級篩選 */}
             <button
               onClick={() => setFilterPriority(null)}
               className={`text-xs px-2.5 py-1 rounded-full font-medium transition-all ${
                 filterPriority === null
-                  ? "bg-foreground text-background"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  ? "bg-foreground text-background" // 選中（無篩選）：深色背景白字
+                  : "bg-muted text-muted-foreground hover:bg-muted/80" // 未選中：灰色
               }`}
             >
               All
             </button>
+             {/* low / medium / high / urgent  用map渲染四個按鈕 */}
             {(["low", "medium", "high", "urgent"] as Priority[]).map((p) => {
               const cfg = PRIORITY_CONFIG[p]
               const isActive = filterPriority === p
@@ -603,7 +610,7 @@ export default function SprintKanbanPage() {
           </div>
         </div>
 
-        {/* 分隔線 */}
+        {/* 垂直分隔線 */}
         <div className="w-px h-5 bg-border shrink-0" />
 
         {/* ⋯ 多工能選單 */} 
@@ -756,11 +763,12 @@ export default function SprintKanbanPage() {
           <div className="flex justify-end gap-3">
             <Button variant="ghost" onClick={() => setShowCompleteConfirm(false)}>Cancel</Button>
             <Button
-              onClick={handleComplete}
+              onClick={handleComplete} //調用處理完成專案的函數
               disabled={actionLoading}
               className="bg-brand hover:bg-brand-hover text-white rounded-full px-6"
             >
               {actionLoading ? "Processing..." : "Complete Sprint"}
+              {/* actionLoading 時顯示 "Processing..."，防止重複點擊 */}
             </Button>
           </div>
         </DialogContent>
@@ -783,6 +791,7 @@ export default function SprintKanbanPage() {
             <DialogTitle className="text-2xl font-bold">Edit Sprint</DialogTitle>
           </DialogHeader>
           <div className="space-y-5">
+             {/* Sprint 名稱 */}
             <div className="space-y-2">
               <Label className="font-semibold text-sm">Sprint Name</Label>
               <Input
@@ -791,6 +800,7 @@ export default function SprintKanbanPage() {
                 className="rounded-xl bg-muted border-0 h-11 focus-visible:ring-1"
               />
             </div>
+            {/* Sprint 目標（選填） */}
             <div className="space-y-2">
               <Label className="font-semibold text-sm">Goal (optional)</Label>
               <textarea
@@ -800,6 +810,7 @@ export default function SprintKanbanPage() {
                 className="w-full rounded-xl bg-muted border-0 px-3 py-2.5 text-sm resize-none outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
+            {/* 日期：兩欄並排 */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label className="font-semibold text-sm">Start Date</Label>
@@ -821,6 +832,7 @@ export default function SprintKanbanPage() {
               </div>
             </div>
           </div>
+          {/* 底部按鈕 */}
           <div className="flex justify-end gap-3 mt-8">
             <Button variant="ghost" onClick={() => setShowEditModal(false)}>Cancel</Button>
             <Button
@@ -833,15 +845,17 @@ export default function SprintKanbanPage() {
           </div>
         </DialogContent>
       </Dialog>
+
 {/* Todo 欄虛線卡片：New Task / From Backlog 合併 Modal */}
       <Dialog open={showTodoModal} onOpenChange={(open) => {
         setShowTodoModal(open)
+        //關閉時
         if (!open) { setNewTitle(""); setNewDescription(""); setNewPriority("medium"); setNewStoryPoints(null); setNewAssigneeId(null); setNewDueDate("") }
       }}>
         <DialogContent className="sm:max-w-2xl rounded-2xl p-8 flex flex-col min-h-[580px]">
           <DialogHeader className="mb-4">
             <DialogTitle className="text-2xl font-bold">
-              {todoTab === "create" ? "New Task" : "From Backlog"}
+              {todoTab === "create" ? "New Task" : "From Backlog"}  {/* 標題跟著 Tab 切換 */}
             </DialogTitle>
           </DialogHeader>
           {/* Tab 切換 */}
@@ -860,10 +874,11 @@ export default function SprintKanbanPage() {
             ))}
           </div>
 
+          {/* ── Create 新任務 Tab ── */}
           <div className="flex-1">
           {todoTab === "create" ? (
             <div key="create" className="animate-in fade-in duration-200 space-y-6">
-              {/* Title */}
+              {/* 標題輸入框 */}
               <div className="space-y-1.5">
                 <Label className="font-semibold text-sm">Title</Label>
                 <Input
@@ -896,6 +911,7 @@ export default function SprintKanbanPage() {
                     ))}
                   </div>
                 </div>
+                {/* Priority 選擇器 */}
                 <div className="space-y-1.5">
                   <Label className="font-semibold text-sm">Priority</Label>
                   <div className="flex gap-1.5">

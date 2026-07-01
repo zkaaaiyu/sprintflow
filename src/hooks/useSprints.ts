@@ -1,3 +1,4 @@
+//查詢單一 project 下的所有sprint 
 import { useState, useEffect } from "react"
 import {
   collection,
@@ -35,7 +36,7 @@ export function useSprints(projectId: string) {
       orderBy("createdAt", "asc") // 根據createdAt舊到新排列
     )
 
-    // onSnapshot 監聽函式 傳入封裝好的查詢邏輯 q 當 查詢結果有變動 就 調後面的函數把當前的最新資料（snap）作為參數傳進來 
+    // onSnapshot 監聽函式 傳入封裝好的查詢邏輯 q 當查詢結果有變動 就 調後面的函數把當前的最新資料（snap）作為參數傳進來 
     const unsubscribe = onSnapshot(q, (snap) => {   
       const list = snap.docs.map((d) => ({
         id: d.id,
@@ -44,7 +45,7 @@ export function useSprints(projectId: string) {
         endDate: (d.data().endDate as Timestamp)?.toDate() ?? null,
         createdAt: (d.data().createdAt as Timestamp)?.toDate() ?? null,
       })) as Sprint[]
-      setSprints(list)
+      setSprints(list) //更新畫面
       setLoading(false)
     })
 
@@ -63,5 +64,10 @@ export function useSprints(projectId: string) {
     })
   }
 
-  return { sprints, loading, createSprint }
+  return { 
+    sprints,   //這個專案裡面所有的sprints
+    loading,  
+    createSprint //建立sprint的函數
+  
+  }
 }

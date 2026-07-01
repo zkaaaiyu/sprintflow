@@ -1,4 +1,4 @@
-// 編寫router
+// 路由設定：定義每個 URL 對應哪個頁面
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import AppLayout from "@/components/layout/AppLayout"
 import LoginPage from "@/pages/LoginPage"

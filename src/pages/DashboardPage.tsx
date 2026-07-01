@@ -1,3 +1,4 @@
+//整合所有 dashboard 組件 
 import { useWorkspace } from "@/hooks/useWorkspace"
 import { useActiveSprintTasks } from "@/hooks/useActiveSprintTasks"
 import { useDashboardStats } from "@/hooks/useDashboardStats"
@@ -11,12 +12,13 @@ import ActiveSprintsSummary from "@/components/dashboard/ActiveSprintsSummary"
 import BurndownChart from "@/components/dashboard/BurndownChart"
 
 export default function DashboardPage() {
-  const { projects, loading: projectsLoading } = useWorkspace()
+  
+  const { projects, loading: projectsLoading } = useWorkspace()   // 取得所有專案清單 這是整個 Dashboard 的資料起點
 
-  // 只查一次 Firestore，撈出所有 active sprint + 任務的原始資料，
-  // 下面兩個 hook 都從這份資料做加總計算，不再各自重複查詢
+  // 一次撈出所有 active sprint + 任務的原始資料
   const { groups: activeSprintGroups, loading: groupsLoading } = useActiveSprintTasks(projects, projectsLoading)
-  const stats = useDashboardStats(activeSprintGroups, groupsLoading)
+
+  const stats = useDashboardStats(activeSprintGroups, groupsLoading) // 用useDashboardStats拿到狀態
   const { tasks: upcomingTasks } = useUpcomingTasks(projects, projectsLoading)
   const { summaries: sprintSummaries, loading: sprintsLoading } = useActiveSprintsSummary(activeSprintGroups, groupsLoading)
 

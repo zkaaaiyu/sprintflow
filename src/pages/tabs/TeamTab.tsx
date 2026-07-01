@@ -17,9 +17,9 @@ export default function TeamTab({ project, onRemoveMember }: {
   const { user } = useAuth()
   const { members, loading } = useMembers(project.memberIds)
   const isOwner = project.ownerId === user?.uid
-  const [confirmUid, setConfirmUid] = useState<string | null>(null)
+  const [confirmUid, setConfirmUid] = useState<string | null>(null) // 記錄「要移除哪個成員」的 uid
 
-  const confirmTarget = members.find((m) => m.uid === confirmUid)
+  const confirmTarget = members.find((m) => m.uid === confirmUid)// 從 members 裡找出要被移除的那個人的完整資料用來顯示displayname 
 
   if (loading) return <div className="text-muted-foreground text-sm py-8 text-center">Loading...</div>
 
@@ -50,14 +50,14 @@ export default function TeamTab({ project, onRemoveMember }: {
         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide text-right">Actions</span>
       </div>
 
-      {/* Rows */}
+      {/* 成員列表 */}
       <div>
         {members.map((member, i) => {
-          const isMe = member.uid === user?.uid
-          const isMemberOwner = member.uid === project.ownerId
+          const isMe = member.uid === user?.uid //如果是自己
+          const isMemberOwner = member.uid === project.ownerId //如果是owner
           return (
             <div key={member.uid} className="grid grid-cols-[1fr_120px_130px_60px] items-center px-5 py-3.5 hover:bg-accent transition-colors">
-              {/* Member */}
+              {/* 成員顯示 */}
               <div className="flex items-center gap-3">
                 {member.photoURL ? (
                   <img
@@ -85,7 +85,7 @@ export default function TeamTab({ project, onRemoveMember }: {
                 </div>
               </div>
 
-              {/* Role */}
+              {/* 顯示角色 */}
               <span
                 className="text-xs px-2.5 py-0.5 rounded-full font-medium w-fit"
                 style={isMemberOwner
@@ -96,7 +96,7 @@ export default function TeamTab({ project, onRemoveMember }: {
                 {isMemberOwner ? "Owner" : "Member"}
               </span>
 
-              {/* Joined Date */}
+              {/* 加入時間 */}
               <span className="text-sm text-muted-foreground">
                 {project.joinedAt?.[member.uid]
                   ? project.joinedAt[member.uid]!.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })

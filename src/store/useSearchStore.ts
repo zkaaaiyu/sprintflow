@@ -1,4 +1,4 @@
-// Command Palette 的 UI 狀態（開關 + 輸入框內容），不存放任何資料本身
+// 管理 Command Palette 的 UI 狀態（開關 + 輸入框內容），不存放任何資料本身
 import { create } from "zustand"
 
 interface SearchStore {
@@ -14,7 +14,6 @@ export const useSearchStore = create<SearchStore>((set) => ({
   isOpen: false,
   query: "",
   open: () => set({ isOpen: true }),
-  // 關閉時順手清空 query，下次打開不會殘留上次的搜尋字
-  close: () => set({ isOpen: false, query: "" }),
-  setQuery: (q) => set({ query: q }),
+  close: () => set({ isOpen: false, query: "" }), //關閉時清空輸入匡
+  setQuery: (q) => set({ query: q }), // 接收新的搜尋文字時更新 query
 }))

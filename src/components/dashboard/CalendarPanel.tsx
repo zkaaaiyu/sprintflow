@@ -27,6 +27,7 @@ export default function CalendarPanel() {
 
   const year = viewDate.getFullYear()
   const month = viewDate.getMonth()
+
   const daysInMonth = getDaysInMonth(year, month)
   const firstDay = getFirstDayOfMonth(year, month)
 
@@ -39,6 +40,7 @@ export default function CalendarPanel() {
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ]
 
+  //判斷今天給高亮
   const isToday = (day: number) =>
     year === today.getFullYear() &&
     month === today.getMonth() &&

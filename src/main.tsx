@@ -1,4 +1,4 @@
-//APP的啟動
+//APP的啟動 負責把整個 App 掛進 HTML
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"  //用來建立根節點的
 import { AuthProvider } from "@/contexts/AuthContext"  // 全域狀態容器（登入）

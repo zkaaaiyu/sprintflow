@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useNavigate, useLocation } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"// useLocation 用來讀 pathname，麵包屑要用    
 import { Search, Bell, LogOut, Moon, Sun, ChevronLeft, ChevronRight, Settings } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { BRAND } from "@/lib/colors"
@@ -12,17 +12,17 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu"  //shadcn下拉選單相關元件
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from "@/components/ui/popover" //瞭鈴鐺通知彈出匡
 import { toast } from "sonner"
 import { useTheme } from "@/contexts/ThemeContext"
 import { avatarColor } from "@/lib/utils"
 
-// 相對時間格式化
+// 把 Date 物件轉成「幾分鐘前」的文字顯示
 function timeAgo(date: Date | null): string {
   if (!date) return ""
   const diff = (Date.now() - date.getTime()) / 1000
@@ -41,13 +41,13 @@ function formatActivityMessage(act: GlobalActivity): string {
   return `updated '${act.taskTitle}'`
 }
 
-// 小頭像
+// 通知列表裡的小頭像
 function MiniAvatar({ name, photoURL }: { name: string; photoURL: string | null }) {
-  const initial = name[0]?.toUpperCase() ?? "?"
-  if (photoURL) {
+  const initial = name[0]?.toUpperCase() ?? "?"  // 取首字母大寫 沒有的話用?代替
+  if (photoURL) { // 有頭像圖片：直接顯示圖片
     return <img src={photoURL} referrerPolicy="no-referrer" className="w-7 h-7 rounded-full object-cover shrink-0" />
   }
-  return (
+  return ( // 沒有頭像圖片：用名字縮寫 + 顏色背景代替
     <div
       className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold text-white shrink-0"
       style={{ backgroundColor: avatarColor(name) }}
@@ -60,40 +60,45 @@ function MiniAvatar({ name, photoURL }: { name: string; photoURL: string | null 
 export default function Navbar() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const { pathname } = useLocation() //網址路徑
   const { projects, loading: projectsLoading } = useWorkspace()
 
-  // 跨專案 activity feed（鈴鐺通知用）
+  // 跨專案 activity 資料準備
   const projectIds = projects.map((p) => p.id)
   // 整理每個 project 的使用者加入時間，用來過濾加入前的舊紀錄
-  const joinedAtMap: Record<string, Date | null> = Object.fromEntries(
-    projects.map((p) => [p.id, user ? (p.joinedAt?.[user.uid] ?? null) : null])
-  )
+  const joinedAtMap: Record<string, Date | null> = Object.fromEntries(  //用 Object.fromEntries：把陣列轉成物件
+    projects.map((p) => [p.id, user ? (p.joinedAt?.[user.uid] ?? null) : null]) 
+  )   // joinedAtMap的結構會長下面這樣
+      // { "projectId_A": Date(2026-01-15),    // 用戶加入 A 的時間
+      //   "projectId_B": null,      }         // 這個專案沒有加入時間紀錄
+ 
+
+   // 取得跨所有專案的活動列表，已經用 joinedAtMap 過濾
   const { activities } = useGlobalActivities(projectIds, projectsLoading, joinedAtMap)
   const projectMap = Object.fromEntries(projects.map((p) => [p.id, p]))
 
   // 已讀狀態：記錄上次已讀的時間點（存 localStorage）
   const [lastReadAt, setLastReadAt] = useState<number>(() =>
-    parseInt(localStorage.getItem("notificationLastRead") ?? "0")
+    parseInt(localStorage.getItem("notificationLastRead") ?? "0") //取到上次閱讀的時間沒有就給0（代表沒讀過）
   )
   const [notifOpen, setNotifOpen] = useState(false)
 
-  const hasUnread = activities.some(
-    (act) => act.createdAt && act.createdAt.getTime() > lastReadAt
+  const hasUnread = activities.some(   // .some() 只要有一個元素符合條件就回傳 true
+    (act) => act.createdAt && act.createdAt.getTime() > lastReadAt  // 判斷有沒有比上一次閱讀時間更新的
   )
 
   const markAsRead = () => {
     const now = Date.now()
     localStorage.setItem("notificationLastRead", String(now))
-    setLastReadAt(now)
+    setLastReadAt(now) //設定上次閱讀時間為現在 所以就不會有比現在更新的通知 -> 達成一鍵已讀全部
   }
 
   const { dark, setDark } = useTheme()
 
   // 從 pathname 組出麵包屑陣列
   const buildCrumbs = () => {
-    const parts = pathname.split("/").filter(Boolean)
-    const crumbs: { label: string; to: string }[] = []
+    const parts = pathname.split("/").filter(Boolean) //用split把網址用根據斜槓區分在用 用filter過濾掉空字串
+    const crumbs: { label: string; to: string }[] = [] //定義一個麵包屑陣列 跟他的型別
 
     if (parts[0] === "dashboard") {
       crumbs.push({ label: "Dashboard", to: "/dashboard" })
@@ -101,7 +106,7 @@ export default function Navbar() {
       crumbs.push({ label: "Workspace", to: "/projects" })
 
       if (parts[1]) {
-        const project = projects.find((p) => p.id === parts[1])
+        const project = projects.find((p) => p.id === parts[1]) //找到id符合專案的物件
         if (project) crumbs.push({ label: project.name, to: `/projects/${parts[1]}` })
       }
       // sprint 頁：顯示 "Sprint"（sprint name 由 SprintKanbanPage 自己管，不在 Navbar 重複抓）
@@ -119,6 +124,7 @@ export default function Navbar() {
 
   const crumbs = buildCrumbs()
 
+  // ─── 取得用戶名縮寫（頭像沒有圖片時顯示）───
   const getInitials = () => {
     if (!user?.displayName) return "U"
     const parts = user.displayName.trim().split(" ")
@@ -139,18 +145,19 @@ export default function Navbar() {
         {/* 只有在有上一層（crumbs > 1）時才顯示返回按鈕 */}
         {crumbs.length > 1 && (
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate(-1)} //navigate(-1) 等同於瀏覽器的上一頁
             className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground shrink-0"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
         )}
 
-        {crumbs.length > 0 && (
+        {/* 麵包屑導覽列 */}
+        {crumbs.length > 0 && ( //如果麵包屑陣列裡面有東西 才顯示
           <nav className="flex items-center gap-1 text-sm min-w-0">
             {crumbs.map((crumb, i) => (
               <span key={crumb.to} className="flex items-center gap-1 min-w-0">
-                {i > 0 && <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
+                {i > 0 && <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />} 
                 <button
                   onClick={() => i < crumbs.length - 1 && navigate(crumb.to)}
                   className={
@@ -167,7 +174,7 @@ export default function Navbar() {
         )}
       </div>
 
-      {/* 右側：搜尋 + 鈴鐺 + 頭像（mr-2 讓頭像不貼邊） */}
+      {/* 右側：搜尋 + 鈴鐺 + 頭像 */}
       <div className="flex items-center gap-1 shrink-0 mr-2">
 
         {/* 搜尋：開啟全域 Command Palette（跟 ⌘K 共用同一個 store） */}
@@ -203,7 +210,7 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* Activity 列表，固定高度，內容不足時不縮小 */}
+            {/* 通知列表，固定 420px 高度可捲動 */}
             <div className="overflow-y-auto h-[420px]">
               {activities.length === 0 ? (
                 <div className="h-full flex items-center justify-center">
@@ -224,13 +231,16 @@ export default function Navbar() {
                         className={`flex gap-3 px-4 py-3 cursor-pointer hover:bg-accent transition-colors ${
                           isUnread ? "bg-accent/40" : ""
                         }`}
-                      >
+                      > 
+                       {/* 通知欄內的頭像 */}
                         <MiniAvatar name={act.changedByName} photoURL={act.changedByPhotoURL} />
+                        
+                        {/* activity 描述文字 + 時間 + 專案名 */}
                         <div className="flex-1 min-w-0">
                           <p className="text-xs leading-snug">
                             <span className="font-semibold">{act.changedByName}</span>
                             {" "}
-                            <span className="text-muted-foreground">{formatActivityMessage(act)}</span>
+                            <span className="text-muted-foreground">{formatActivityMessage(act)}</span> 
                           </p>
                           <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                             <span className="text-[10px] text-muted-foreground">{timeAgo(act.createdAt)}</span>
@@ -243,6 +253,7 @@ export default function Navbar() {
                             )}
                           </div>
                         </div>
+                         {/* 未讀標示 */}
                         {isUnread && (
                           <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 mt-1.5" />
                         )}
@@ -261,7 +272,6 @@ export default function Navbar() {
         {/* 頭像下拉選單 */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            {/* outline-none 拿掉藍色 focus 外框 */}
             <button className="ml-1 outline-none focus:outline-none rounded-full">
               {user?.photoURL ? (
                 <img
@@ -289,6 +299,7 @@ export default function Navbar() {
             </div>
             <DropdownMenuSeparator />
 
+            {/* 設定item */}
             <DropdownMenuItem
               onClick={() => navigate("/settings")}
               className="cursor-pointer"
@@ -297,15 +308,14 @@ export default function Navbar() {
               Settings
             </DropdownMenuItem>
 
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator /> 
 
-            {/* 深色模式 toggle（不是 DropdownMenuItem，點擊不會關閉選單） */}
+            {/* 深色模式 toggle */}
             <div className="flex items-center justify-between px-1.5 py-1 rounded-md hover:bg-accent cursor-default text-sm">
               <div className="flex items-center gap-1.5">
-                {dark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                {dark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />} 
                 <span>Dark mode</span>
               </div>
-              {/* 自製 toggle 開關：flex + p-0.5 讓圓圈完整在軌道內 */}
               <button
                 onClick={() => setDark(!dark)}
                 className={`flex items-center w-9 h-5 rounded-full p-0.5 transition-colors shrink-0 focus:outline-none ${

@@ -1,16 +1,16 @@
 // useGlobalSearch — 用 Fuse.js 對 useGlobalSearchData 撈回來的資料做模糊搜尋
 import { useMemo } from "react"
-import Fuse from "fuse.js"
+import Fuse from "fuse.js" // 導入 fuse 搜尋引擎
 import type { SearchProject, SearchSprint, SearchTask } from "@/hooks/useGlobalSearchData"
 
 // 每組（task / project / sprint）最多顯示幾筆結果
 const RESULT_LIMIT = 5
 
 export function useGlobalSearch(
-  query: string,
-  data: { searchProjects: SearchProject[]; searchSprints: SearchSprint[]; searchTasks: SearchTask[] }
+  query: string,  // 用戶輸入的搜尋文字，來自 useSearchStore 的 query
+  data: { searchProjects: SearchProject[]; searchSprints: SearchSprint[]; searchTasks: SearchTask[] }// 來自 useGlobalSearchData 撈回來的所有資料
 ) {
-  // useMemo 包住 Fuse 實例：資料陣列沒變就不重建索引，避免每次打字都重新建立
+  // 用 useMemo 包住 Fuse 實例：資料陣列沒變就不重建索引，避免每次打字都重新建立
   const projectFuse = useMemo(
     () => new Fuse(data.searchProjects, { keys: ["name", "description"], threshold: 0.4 }),
     [data.searchProjects]

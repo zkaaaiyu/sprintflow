@@ -1,3 +1,4 @@
+//projectdetailpage 裡面的 sprint tab 
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useSprints, type SprintStatus } from "@/hooks/useSprints"
@@ -23,11 +24,11 @@ function formatDate(date: Date | null) {
 export default function SprintsTab({
   projectId,
   createOpen,
-  onCreateOpenChange,
+  onCreateOpenChange, //控制create sprint 的 modal 開關
 }: {
   projectId: string
   createOpen: boolean
-  onCreateOpenChange: (open: boolean) => void
+  onCreateOpenChange: (open: boolean) => void 
 }) {
   const navigate = useNavigate()
   const { sprints, loading, createSprint } = useSprints(projectId)
@@ -38,6 +39,8 @@ export default function SprintsTab({
   const [endDate, setEndDate] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
+
+//新建 sprint 函式
   const handleCreate = async () => {
     if (!name.trim()) { toast.error("Sprint name is required"); return }
     if (!startDate || !endDate) { toast.error("Please select a date range"); return }
@@ -53,7 +56,7 @@ export default function SprintsTab({
 
   return (
     <>
-      {/* 下方 Sprint 列表卡片 */}
+      {/* 下方 Sprint 時間軸卡片 */}
       <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden min-h-[calc(100vh-180px)]">
         {sprints.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground">
@@ -68,7 +71,7 @@ export default function SprintsTab({
 
               <div className="space-y-4">
                 {sprints.map((sprint) => {
-                  const cfg = SPRINT_STATUS_CONFIG[sprint.status]
+                  const cfg = SPRINT_STATUS_CONFIG[sprint.status] // 從 sprintStatus.ts 取出這個狀態對應的顏色、標籤等設定
                   const isActive = sprint.status === "active"
                   return (
                     <div key={sprint.id} className="flex items-center gap-4">
@@ -80,7 +83,7 @@ export default function SprintsTab({
 
                       {/* Sprint 卡片 */}
                       <div
-                        onClick={() => navigate(`/projects/${projectId}/sprints/${sprint.id}`)}
+                        onClick={() => navigate(`/projects/${projectId}/sprints/${sprint.id}`)} //點擊sprint 卡片跳轉到 kanban 頁面
                         className="flex-1 flex items-center gap-4 p-4 rounded-xl border cursor-pointer hover:shadow-md hover:scale-[1.01] transition-all"
                         style={
                           isActive
@@ -126,6 +129,7 @@ export default function SprintsTab({
             <DialogTitle className="text-2xl font-bold">Create Sprint</DialogTitle>
           </DialogHeader>
           <div className="space-y-5">
+            {/* Sprint Name */}
             <div className="space-y-2">
               <Label className="font-semibold text-sm">Sprint Name</Label>
               <Input
@@ -136,6 +140,7 @@ export default function SprintsTab({
                 autoFocus
               />
             </div>
+            {/* Sprint goal */}
             <div className="space-y-2">
               <Label className="font-semibold text-sm">Goal (optional)</Label>
               <textarea
@@ -146,6 +151,7 @@ export default function SprintsTab({
                 className="w-full rounded-xl bg-muted border-0 px-3 py-2.5 text-sm resize-none outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
+            {/* start date */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label className="font-semibold text-sm">Start Date</Label>
@@ -156,6 +162,7 @@ export default function SprintsTab({
                   className="rounded-xl bg-muted border-0 h-11 focus-visible:ring-1"
                 />
               </div>
+            {/* end date */}
               <div className="space-y-2">
                 <Label className="font-semibold text-sm">End Date</Label>
                 <Input

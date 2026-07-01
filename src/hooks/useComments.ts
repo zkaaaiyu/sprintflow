@@ -43,13 +43,14 @@ export function useComments(projectId: string, taskId: string) { //要傳入proj
         authorPhotoURL: (d.data().authorPhotoURL as string | null) ?? null,
         createdAt: (d.data().createdAt as Timestamp)?.toDate() ?? null,
       })) as Comment[]
-      setComments(list)
+      setComments(list) //載入留言陣列
       setLoading(false)
     })
 
     return () => unsub()
-  }, [projectId, taskId])
+  }, [projectId, taskId]) //依賴專案跟任務id
 
+  //新增留言
   const addComment = async (content: string) => {
     if (!user || !content.trim()) return
     await addDoc(
@@ -65,5 +66,9 @@ export function useComments(projectId: string, taskId: string) { //要傳入proj
     )
   }
 
-  return { comments, loading, addComment }
+  return { 
+    comments, //特定任務下面的留言
+    loading, 
+    addComment  //新增留言的函式
+  }
 }

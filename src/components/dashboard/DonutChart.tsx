@@ -1,5 +1,5 @@
 //dashboard 左上角donut chart
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts" //引入圖表套件
 
 type Props = {
   total: number
@@ -9,7 +9,7 @@ type Props = {
   done: number
 }
 
-// DonutChart 專用色盤，與 badge 顏色獨立管理
+// 定義 DonutChart 專用色盤
 const STATUS_CONFIG = [
   { key: "in_progress", label: "IN PROGRESS", color: "#B3795F" },
   { key: "done",        label: "DONE",        color: "#6F9E8A" },
@@ -33,14 +33,15 @@ export default function DonutChart({ total, todo, in_progress, review, done }: P
           <PieChart>
             <Pie
               data={hasData ? data : [{ value: 1, color: "var(--subtle-bg)", key: "empty", label: "" }]}
-              cx="50%"
-              cy="50%"
-              innerRadius={38}
-              outerRadius={58}
-              dataKey="value"
-              strokeWidth={0}
-              startAngle={90}
-              endAngle={-270}
+              cx="50%"          // 圓心 X 位置（置中）
+              cy="50%"          // 圓心 Y 位置（置中）
+              innerRadius={38}  // 內圈半徑（留空心）
+              outerRadius={58}  // 外圈半徑
+              // innerRadius < outerRadius → 形成甜甜圈形狀
+              dataKey="value"   // 告訴 Recharts 用 value 欄位決定扇形大小
+              strokeWidth={0}   // 扇形之間不畫邊框線
+              startAngle={90}   // 從 12 點鐘方向開始畫
+              endAngle={-270}   // 順時針畫一整圈（-270 = 90 - 360）
             >
               {hasData
                 ? data.map((entry) => <Cell key={entry.key} fill={entry.color} />)

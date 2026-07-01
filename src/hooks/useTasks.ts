@@ -1,4 +1,4 @@
-// useTasks 抓取 backlog 的 「所有」 任務列表
+// useTasks 抓取 特定project下「所有」任務
 import { useState, useEffect } from "react"
 import {
   collection,
@@ -12,6 +12,7 @@ import {
 import { db } from "@/lib/firebase"
 import { useAuth } from "@/contexts/AuthContext"
 
+//定義型別
 export type Priority = "low" | "medium" | "high" | "urgent" 
 export type TaskStatus = "todo" | "in_progress" | "review" | "done" 
 export type StoryPoints = 1 | 2 | 3 | 5 | 8 | 13 
@@ -34,20 +35,21 @@ export type Task = {
   createdAt: Date | null
 }
 
-export function useTasks(projectId: string) {
-  const { user } = useAuth() //拿到當前登入者的資料
+//即時監聽
+export function useTasks(projectId: string) { // 這裡的參數是從 ProjectDetailPage / SprintKanbanPage 用 useParams() 取得後傳進來
+  const { user } = useAuth() //拿到當前登入者的資料 要記錄建立者
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!projectId) return
 
-    const q = query(
+    const q = query(  //定義查詢邏輯
       collection(db, "projects", projectId, "tasks"), 
       orderBy("createdAt", "desc") // 根據時間由新到舊排列
     )
 
-    const unsubscribe = onSnapshot(q, (snap) => {  //用onSnapShot 監聽
+    const unsubscribe = onSnapshot(q, (snap) => {  //用onSnapShot 監聽所有任務新增刪除修改
       const list = snap.docs.map((d) => ({
         id: d.id,
         ...d.data(),
@@ -68,12 +70,12 @@ export function useTasks(projectId: string) {
     priority: Priority
     storyPoints: StoryPoints | null
     dueDate: Date | null
-    assigneeId?: string | null
+    assigneeId?: string | null // 可選：可以後續再指派
     sprintId?: string | null   // 可選：傳入則加入該 sprint，否則預設進 Backlog
     status?: TaskStatus        // 可選：傳入則使用指定狀態，否則預設 todo
   }) => {
     if (!user) return
-    await addDoc(collection(db, "projects", projectId, "tasks"), {
+    await addDoc(collection(db, "projects", projectId, "tasks"), {  // 執行寫入資料庫
       ...data,
       projectId,
       sprintId: data.sprintId ?? null,
@@ -87,5 +89,9 @@ export function useTasks(projectId: string) {
     })
   }
 
-  return { tasks, loading, createTask }
-}
+  return { 
+    tasks, //導出特定project下面的所有任務
+    loading, 
+    createTask 
+  }
+} 

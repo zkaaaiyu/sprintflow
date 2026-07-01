@@ -1,5 +1,6 @@
 import type { TaskStatus } from "@/hooks/useTasks"
 
+//定義四個看板欄位對應的顯示文字和顏色
 export const TASK_STATUS_CONFIG: Record<TaskStatus, { label: string; color: string; bg: string }> = {
   todo:        { label: "To Do",       color: "white", bg: "rgba(149, 144, 142, 0.85)" },
   in_progress: { label: "In Progress", color: "white", bg: "rgba(181, 132, 119, 0.85)" },

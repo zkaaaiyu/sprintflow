@@ -1,7 +1,7 @@
-//封裝跟 workspace與資料庫溝通 相關的hooks
+//封裝跟 workspace與資料庫溝通 相關的hooks （新增、查詢、更新、刪除）
 import { useState, useEffect } from "react"
 import {
-  collection,
+  collection,// 指向一個資料表（集合）
   query,
   where,
   getDocs,
@@ -9,7 +9,7 @@ import {
   deleteDoc,
   updateDoc,
   doc,
-  serverTimestamp,
+  serverTimestamp,// 讓 Firebase 伺服器記錄「現在時間」
   onSnapshot,
 } from "firebase/firestore"
 import { db } from "@/lib/firebase"
@@ -17,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext"
 
 // 定義member型別
 export type ProjectRole = "owner" | "member"
+
 // 定義project型別
 export type Project = {
   id: string
@@ -36,23 +37,23 @@ export type Project = {
 const generateInviteCode = () => Math.random().toString(36).slice(2, 8)
 
 
-// 定義自訂 Hook、初始化狀態
+// 定義自訂 Hook、初始化狀態 間聽firestor即時資料
 export function useWorkspace() {
   const { user } = useAuth()
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
 
-  // 用 onSnapshot 即時監聽：只要 Firestore 資料有變動，畫面自動更新
+  // 用 onSnapshot 即時監聽專案：只要 Firestore 資料有變動，畫面自動更新
   useEffect(() => {
     if (!user) return
     setLoading(true)
     const q = query(
       collection(db, "projects"),
-      where("memberIds", "array-contains", user.uid)
+      where("memberIds", "array-contains", user.uid) // WHERE memberIds 陣列裡包含當前用戶的 uid
     )
-    const unsubscribe = onSnapshot(q, (snap) => {
+    const unsubscribe = onSnapshot(q, (snap) => { // 用 onSnapshot：建立「即時訂閱」，資料改變時這個 callback 會自動被呼叫
       const list = snap.docs.map((d) => {
-        const data = d.data()
+        const data = d.data() //d 是 Document Snapshot 物件 要用data()方法取出資料
         const rawJoinedAt = data.joinedAt ?? {}
         const joinedAt: Record<string, Date | null> = {}
         for (const uid in rawJoinedAt) {
@@ -65,17 +66,17 @@ export function useWorkspace() {
           createdAt: data.createdAt?.toDate() ?? null,
           updatedAt: data.updatedAt?.toDate() ?? null,
         }
-      }) as Project[]
+      }) as Project[] //告訴ts 這是project 型別
       setProjects(list)
       setLoading(false)
     })
     return unsubscribe // 元件卸載時停止監聽，避免記憶體洩漏
   }, [user?.uid])
 
-// 新增project
+// 新增project 函式
   const createProject = async (name: string, description: string, color: string) => {
     if (!user) return
-    const inviteCode = generateInviteCode()
+    const inviteCode = generateInviteCode() //調用前面寫的隨機生成邀請碼函數
     const now = serverTimestamp() //firebase 提供的獲取時間函數
     const data = {
       name,
@@ -89,10 +90,10 @@ export function useWorkspace() {
       createdAt: now,
       updatedAt: now,
     }
-    const newDoc = await addDoc(collection(db, "projects"), data) //addDoc -> firebase提供新增資料的方法
+    const newDoc = await addDoc(collection(db, "projects"), data) //addDoc -> firebase提供新增資料的方法 回傳值裡面包含這筆資料的id
 
-    const now2 = new Date() //樂觀更新時間
-    //寫一個newproject把剛給firebase的資料直接塞給渲染project的陣列就不用等獲取會卡（樂觀更新）
+    const now2 = new Date() //樂觀更新要用的時間（因為是js端要用的 不能直接用前面firestore serverTimestamp 生成的）
+    //寫一個newproject把剛給firebase的資料直接塞給渲染project的陣列就不用等獲取會時間（樂觀更新）
     const newProject: Project = {
       id: newDoc.id,
       name,
@@ -106,18 +107,20 @@ export function useWorkspace() {
       createdAt: now2,
       updatedAt: now2,
     }
-    setProjects((prev) => [...prev, newProject])
+    setProjects((prev) => [...prev, newProject]) //不能覆蓋前面原本有的值所以用展開運算子倒出前面的資料
   }
 
   // 刪除 Project：遞迴清除所有子集合再刪 project 本體
   const deleteProject = async (projectId: string) => {
-    // 刪除所有 sprints
+    // 第一層：刪所有 sprints
     const sprintsSnap = await getDocs(collection(db, "projects", projectId, "sprints"))
     for (const d of sprintsSnap.docs) await deleteDoc(d.ref)
 
-    // 刪除所有 tasks，並遞迴清除每個 task 底下的 comments 和 activities
+    // 第二層：刪所有 tasks
     const tasksSnap = await getDocs(collection(db, "projects", projectId, "tasks"))
     for (const taskDoc of tasksSnap.docs) {
+
+       // 第三層（子集合）：每個 task 底下還有 comments 和 activities
       const commentsSnap = await getDocs(collection(db, "projects", projectId, "tasks", taskDoc.id, "comments"))
       for (const c of commentsSnap.docs) await deleteDoc(c.ref)
 
@@ -161,7 +164,7 @@ export function useWorkspace() {
     delete newRoles[user.uid]
     const newJoinedAt = { ...project.joinedAt }
     delete newJoinedAt[user.uid]
-    //workspace 頁面該 project 卡片會消失
+    //workspace 頁面更新渲染 該 project 卡片會消失
     await updateDoc(doc(db, "projects", projectId), { memberIds: newMemberIds, roles: newRoles, joinedAt: newJoinedAt, updatedAt: serverTimestamp() }) 
     setProjects((prev) => prev.filter((p) => p.id !== projectId))
   }
@@ -212,5 +215,15 @@ export function useWorkspace() {
     return projectDoc.id
   }
 
-  return { projects, loading, createProject, deleteProject, updateProject, removeMember, leaveProject, regenerateInviteCode, joinProject }
+  return { 
+    projects,//專案列表
+    loading, 
+    createProject, //新增函式
+    deleteProject, //刪除函式
+    updateProject,  //更新函式
+    removeMember, //刪除函式
+    leaveProject, //離開函式
+    regenerateInviteCode,  //重新產生邀請碼函式
+    joinProject //加入函式
+  }
 }

@@ -15,9 +15,10 @@ import {
 } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { useAuth } from "@/contexts/AuthContext"
-import type { Task } from "./useTasks"
+import type { Task } from "./useTasks" //直接引用定義好的任務型別
 
 export function useTask(projectId: string, taskId: string) {
+  //這裡的參數 從 TaskDetailModal 從外層傳進來，外層從 URL 或 selectedTaskId 取得
   const { user } = useAuth()
   const [task, setTask] = useState<Task | null>(null)
   const [loading, setLoading] = useState(true)
@@ -70,7 +71,7 @@ export function useTask(projectId: string, taskId: string) {
     // 若更新的是 status 欄位，同時寫入 doneAt（完成時間）
     const extraFields: Record<string, unknown> = {}
     if (field === "status") {
-      extraFields.doneAt = newValue === "done" ? serverTimestamp() : null
+      extraFields.doneAt = newValue === "done" ? serverTimestamp() : null //因為要同時更新兩個欄位所以用extraFields 
     }
 
     await updateDoc(taskRef, { [field]: storeValue, ...extraFields })  // 更新任務文件 filed 是動態的 可以是 時間、狀態或是其他屬性 storeValue 是判斷好的新值

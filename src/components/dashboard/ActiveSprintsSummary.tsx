@@ -29,7 +29,6 @@ export default function ActiveSprintsSummary({ summaries, loading }: Props) {
       </div>
 
       {loading ? (
-        // Skeleton
         <div className="space-y-5">
           {[1, 2].map((i) => (
             <div key={i} className="animate-pulse space-y-2">

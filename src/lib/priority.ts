@@ -1,5 +1,6 @@
 import type { Priority } from "@/hooks/useTasks"
 
+//用record < k,v > 定義好鍵值 查表
 export const PRIORITY_CONFIG: Record<Priority, { label: string; color: string; bg: string }> = {
   low:    { label: "Low",    color: "white", bg: "rgba(149, 144, 142, 0.85)" },
   medium: { label: "Medium", color: "white", bg: "rgba(125, 153, 177, 0.85)" },

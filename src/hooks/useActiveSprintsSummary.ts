@@ -1,5 +1,4 @@
-// useActiveSprintsSummary — 從 useActiveSprintTasks 撈到的原始資料中，彙整每個 active sprint 的 SP 進度摘要
-// 純計算（不再自己查 Firestore），資料來源由外部傳入的 groups 提供
+// useActiveSprintsSummary — 從 useActiveSprintTasks 撈到的原始資料中，彙整每個 active sprint 的 SP 進度摘要  純計算
 import { useMemo } from "react"
 import type { ActiveSprintGroup } from "@/hooks/useActiveSprintTasks"
 
@@ -19,6 +18,7 @@ export type ActiveSprintSummary = {
 }
 
 export function useActiveSprintsSummary(groups: ActiveSprintGroup[], loading: boolean) {
+// 參數 groups：從 useActiveSprintTasks 傳進來的原始資料（每個專案的 active sprint + tasks）
   const summaries = useMemo<ActiveSprintSummary[]>(() => {
     return groups.map((group) => {
       let totalSP = 0

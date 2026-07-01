@@ -1,10 +1,10 @@
-// useGlobalActivities — 跨專案的任務變動記錄，供 Dashboard 上方的狀態面板使用
-// 資料來源：頂層 activities/ collection（每次寫 task activity 時同步雙寫）
+// useGlobalActivities — 跨專案的任務變動記錄，通知面板會用到
 
 import { useState, useEffect } from "react"
 import { collection, query, where, onSnapshot, Timestamp } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 
+// 單筆全域活動紀錄的型別
 export type GlobalActivity = {
   id: string
   type: string
@@ -30,12 +30,12 @@ export function useGlobalActivities(
   const [activities, setActivities] = useState<GlobalActivity[]>([])
   const [loading, setLoading] = useState(true)
 
-  const projectIdsKey = projectIds.join(",")
+  const projectIdsKey = projectIds.join(",") //陣列轉字串當依賴項，避免無限重跑
 
   useEffect(() => {
     if (projectsLoading) return
 
-    if (projectIds.length === 0) {
+    if (projectIds.length === 0) { //沒專案也不跑
       setActivities([])
       setLoading(false)
       return
@@ -64,7 +64,7 @@ export function useGlobalActivities(
         return true
       })
 
-      filtered.sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0))
+      filtered.sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0)) // 由新到舊排序
       setActivities(filtered.slice(0, 30))
       setLoading(false)
     })

@@ -5,11 +5,11 @@ import { Plus, Trash2 } from "lucide-react"
 import { BRAND } from "@/lib/colors"
 
 export default function PersonalTodos() {
-  const { todos, createTodo, toggleTodo, updateTodo, deleteTodo } = usePersonalTodos()
-  const [adding, setAdding] = useState(false)
+  const { todos, createTodo, toggleTodo, updateTodo, deleteTodo } = usePersonalTodos() //呼叫usePersonalTodos 拿到所有待辦事項陣列 以及操作函式
+  const [adding, setAdding] = useState(false) //否處於新增的狀態（顯示輸入匡）
   const [inputVal, setInputVal] = useState("")
   // 行內編輯：記錄正在編輯的 todo id 與暫存文字
-  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null) //記錄在編輯哪一個輸入匡
   const [editVal, setEditVal] = useState("")
 
   const startEdit = (id: string, title: string) => {
@@ -38,7 +38,7 @@ export default function PersonalTodos() {
 
       {/* 待辦清單 */}
       <div className="space-y-1">
-        {todos.length === 0 && !adding && (
+        {todos.length === 0 && !adding && ( //沒todo項目也沒有在新增顯示No todos yet
           <p className="text-xs text-muted-foreground py-2">No todos yet</p>
         )}
 
@@ -49,7 +49,7 @@ export default function PersonalTodos() {
           >
             {/* 圓形打勾按鈕 */}
             <button
-              onClick={() => toggleTodo(todo.id, todo.done)}
+              onClick={() => toggleTodo(todo.id, todo.done)} //傳入哪一個todo項目跟目前的狀態 取反
               className="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all group-hover:border-brand"
               style={{
                 borderColor: todo.done ? BRAND : undefined,
@@ -76,6 +76,8 @@ export default function PersonalTodos() {
                   if (e.key === "Escape") setEditingId(null)
                 }}
                 className="flex-1 text-sm bg-transparent outline-none border-b border-foreground/20"
+                // bg-transparent：背景透明，看起來像直接編輯文字
+                // border-b：只有下邊框，像底線式輸入框
               />
             ) : (
               // hover 時底線提示可點擊，完成的 todo 劃線
@@ -95,6 +97,7 @@ export default function PersonalTodos() {
             <button
               onClick={() => deleteTodo(todo.id)}
               className="opacity-0 group-hover:opacity-50 hover:!opacity-100 text-muted-foreground hover:text-destructive transition-all shrink-0"
+              //分為父元素hover(group hover)跟按鈕本身hover
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>

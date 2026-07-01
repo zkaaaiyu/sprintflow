@@ -1,6 +1,6 @@
 // 全域搜尋面板（⌘K / Navbar 搜尋圖示觸發）
 import { useNavigate } from "react-router-dom"
-import { Command as CommandPrimitive } from "cmdk"
+import { Command as CommandPrimitive } from "cmdk" // 導入專門做 Command Palette 的 UI 套件，處理鍵盤導航、選取高亮等
 import {
   Command,
   CommandDialog,
@@ -14,11 +14,6 @@ import { useGlobalSearch } from "@/hooks/useGlobalSearch"
 import { PRIORITY_CONFIG } from "@/lib/priority"
 import { Search, ListChecks, Layers, Zap, ChevronRight } from "lucide-react"
 
-// CommandItem 共用樣式：直接用 cmdk 的 CommandPrimitive.Item（而不是 ui/command.tsx 包好的版本），
-// 因為包好的版本會自動在最後面塞一個 checkmark icon，跟這裡自訂的「icon 圓圈 + 文字 + 右側內容」排版會打架
-// 只用 data-[selected=true] 反白：cmdk 滑鼠移到項目上時，內部已經會把該項目同步設成「目前選取」，
-// 跟鍵盤上下鍵共用同一個狀態。如果額外加 hover:，滑鼠停在原地不動、改用鍵盤切到別的項目時，
-// 就會同時出現「滑鼠停留處」跟「鍵盤選到處」兩個反白
 const ITEM_CLASS =
   "flex items-center gap-3 rounded-xl px-3 py-2.5 cursor-default select-none outline-hidden data-[selected=true]:bg-muted [&_svg]:shrink-0"
 
@@ -36,13 +31,17 @@ function IconBubble({ icon: Icon }: { icon: typeof ListChecks }) {
 
 export default function CommandPalette() {
   const navigate = useNavigate()
-  const { isOpen, query, close, setQuery } = useSearchStore()
+  const { isOpen, query, close, setQuery } = useSearchStore() // 從useSearchStore拿到狀態跟函式
 
   // isOpen 傳進去：只有第一次打開時才會真正打 Firestore 撈資料
   const { searchProjects, searchSprints, searchTasks } = useGlobalSearchData(isOpen)
+  
+  // 把 query 和資料傳給 Fuse.js 搜尋，拿到過濾後的結果
   const { tasks, projects, sprints } = useGlobalSearch(query, { searchProjects, searchSprints, searchTasks })
 
-  const hasResults = tasks.length > 0 || projects.length > 0 || sprints.length > 0
+  const hasResults = tasks.length > 0 || projects.length > 0 || sprints.length > 0 
+
+  //查詢結果跳轉
 
   const goToProject = (projectId: string) => {
     navigate(`/projects/${projectId}`)
@@ -54,10 +53,9 @@ export default function CommandPalette() {
     close()
   }
 
-  // 任務在 Sprint 裡就帶去該 Sprint 的看板，在 Backlog 就帶去 Project 的 Backlog tab
-  // 兩種情況都用 ?openTask= 帶上 taskId，由目標頁面自己讀取並開啟 Task Detail Modal
+
   const goToTask = (task: SearchTask) => {
-    if (task.sprintId) {
+    if (task.sprintId) { //先跳到對應的sprint或是backlog
       navigate(`/projects/${task.projectId}/sprints/${task.sprintId}?openTask=${task.id}`)
     } else {
       navigate(`/projects/${task.projectId}?openTask=${task.id}`, { state: { tab: "backlog" } })
@@ -66,17 +64,18 @@ export default function CommandPalette() {
   }
 
   return (
-    <CommandDialog
+    <CommandDialog //CommandDialog(shadcn)-> 整個面板的外殼負責「背景遮罩 + 置中浮層 + ESC 關閉」
       open={isOpen}
       onOpenChange={(open) => !open && close()}
       className="top-[8%] sm:max-w-2xl rounded-3xl! border-0 shadow-2xl"
     >
       {/* shouldFilter=false：過濾邏輯已經交給 useGlobalSearch 的 Fuse.js 處理，不要讓 cmdk 自己再篩一次 */}
-      <Command shouldFilter={false} className="p-0 bg-transparent rounded-3xl!">
+      {/* command -> shadcn 提供搜尋的核心容器，管理「目前哪個 Item 被選中」的狀態*/}
+      <Command shouldFilter={false} className="p-0 bg-transparent rounded-3xl!"> 
         {/* 搜尋輸入列：放大版，左邊放大鏃 icon，右邊放 ESC 提示 */}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-border/60">
           <Search className="w-5 h-5 text-muted-foreground shrink-0" />
-          <CommandPrimitive.Input
+          <CommandPrimitive.Input // cmdk 提供的輸入匡
             value={query}
             onValueChange={setQuery}
             placeholder="Search tasks, projects, or commands..."
@@ -89,7 +88,8 @@ export default function CommandPalette() {
         </div>
 
         {/* max-h 用 vh 而不是固定 px：不管視窗高度多少，列表超出時都會在這裡滾動，不會把面板撐出畫面外 */}
-        <CommandList className="max-h-[55vh] p-2">
+        {/*  搜尋結果的捲動區域  */}
+        <CommandList className="max-h-[55vh] p-2"> 
           {!query.trim() ? (
             <div className="py-10 text-center text-sm text-muted-foreground">
               Start typing to search across your projects
@@ -99,14 +99,14 @@ export default function CommandPalette() {
           ) : null}
 
           {tasks.length > 0 && (
-            <CommandGroup
+            <CommandGroup //把結果進行分組 把相關的 Item 包在一起
               heading="Tasks"
               className="**:[[cmdk-group-heading]]:uppercase **:[[cmdk-group-heading]]:tracking-wider"
             >
               {tasks.map((task) => {
                 const p = PRIORITY_CONFIG[task.priority]
                 return (
-                  <CommandPrimitive.Item
+                  <CommandPrimitive.Item //自動處理：鍵盤上下鍵選取、Enter 觸發 onSelect、滑鼠 hover 高亮 data-[selected=true]：cmdk 在這個元素上標記「目前選中」
                     key={task.id}
                     value={task.id}
                     onSelect={() => goToTask(task)}

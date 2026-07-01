@@ -1,11 +1,13 @@
-// useGlobalSearchData — 為 Command Palette 準備「全部搜尋得到的資料」
-// 做法跟 useActiveSprintsSummary.ts 一樣：手動 getDocs 撈一次，不用 onSnapshot 即時監聽
-// （搜尋面板本來就是開啟時看一次的快照，不需要為了即時性付出持續監聽 Firestore 的成本）
+//這個 hook 負責在 Command Palette 第一次打開時，一次把所有專案、Sprint、任務都撈進來，
+// 讓後面的 Fuse.js 搜尋可以在本地端直接查，不用每次打字都查一次 Firestore。
+
 import { useState, useEffect } from "react"
 import { collection, getDocs } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { useWorkspace } from "@/hooks/useWorkspace"
 import type { Priority } from "@/hooks/useTasks"
+
+// 定義查詢資料的型別
 
 export type SearchProject = {
   id: string
@@ -46,24 +48,29 @@ export function useGlobalSearchData(isOpen: boolean) {
   useEffect(() => {
     if (!isOpen || fetched || projectsLoading) return
 
+    
     const fetchAll = async () => {
       setLoading(true)
+      // 先建空陣列，每個 project 的結果都 push 進來
       const sprintsResult: SearchSprint[] = []
       const tasksResult: SearchTask[] = []
 
-      // 平行查詢每個 project 各自的 sprints / tasks 子集合
+       // 外層 Promise.all：所有 project 同時查，不等前一個完成
       await Promise.all(
         projects.map(async (project) => {
+          // 內層 Promise.all：同一個 project 的 sprints 和 tasks 同時查
           const [sprintSnap, taskSnap] = await Promise.all([
             getDocs(collection(db, "projects", project.id, "sprints")),
             getDocs(collection(db, "projects", project.id, "tasks")),
           ])
+          // 解構賦值：[sprintSnap, taskSnap] 對應 Promise.all 回傳陣列的第一、第二個結果
 
-          // 先建一張 sprintId -> sprintName 對照表，task 顯示「所屬 sprint」時要用
+          // 建立一個sprintid : sprintname 的對照物件 （task 查詢的時候會用到 ）
           const sprintNameById: Record<string, string> = {}
           sprintSnap.docs.forEach((d) => {
             const data = d.data()
             sprintNameById[d.id] = data.name
+            //順便把sprint的完整資料塞進前面建立好的陣列
             sprintsResult.push({
               id: d.id,
               name: data.name,
@@ -92,6 +99,7 @@ export function useGlobalSearchData(isOpen: boolean) {
       )
 
       setSearchProjects(
+        // 專案資料直接從 useWorkspace 的 projects 整理，不需要再查 Firestore
         projects.map((p) => ({ id: p.id, name: p.name, description: p.description, color: p.color }))
       )
       setSearchSprints(sprintsResult)
